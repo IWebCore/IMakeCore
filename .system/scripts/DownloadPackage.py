@@ -1,0 +1,111 @@
+import json
+import os
+import time
+import zipfile
+from packaging.version import Version
+from scripts.data import *
+import requests
+
+class DownloadPackage:
+    def __init__(self, package:AppPackage, env:EnvConfig):
+        self.package = package
+        self.env = env
+        self.success = False
+        
+        self.cachePath = os.path.join(env.sysCachePath, f"{self.package.name}_{str(time.time())}.zip")
+        self.packagePath = ""
+        print(self.cachePath)
+
+        self.process()
+
+    def process(self):
+        if self.download() and self.uppackPackage() and self.matchPackage():
+            self.success = True
+
+    def download(self):
+        if self.package.url is not None and len(self.package.url) > 0:
+            if not self.downloadByUrl(self.package.url):
+                print(f"Failed to download {self.package.name} from given url: {self.package.url}")
+                exit(1)
+            return True
+        
+        if not self.downloadByServer():
+            print(f"Failed to download {self.package.name} from server")
+            exit(1)
+        return True
+
+    def uppackPackage(self):
+        json = self.readPackageJson()
+        if json is None:
+            print(f"Failed to read package.json from downloaded package: {self.package.name}")
+            exit(1)
+
+        if not self.checkDownloadedPackage(json):
+            print(f"Downloaded package is not the same as required")
+            exit(1)
+        
+        self.packagePath = os.path.join(self.env.sysPath, self.package.group, f"{self.package.name}@{json.get('version')}")
+        if not os.path.exists(self.packagePath):
+            os.makedirs(self.packagePath, exist_ok=False)
+        
+        with zipfile.ZipFile(self.cachePath, 'r') as zip_ref:
+            zip_ref.extractall(self.packagePath)
+
+        return True
+        
+    def matchPackage(self):
+        lib = LibPackage(self.packagePath)
+        if not lib.success:
+            print(f"Failed to load library package: {self.package.name}")
+            exit(1)
+        if(lib.isMatch(self.package)):
+            self.package.libPackage = lib
+            return True
+        else:
+            print(f"Library package {self.package.name} is not match with app package")
+            exit(1)
+
+    def getPotensialUrls(self):
+        urls = []
+        for path in self.env.servers:
+            url = os.path.join(path, self.package.name+".zip")
+            urls.append(url)
+        return urls
+    
+    def downloadByUrl(self, url):
+        try:
+            response = requests.get(url)
+            if response.status_code == 200:
+                with open(self.cachePath, "wb") as f:
+                    f.write(response.content)
+                self.success = True
+                return True
+            else:
+                return False
+        except:
+            return False
+        
+    def downloadByServer(self):
+        # TODO: implement download by server latter
+        return False
+    
+
+    def readPackageJson(self):
+        with zipfile.ZipFile(self.cachePath, 'r') as zip_ref:
+        # 检查是否存在package.json
+            if 'package.json' in zip_ref.namelist():
+                # 读取文件内容
+                with zip_ref.open('package.json') as json_file:
+                    data = json.load(json_file)
+                    return data
+            else:
+                return None
+            
+
+    def checkDownloadedPackage(self, val):
+        if val.get("group", "") == self.package.group       \
+            and val.get("name", "") == self.package.name    \
+            and self.package.versionSpec.contains(Version(val.get("version"))):
+            return True
+        return False
+    

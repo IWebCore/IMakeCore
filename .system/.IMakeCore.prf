@@ -1,0 +1,68 @@
+IWEB_CORE_ROOT = $$(IMAKECORE_ROOT)
+SCRIPT_PATH = $$IWEB_CORE_ROOT/.system/
+QMAKE_SOURCE_DIR =
+
+defineTest(IQMakeCoreInit){
+    QMAKE_SOURCE_DIR = $$PWD
+    export(QMAKE_SOURCE_DIR)
+
+    script_path = $$getPythonFilePath("IMakeCore.py")
+    cmd = python $$script_path $$PWD qmake
+
+    !exists($$PWD/packages.json){
+        error("$$PWD/package.json configure file not exist, please create one")
+    }
+
+    message($$cmd)
+    res = $$system($$cmd, blob, result)
+    ! isEqual(res, "") {
+        message($$res)
+    }
+    ! isEqual(result, 0) {
+        message("packages configuration failed")
+        return(false)
+    }
+    message("packages configured successfully")
+    #message($$PWD/.package.pri)
+    include($$PWD/.package.pri)
+    return(true)
+}
+
+defineTest(findPythonInterpreter) {
+    win32 {
+        python = $$system(where python /F)
+        python = $$first(python)
+        isEmpty(python): python = $$system(where python3)
+    } else {
+        python = $$system(which python3 || which python)
+    }
+    isEmpty(python): {
+        error("Python interpreter not found")
+        return(false)
+    }
+    export(python)
+    return(true)
+}
+
+defineReplace(getPythonFilePath){
+    script_path = $$SCRIPT_PATH/$$1
+
+    !exists($$script_path) {
+        error("script not found at $$script_path")
+    }
+    script_path = $$absolute_path($$script_path)
+    return ("$$script_path")
+}
+
+defineTest(writeFile){
+    path = $$Package_Path/values/$$1
+    content = $$2
+    script_path = $$getPythonFilePath("writeFile.py")
+    cmd = python $$script_path $$path $$content
+    res = $$system($$cmd)
+    isEqual($$result, "") {
+        return(true)
+    }
+    error($$res)
+    return(false)
+}

@@ -1,0 +1,8 @@
+{   
+    "name":"charconv",
+    "group":"msstl",
+    "version":"1.0.0",
+    "author": "yuekeyuan",
+    "summary":"charconv library for C++",
+    "dependencies": {}
+}
