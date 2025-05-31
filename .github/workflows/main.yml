@@ -1,0 +1,49 @@
+name: Package and Release
+
+on:
+  push:
+    tags:
+      - "v*"  # 触发条件：v开头的标签 (如 v1.0.0)
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    # 提取版本号 (从 git tag)
+    - name: Extract version
+      id: extract-version
+      run: |
+        # 去除标签前的 "v" (v1.0.0 → 1.0.0)
+        VERSION="${GITHUB_REF#refs/tags/v}"
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+        echo "Extracted version: $VERSION"
+      
+    # 设置包名格式：仓库名@版本
+    - name: Set package name
+      run: |
+        # 获取仓库名并转为小写
+        REPO_NAME=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+        echo "PACKAGE_NAME=${REPO_NAME}@${{ env.VERSION }}.zip" >> $GITHUB_ENV
+        echo "Package name: $PACKAGE_NAME"
+      
+    # 创建压缩包 (排除 .git 目录)
+    - name: Create zip package
+      run: |
+        echo "Creating ${{ env.PACKAGE_NAME }}"
+        zip -r "${{ env.PACKAGE_NAME }}" . -x '*.git*' -x '.github/*'
+        ls -lh *.zip
+      
+    # 上传到 GitHub Releases
+    - name: Upload to GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ github.ref_name }}  # 使用原始标签名 (含v前缀)
+        name: Release ${{ env.VERSION }}
+        files: ${{ env.PACKAGE_NAME }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
