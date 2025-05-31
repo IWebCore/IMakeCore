@@ -30,7 +30,7 @@ jobs:
         REPO_NAME=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
         echo "PACKAGE_NAME=${REPO_NAME}@${VERSION}.zip" >> $GITHUB_ENV
         echo "Package name: $PACKAGE_NAME"
-      
+        
     # 创建压缩包 (排除 .git 目录)
     - name: Create zip package
       run: |
