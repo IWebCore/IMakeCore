@@ -48,17 +48,25 @@ install() {
         exit 1
     }
 
-    # 环境变量设置
-    echo "IMAKECORE_ROOT=\"$TARGET\"" >> /etc/environment
-    echo "IMAKECORE_ROOT=\"$TARGET\""
-    
-    echo "ICMakeCore=\"$TARGET/.system/.IMakeCore.cmake\"" >> /etc/environment
-    echo "IQMakeCore=\"$TARGET/.system/.IMakeCore.prf\"" >> /etc/environment
-    
-    source /etc/environment || {
-        echo "环境变量设置失败" >&2
-        exit 1
-    }
+    # 1. 创建脚本文件（使用 sudo）
+    sudo tee /etc/profile.d/imakecore_vars.sh > /dev/null <<EOF
+#!/bin/sh
+
+export IMAKECORE_ROOT="$TARGET"
+export ICMakeCore="$TARGET/.system/.IMakeCore.cmake"
+export IQMakeCore="$TARGET/.system/.IMakeCore.prf"
+EOF
+
+    # 2. 赋予执行权限
+    sudo chmod +x /etc/profile.d/imakecore_vars.sh
+
+    # 3. 立即生效（当前会话）
+    . /etc/profile.d/imakecore_vars.sh
+
+    # 4. 验证设置
+    echo "IMAKECORE_ROOT = $IMAKECORE_ROOT"
+    echo "ICMakeCore = $ICMakeCore"
+    echo "IQMakeCore = $IQMakeCore"
     
     echo "安装成功完成"
 }

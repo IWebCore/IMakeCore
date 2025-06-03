@@ -14,7 +14,6 @@ defineTest(IQMakeCoreInit){
         error("$$PWD/package.json configure file not exist, please create one")
     }
 
-    message($$cmd)
     res = $$system($$cmd, blob, result)
     ! isEqual(res, "") {
         message($$res)
@@ -24,7 +23,6 @@ defineTest(IQMakeCoreInit){
         return(false)
     }
     message("packages configured successfully")
-    #message($$PWD/.package.pri)
     include($$PWD/.package.pri)
     return(true)
 }
@@ -41,7 +39,6 @@ defineTest(findPythonInterpreter) {
         error("Python interpreter not found")
         return(false)
     }
-    message($$python)
     export(python)
     return(true)
 }

@@ -46,7 +46,7 @@ function(resolvePackageInfo)
 
     file(TO_CMAKE_PATH "$ENV{IMAKECORE_ROOT}/.system/IMakeCore.py" script_path)
     execute_process(
-        COMMAND  ${Python_EXECUTABLE} ${script_path} ${CMAKE_CURRENT_LIST_DIR} cmake
+        COMMAND  ${Python_EXECUTABLE} -B ${script_path} ${CMAKE_CURRENT_LIST_DIR} cmake
         OUTPUT_VARIABLE infoVal
         RESULT_VARIABLE result
         # COMMAND_ECHO STDOUT
