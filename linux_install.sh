@@ -29,22 +29,36 @@ select_directory() {
 # 主安装流程
 install() {
     check_root
+
+    echo "finish check $APP_NAME"
+
     select_directory
+
+    echo "finish select $APP_NAME"
+    echo "$TARGET"
+
     
     mkdir -p "$TARGET" || {
         echo "无法创建目录 $TARGET" >&2
         exit 1
     }
 
-    echo "正在安装到: $TARGET"
-    cp -r "$(dirname "$0")"/* "$TARGET/" 2>/dev/null || {
+    cp -r "$(dirname "$0")"/ "$TARGET/" || {
         echo "文件复制失败" >&2
         exit 1
     }
 
     # 环境变量设置
-    echo "export APP_HOME=\"$TARGET\"" >> /etc/profile
-    source /etc/profile
+    echo "IMAKECORE_ROOT=\"$TARGET\"" >> /etc/environment
+    echo "IMAKECORE_ROOT=\"$TARGET\""
+    
+    echo "ICMakeCore=\"$TARGET/.system/.IMakeCore.cmake\"" >> /etc/environment
+    echo "IQMakeCore=\"$TARGET/.system/.IMakeCore.prf\"" >> /etc/environment
+    
+    source /etc/environment || {
+        echo "环境变量设置失败" >&2
+        exit 1
+    }
     
     echo "安装成功完成"
 }

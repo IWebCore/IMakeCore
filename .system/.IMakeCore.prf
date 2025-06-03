@@ -5,9 +5,10 @@ QMAKE_SOURCE_DIR =
 defineTest(IQMakeCoreInit){
     QMAKE_SOURCE_DIR = $$PWD
     export(QMAKE_SOURCE_DIR)
+    findPythonInterpreter()
 
     script_path = $$getPythonFilePath("IMakeCore.py")
-    cmd = python $$script_path $$PWD qmake
+    cmd = $$python -B $$script_path $$PWD qmake
 
     !exists($$PWD/packages.json){
         error("$$PWD/package.json configure file not exist, please create one")
@@ -40,12 +41,13 @@ defineTest(findPythonInterpreter) {
         error("Python interpreter not found")
         return(false)
     }
+    message($$python)
     export(python)
     return(true)
 }
 
 defineReplace(getPythonFilePath){
-    script_path = $$SCRIPT_PATH/$$1
+    script_path = $$(IMAKECORE_ROOT)/.system/$$1
 
     !exists($$script_path) {
         error("script not found at $$script_path")
