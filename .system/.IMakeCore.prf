@@ -23,10 +23,9 @@ defineTest(IQMakeCoreInit){
         return(false)
     }
     message("packages configured successfully")
-    include($$PWD/.package.pri)
     return(true)
 }
-
+cached
 defineTest(findPythonInterpreter) {
     win32 {
         python = $$system(where python /F)
@@ -53,15 +52,165 @@ defineReplace(getPythonFilePath){
     return ("$$script_path")
 }
 
-defineTest(writeFile){
-    path = $$Package_Path/values/$$1
-    content = $$2
-    script_path = $$getPythonFilePath("writeFile.py")
-    cmd = python $$script_path $$path $$content
-    res = $$system($$cmd)
-    isEqual($$result, "") {
-        return(true)
+############################
+#
+############################
+
+defineReplace(findFilesByPython){
+    ARGS = $$ARGS 
+    base_dir = $$take_first($$ARGS)
+    suffixes = $$ARGS
+
+    script_path = $$getPythonFilePath("IMakeCore_loadFiles.py")
+    cmd = $$python -B $$script_path $$base_dir $$suffixes
+    
+    res = $$system($$cmd, lines, result)
+    ! isEqual(result, 0) {
+        error("$$base_dir packages configuration failed")
     }
-    error($$res)
-    return(false)
+    return($$res)
+}
+
+defineTest(cacheTo){
+    allData = $$ARGS
+    dest = $$take_first(allData)
+    for(f, allData){
+        !isEmpty(f){
+            $$dest += $$imakecore_current_lib_dir/$$f
+        }
+    }
+    export($$dest)
+}
+
+defineTest(cacheToRaw){
+    allData = $$ARGS
+    dest = $$take_first(allData)
+    for(f, allData){
+        !isEmpty(f){
+            $$dest += $$f
+        }
+    }
+    export($$dest)
+}
+
+defineTest(cacheToSources){
+    cacheTo(SOURCES $$ARGS)
+}
+
+defineTest(cacheToSourcesRaw){
+    cacheToRaw(HEADERS $$ARGS)
+}
+
+defineTest(cacheToHeaders){
+    cacheTo(HEADERS $$ARGS)
+    export(HEADERS)
+}
+
+defineTest(cacheToHeadersRaw){
+    cacheToRaw(HEADERS $$ARGS)
+    export(HEADERS)
+}
+
+defineTest(cacheToIncludes){
+    cacheTo(INCLUDEPATH $$ARGS)
+}
+
+defineTest(cacheToIncludesRaw){
+    cacheToRaw(INCLUDEPATH $$ARGS)
+}
+
+defineTest(cacheToResources){
+    cacheTo(RESOURCES $$ARGS)
+}
+
+defineTest(cacheToResourcesRaw){
+    cacheToRaw(RESOURCES $$ARGS)
+}
+
+defineTest(cacheToLibraries){
+    cacheTo(LIBS $$ARGS)
+}
+
+defineTest(autoCacheInclude) {
+    filePath = $$imakecore_current_lib_dir/__includes.txt
+    exists($$filePath) {
+        dirNames = $$cat($$filePath)
+        cacheToIncludes($$dirNames)
+    } else {
+        cacheToIncludes(/)
+    }
+}
+
+defineTest(autoCacheHeaders){
+    filePath = $$imakecore_current_lib_dir/__headers.txt
+    exists($$filePath){
+        fileNames = $$cat($$filePath, lines)
+        cacheToHeaders($$fileNames)
+    }else{
+        fileNames = $$findFilesByPython($$imakecore_current_lib_dir .h .hpp .hxx)
+        cacheToHeadersRaw($$fileNames)
+    }
+}
+
+defineTest(autoCacheSources){
+    filePath = $$imakecore_current_lib_dir/__sources.txt
+    exists($$filePath) {
+        fileNames = $$cat($$filePath, lines)
+        cacheToSources($$fileNames)
+    }else{
+        fileNames = $$findFilesByPython($$imakecore_current_lib_dir .c .cpp .cxx .c++)
+        cacheToSourcesRaw($$fileNames)
+    }
+}
+
+defineTest(autoCacheResources){
+    filePath = $$imakecore_current_lib_dir/__resources.txt
+    exists($$filePath) {
+        fileNames = $$cat($$filePath, lines)
+        cacheToResources($$fileNames)
+    }else{
+        fileNames = $$findFilesByPython($$imakecore_current_lib_dir .rcc)
+        cacheToResourcesRaw($$fileNames)
+    }
+}
+
+defineReplace(getQuotedString) {
+    str = $$1
+    startsWithDouble = $$find(str, "=\"\"")
+    !isEmpty(startsWithDouble) {
+        endsWithDouble = $$find(str, "\"\"$$")
+        !isEmpty(endsWithDouble) {
+            str = $$replace(str, "=\"\"", "=\\\"")
+            str = $$replace(str, "\"\"$$", "\\\"")
+            return($$str)
+        }
+    }
+    return($$str)
+}
+
+defineTest(cacheToDefinitions){
+    allData = $$ARGS
+    for(line, allData){
+        !isEmpty(line){
+            line = $$getQuotedString($$line)
+            DEFINES += $$line
+        }
+    }
+    export(DEFINES)
+}
+
+defineTest(autoCacheDefinitions){
+    filePath = $$imakecore_current_lib_dir/__definitions.txt
+    exists($$filePath) {
+        fileNames = $$cat($$filePath, lines)
+        cacheToDefinitions($$fileNames)
+    }
+}
+
+defineTest(autoCachePackage){
+    autoCacheInclude()
+    autoCacheHeaders()
+    autoCacheSources()
+    autoCacheResources()
+    autoCacheDefinitions()
 }

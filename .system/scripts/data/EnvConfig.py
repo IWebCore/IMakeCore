@@ -64,7 +64,7 @@ class EnvConfig:
         
     def loadLibStoreConfig(self):
         
-        self.libstore.append(os.path.join(self.appPath, ".lib"))
+        # self.libstore.append(os.path.join(self.appPath, ".lib"))
 
         packageFile = os.path.join(self.appPath, "package.json")
         if os.path.exists(packageFile):

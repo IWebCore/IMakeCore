@@ -4,13 +4,16 @@ from packaging.specifiers import *
 from scripts.Utils import Utils
 
 class AppPackage:
-    def __init__(self,  name:str, version:str, group:str, path:str, url:str, scope):
+    def __init__(self,  name:str, version:str, group:str, path:str, url:str, scope:str):
         self.name = name.strip()
         self.version = version.strip()
+        self.group = group.strip()
+        self.name = name.strip()
         self.group = group.strip()
         self.path = path.strip()
         self.url = url
         self.scope = scope
+        self.autoScan = False
         self.libPackage = None  # LibPackage object
         self.versionSpec = Utils.parseVersionSpecifier(self.version)
         
@@ -19,7 +22,7 @@ class AppPackage:
     @classmethod
     def fromJson(cls, package_info):
         name = package_info.get('name')
-        version = package_info.get('version', '')  # default version to 1.0.0
+        version = package_info.get('version', '1.0.0')  # default version to 1.0.0
         group = package_info.get('group', "IWebCore")
         path = package_info.get('path', '')
         url = package_info.get('url')

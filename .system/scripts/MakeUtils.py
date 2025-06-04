@@ -6,11 +6,24 @@ from scripts.data import *
 class MakeUtils:
 
     @staticmethod
-    def createIncludeFile(packType:str, package:list[AppPackage]):
+    def createIncludeFile(packType:str, package:list[AppPackage], env : EnvConfig):
+        content : str
+        path : str
         if packType == "qmake":
-            return MakeUtils.qmakePostProcess(package)
+            content = MakeUtils.qmakePostProcess(package, env)
+            path = os.path.join(env.appPath, ".package.pri")
         elif packType == "cmake":
-            return MakeUtils.cmakePostProcess(package)
+            content = MakeUtils.cmakePostProcess(package)
+            path = os.path.join(env.appPath, ".package.cmake")
+
+        if os.path.exists(path):
+            with open(path, "rt") as oldFile:
+                if oldFile.read() == content:
+                    exit(0)
+        
+        with open(path, "wt") as newFile:
+            newFile.write(content)
+
 
     @staticmethod
     def checkPackageDependencies(libs:list[AppPackage]):
@@ -45,8 +58,25 @@ class MakeUtils:
 
         return str
     
+    staticmethod
+    def createQMakeAutoScanPackage(pkg:AppPackage, env : EnvConfig) -> str:
+        path = os.path.join(env.appLibPath, pkg.group+"@"+pkg.name+ "@" + pkg.version +".pri")
+        content = f"""\
+imakecore_current_lib_dir = "{os.path.normpath(pkg.libPackage.path).replace(os.sep, "/")}"
+autoCachePackage()
+"""
+        if os.path.exists(path):
+            with open(path, "rt") as file:
+                if file.read() == content:
+                    return path
+
+        with open(path, "wt") as file:
+            file.write(content)
+
+        return path
+        
     @staticmethod
-    def qmakePostProcess(package:list[AppPackage]) -> str:
+    def qmakePostProcess(package:list[AppPackage], env : EnvConfig) -> str:
         str = """\
 ###################################
 # SYSTEM CONFIGURED, DO NOT EDIT!!!
@@ -57,7 +87,11 @@ OTHER_FILES += packages.json
  
 """
         for p in package:
-            path = os.path.join(p.libPackage.path, p.name+".pri")
+            path = ""
+            if p.libPackage.autoScan == False:
+                path = os.path.join(p.libPackage.path, p.name+".pri")
+            else:
+                path = MakeUtils.createQMakeAutoScanPackage(p, env)
             str += f"\n# {p.libPackage.group}/{p.libPackage.name}@{p.libPackage.version}\n"
             str += f"# {p.libPackage.summary}\n"
             str += "include(" + path +")\n"

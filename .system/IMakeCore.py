@@ -18,19 +18,6 @@ if __name__ == '__main__':
     env = EnvConfig(appPath, packType)
     app = AppConfig(appPath)
     loadPackages(app, env)
-    MakeUtils.checkPackageDependencies(app.packages)
-    content = MakeUtils.createIncludeFile(packType, app.packages)
-
-    jsonPath = os.path.join(appPath, "packages.json")
-    cachedPath = os.path.join(appPath, ".cache", "packages.json")
     
-    if os.path.exists(jsonPath) and os.path.exists(cachedPath):
-        with open(cachedPath, "rt") as oldFile:
-            if oldFile.read() == content:
-                exit(0)
-
-    with open(jsonPath, "rt") as newFile:
-        newFile.write(content)
-
-    shutil.copy(jsonPath, cachedPath)
-    exit(0)
+    MakeUtils.checkPackageDependencies(app.packages)
+    MakeUtils.createIncludeFile(packType, app.packages, env)
