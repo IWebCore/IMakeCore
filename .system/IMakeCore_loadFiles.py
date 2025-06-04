@@ -14,7 +14,7 @@ def find_cpp_files(folder_path: str, suffixes):
 if __name__ == "__main__":
     folder_path = sys.argv[1]
     if not os.path.exists(folder_path):
-        print("文件夹不存在")
+        print("directory not found")
         sys.exit(1)
     
     suffixes = sys.argv[2:]

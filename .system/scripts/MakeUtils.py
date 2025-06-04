@@ -62,8 +62,9 @@ class MakeUtils:
     def createQMakeAutoScanPackage(pkg:AppPackage, env : EnvConfig) -> str:
         path = os.path.join(env.appLibPath, pkg.group+"@"+pkg.name+ "@" + pkg.version +".pri")
         content = f"""\
+# SYSTEM AUTO GENERATED DO NOT EDIT!!!
 imakecore_current_lib_dir = "{os.path.normpath(pkg.libPackage.path).replace(os.sep, "/")}"
-autoCachePackage()
+autoLoadPackage()
 """
         if os.path.exists(path):
             with open(path, "rt") as file:

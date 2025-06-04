@@ -25,7 +25,7 @@ defineTest(IQMakeCoreInit){
     message("packages configured successfully")
     return(true)
 }
-cached
+
 defineTest(findPythonInterpreter) {
     win32 {
         python = $$system(where python /F)
@@ -53,7 +53,7 @@ defineReplace(getPythonFilePath){
 }
 
 ############################
-#
+# below is load functions
 ############################
 
 defineReplace(findFilesByPython){
@@ -71,7 +71,7 @@ defineReplace(findFilesByPython){
     return($$res)
 }
 
-defineTest(cacheTo){
+defineTest(loadTo){
     allData = $$ARGS
     dest = $$take_first(allData)
     for(f, allData){
@@ -82,7 +82,7 @@ defineTest(cacheTo){
     export($$dest)
 }
 
-defineTest(cacheToRaw){
+defineTest(loadToRaw){
     allData = $$ARGS
     dest = $$take_first(allData)
     for(f, allData){
@@ -93,84 +93,88 @@ defineTest(cacheToRaw){
     export($$dest)
 }
 
-defineTest(cacheToSources){
-    cacheTo(SOURCES $$ARGS)
+defineTest(loadToSources){
+    loadTo(SOURCES $$ARGS)
 }
 
-defineTest(cacheToSourcesRaw){
-    cacheToRaw(HEADERS $$ARGS)
+defineTest(loadToSourcesRaw){
+    loadToRaw(HEADERS $$ARGS)
 }
 
-defineTest(cacheToHeaders){
-    cacheTo(HEADERS $$ARGS)
+defineTest(loadToHeaders){
+    loadTo(HEADERS $$ARGS)
     export(HEADERS)
 }
 
-defineTest(cacheToHeadersRaw){
-    cacheToRaw(HEADERS $$ARGS)
+defineTest(loadToHeadersRaw){
+    loadToRaw(HEADERS $$ARGS)
     export(HEADERS)
 }
 
-defineTest(cacheToIncludes){
-    cacheTo(INCLUDEPATH $$ARGS)
+defineTest(loadToIncludes){
+    loadTo(INCLUDEPATH $$ARGS)
 }
 
-defineTest(cacheToIncludesRaw){
-    cacheToRaw(INCLUDEPATH $$ARGS)
+defineTest(loadToIncludesRaw){
+    loadToRaw(INCLUDEPATH $$ARGS)
 }
 
-defineTest(cacheToResources){
-    cacheTo(RESOURCES $$ARGS)
+defineTest(loadToResources){
+    loadTo(RESOURCES $$ARGS)
 }
 
-defineTest(cacheToResourcesRaw){
-    cacheToRaw(RESOURCES $$ARGS)
+defineTest(loadToResourcesRaw){
+    loadToRaw(RESOURCES $$ARGS)
 }
 
-defineTest(cacheToLibraries){
-    cacheTo(LIBS $$ARGS)
+defineTest(loadToLibraries){
+    loadTo(LIBS $$ARGS)
 }
 
-defineTest(autoCacheInclude) {
+defineTest(loadToLibrariesRaw){
+    loadToRaw(LIBS $$ARGS)
+}
+
+defineTest(autoLoadInclude) {
     filePath = $$imakecore_current_lib_dir/__includes.txt
     exists($$filePath) {
         dirNames = $$cat($$filePath)
-        cacheToIncludes($$dirNames)
+        loadToIncludes($$dirNames)
     } else {
-        cacheToIncludes(/)
+        loadToIncludes(/)
     }
 }
 
-defineTest(autoCacheHeaders){
+defineTest(autoLoadHeaders){
     filePath = $$imakecore_current_lib_dir/__headers.txt
     exists($$filePath){
         fileNames = $$cat($$filePath, lines)
-        cacheToHeaders($$fileNames)
+        loadToHeaders($$fileNames)
     }else{
         fileNames = $$findFilesByPython($$imakecore_current_lib_dir .h .hpp .hxx)
-        cacheToHeadersRaw($$fileNames)
+        loadToHeadersRaw($$fileNames)
     }
 }
 
-defineTest(autoCacheSources){
+defineTest(autoLoadSources){
     filePath = $$imakecore_current_lib_dir/__sources.txt
     exists($$filePath) {
         fileNames = $$cat($$filePath, lines)
-        cacheToSources($$fileNames)
+        loadToSources($$fileNames)
     }else{
-        fileNames = $$findFilesByPython($$imakecore_current_lib_dir .c .cpp .cxx .c++)
-        cacheToSourcesRaw($$fileNames)
+        fileNames = $$findFilesByPython($$imakecore_current_lib_dir .c .cpp .cxx .c++ .cc)
+        loadToSourcesRaw($$fileNames)
     }
 }
 
-defineTest(autoCacheResources){
+defineTest(autoLoadResources){
     filePath = $$imakecore_current_lib_dir/__resources.txt
     exists($$filePath) {
         fileNames = $$cat($$filePath, lines)
-        cacheToResources($$fileNames)
+        loadToResources($$fileNames)
     }else{
         fileNames = $$findFilesByPython($$imakecore_current_lib_dir .rcc)
-        cacheToResourcesRaw($$fileNames)
+        loadToResourcesRaw($$fileNames)
     }
 }
 
@@ -188,7 +192,7 @@ defineReplace(getQuotedString) {
     return($$str)
 }
 
-defineTest(cacheToDefinitions){
+defineTest(loadToDefinitions){
     allData = $$ARGS
     for(line, allData){
         !isEmpty(line){
@@ -199,18 +203,19 @@ defineTest(cacheToDefinitions){
     export(DEFINES)
 }
 
-defineTest(autoCacheDefinitions){
+defineTest(autoLoadDefinitions){
     filePath = $$imakecore_current_lib_dir/__definitions.txt
     exists($$filePath) {
         fileNames = $$cat($$filePath, lines)
-        cacheToDefinitions($$fileNames)
+        loadToDefinitions($$fileNames)
     }
 }
 
-defineTest(autoCachePackage){
-    autoCacheInclude()
-    autoCacheHeaders()
-    autoCacheSources()
-    autoCacheResources()
-    autoCacheDefinitions()
+defineTest(autoLoadPackage){
+    autoLoadInclude()
+    autoLoadHeaders()
+    autoLoadSources()
+    autoLoadResources()
+    autoLoadDefinitions()
 }
+
