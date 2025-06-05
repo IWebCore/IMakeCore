@@ -13,7 +13,7 @@ class MakeUtils:
             content = MakeUtils.qmakePostProcess(package, env)
             path = os.path.join(env.appPath, ".package.pri")
         elif packType == "cmake":
-            content = MakeUtils.cmakePostProcess(package)
+            content = MakeUtils.cmakePostProcess(package, env)
             path = os.path.join(env.appPath, ".package.cmake")
 
         if os.path.exists(path):
@@ -39,25 +39,6 @@ class MakeUtils:
                     print(f"Package {lib.group}/{lib.name} requires {dep.group}/{dep.name} version {dep.version} but it is not found in the list of packages.")
                     exit(1)
 
-    @staticmethod
-    def cmakePostProcess(package:list[AppPackage]) -> str:
-
-        str = """\
-###################################
-# SYSTEM CONFIGURED, DO NOT EDIT!!!
-###################################\n"""
-
-        for p in package:
-            path = os.path.join(p.libPackage.path, p.name+".cmake")
-            path = os.path.normpath(path)
-            print(path)
-            path = path.replace("\\", "/")
-            str += f"\n# {p.libPackage.group}/{p.libPackage.name}@{p.libPackage.version}\n"
-            str += f"# {p.libPackage.summary}\n"
-            str += "include(" + path +")\n"
-
-        return str
-    
     staticmethod
     def createQMakeAutoScanPackage(pkg:AppPackage, env : EnvConfig) -> str:
         path = os.path.join(env.appLibPath, pkg.group+"@"+pkg.name+ "@" + pkg.version +".pri")
@@ -75,7 +56,49 @@ autoLoadPackage()
             file.write(content)
 
         return path
+    
+    @staticmethod
+    def createCmakeAutoScanPackage(pkg:AppPackage, env : EnvConfig) -> str:
+        path = os.path.join(env.appLibPath, pkg.group+"@"+pkg.name+ "@" + pkg.version +".cmake")
+        content = f"""\
+# SYSTEM AUTO GENERATED DO NOT EDIT!!!
+set(imakecore_current_lib_dir "{os.path.normpath(pkg.libPackage.path).replace(os.sep, "/")}")
+autoLoadPackage()
+"""
+        if os.path.exists(path):
+            with open(path, "rt") as file:  
+                if file.read() == content:
+                    return path
+
+        with open(path, "wt") as file:
+            file.write(content)
+
+        return path
         
+
+    @staticmethod
+    def cmakePostProcess(package:list[AppPackage], env: EnvConfig) -> str:
+
+        str = """\
+###################################
+# SYSTEM CONFIGURED, DO NOT EDIT!!!
+###################################\n"""
+
+        for p in package:
+            path = ""
+            if p.libPackage.autoScan == False:
+                path = os.path.join(p.libPackage.path, p.name+".cmake")
+            else:
+                path = MakeUtils.createCmakeAutoScanPackage(p, env)
+
+            path = path.replace("\\", "/")
+            str += f"\n# {p.libPackage.group}/{p.libPackage.name}@{p.libPackage.version}\n"
+            str += f"# {p.libPackage.summary}\n"
+            str += "include(" + path +")\n"
+
+        return str
+    
+    
     @staticmethod
     def qmakePostProcess(package:list[AppPackage], env : EnvConfig) -> str:
         str = """\
