@@ -11,7 +11,7 @@ defineTest(IQMakeCoreInit){
     cmd = $$python -B $$script_path $$PWD qmake
 
     !exists($$PWD/packages.json){
-        error("$$PWD/package.json configure file not exist, please create one")
+#        error("$$PWD/package.json configure file not exist, please create one")
     }
 
     res = $$system($$cmd, blob, result)
@@ -71,24 +71,23 @@ defineReplace(findFilesByPython){
     return($$res)
 }
 
+defineReplace(findFilesByFile){
+    fileName = $$1
+    args = $$cat($$fileName ,lines)
+    temp =
+    for(arg, args){
+        !isEmpty(arg){
+            temp += $$imakecore_current_lib_dir/$$arg
+        }
+    }
+    return($$temp)
+}
+
 defineTest(loadTo){
     allData = $$ARGS
     dest = $$take_first(allData)
     for(f, allData){
-        !isEmpty(f){
-            $$dest += $$imakecore_current_lib_dir/$$f
-        }
-    }
-    export($$dest)
-}
-
-defineTest(loadToRaw){
-    allData = $$ARGS
-    dest = $$take_first(allData)
-    for(f, allData){
-        !isEmpty(f){
-            $$dest += $$f
-        }
+        $$dest += $$f
     }
     export($$dest)
 }
@@ -97,17 +96,8 @@ defineTest(loadToSources){
     loadTo(SOURCES $$ARGS)
 }
 
-defineTest(loadToSourcesRaw){
-    loadToRaw(HEADERS $$ARGS)
-}
-
 defineTest(loadToHeaders){
     loadTo(HEADERS $$ARGS)
-    export(HEADERS)
-}
-
-defineTest(loadToHeadersRaw){
-    loadToRaw(HEADERS $$ARGS)
     export(HEADERS)
 }
 
@@ -115,66 +105,54 @@ defineTest(loadToIncludes){
     loadTo(INCLUDEPATH $$ARGS)
 }
 
-defineTest(loadToIncludesRaw){
-    loadToRaw(INCLUDEPATH $$ARGS)
-}
-
 defineTest(loadToResources){
     loadTo(RESOURCES $$ARGS)
-}
-
-defineTest(loadToResourcesRaw){
-    loadToRaw(RESOURCES $$ARGS)
 }
 
 defineTest(loadToLibraries){
     loadTo(LIBS $$ARGS)
 }
 
-defineTest(loadToLibrariesRaw){
-    loadToRaw(LIBS $$ARGS)
-}
-
 defineTest(autoLoadInclude) {
     filePath = $$imakecore_current_lib_dir/__includes.txt
     exists($$filePath) {
-        dirNames = $$cat($$filePath)
+        dirNames = $$findFilesByFile($$filePath)
         loadToIncludes($$dirNames)
     } else {
-        loadToIncludes(/)
+        loadToIncludes($$imakecore_current_lib_dir/)
     }
 }
 
 defineTest(autoLoadHeaders){
     filePath = $$imakecore_current_lib_dir/__headers.txt
     exists($$filePath){
-        fileNames = $$cat($$filePath, lines)
+        fileNames = $$findFilesByFile($$filePath)
         loadToHeaders($$fileNames)
     }else{
         fileNames = $$findFilesByPython($$imakecore_current_lib_dir .h .hpp .hxx)
-        loadToHeadersRaw($$fileNames)
+        loadToHeaders($$fileNames)
     }
 }
 
 defineTest(autoLoadSources){
     filePath = $$imakecore_current_lib_dir/__sources.txt
     exists($$filePath) {
-        fileNames = $$cat($$filePath, lines)
+        fileNames = $$findFilesByFile($$filePath)
         loadToSources($$fileNames)
     }else{
         fileNames = $$findFilesByPython($$imakecore_current_lib_dir .c .cpp .cxx .c++ .cc)
-        loadToSourcesRaw($$fileNames)
+        loadToSources($$fileNames)
     }
 }
 
 defineTest(autoLoadResources){
     filePath = $$imakecore_current_lib_dir/__resources.txt
     exists($$filePath) {
-        fileNames = $$cat($$filePath, lines)
+        fileNames = $$findFilesByFile($$filePath)
         loadToResources($$fileNames)
     }else{
         fileNames = $$findFilesByPython($$imakecore_current_lib_dir .rcc)
-        loadToResourcesRaw($$fileNames)
+        loadToResources($$fileNames)
     }
 }
 

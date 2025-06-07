@@ -11,16 +11,14 @@ class EnvConfig:
         self.sysPath = os.getenv("IMAKECORE_ROOT")
         self.makeType = makeType
 
-        self.appCachePath = os.path.normpath(os.path.join(self.appPath, ".cache"))
         self.sysCachePath = os.path.normpath(os.path.join(self.sysPath, ".cache"))
         self.appLibPath = os.path.normpath(os.path.join(self.appPath, ".lib"))
-        self.sysLibPath = os.path.normpath(os.path.join(self.sysPath, ".lib"))
         self.appDataPath = os.path.normpath(os.path.join(self.appPath, ".data"))
         self.sysDataPath = os.path.normpath(os.path.join(self.sysPath, ".data"))
 
         self.servers = []
         self.libstore = []
-        self.libs = []
+        self.libs = {}  # key :values
     
         self.checkDirectoryExists()
         self.loadServerConfig()
@@ -37,12 +35,6 @@ class EnvConfig:
         if not os.path.exists(self.appLibPath):
             os.makedirs(self.appLibPath, exist_ok=True)
         
-        if not os.path.exists(self.sysLibPath):
-            os.makedirs(self.sysLibPath, exist_ok=True)
-
-        if not os.path.exists(self.appCachePath):
-            os.makedirs(self.appCachePath, exist_ok=True)
-
         if not os.path.exists(self.sysCachePath):
             os.makedirs(self.sysCachePath, exist_ok=True)
 
@@ -97,8 +89,12 @@ class EnvConfig:
             dirs = [d for d in os.listdir(libstore) if os.path.isdir(os.path.join(libstore, d))]
             for dir in dirs:
                 path = os.path.join(libstore, dir)
-                projectDirs = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
-                for projectDir in projectDirs:
-                    lib = LibPackage(os.path.join(path, projectDir))
-                    if lib.success:
-                        self.libs.append(lib)
+                lib = LibPackage(path)
+                if lib.success:
+                    if lib.name not in self.libs:
+                        self.libs[lib.name] = []
+                    self.libs[lib.name].append(lib)
+        
+        for name in self.libs:
+            libs = self.libs[name]
+            libs.sort(key=lambda x: Version(x.version), reverse=True)

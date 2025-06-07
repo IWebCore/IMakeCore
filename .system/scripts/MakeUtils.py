@@ -36,12 +36,12 @@ class MakeUtils:
                         cond = True
                         break
                 if not cond:
-                    print(f"Package {lib.group}/{lib.name} requires {dep.group}/{dep.name} version {dep.version} but it is not found in the list of packages.")
+                    print(f"Package {lib.name} requires {dep.name} version {dep.version} but it is not found in the list of packages.")
                     exit(1)
 
     staticmethod
     def createQMakeAutoScanPackage(pkg:AppPackage, env : EnvConfig) -> str:
-        path = os.path.join(env.appLibPath, pkg.group+"@"+pkg.name+ "@" + pkg.version +".pri")
+        path = os.path.join(env.appLibPath, pkg.libPackage.name+ "@" + pkg.libPackage.version +".pri")
         content = f"""\
 # SYSTEM AUTO GENERATED DO NOT EDIT!!!
 imakecore_current_lib_dir = "{os.path.normpath(pkg.libPackage.path).replace(os.sep, "/")}"
@@ -74,7 +74,40 @@ autoLoadPackage()
             file.write(content)
 
         return path
+    
+    @staticmethod
+    def findQMakeIncludeFilePath(p:AppPackage):
+        path = os.path.join(p.libPackage.path, f"{p.name}@{p.version}.pri")
+        if os.path.exists(path):
+            return path
+
+        path = os.path.join(p.libPackage.path, p.name+".pri")
+        if os.path.exists(path):
+            return path
         
+        path = os.path.join(p.libPackage.path, ".package.pri")
+        if os.path.exists(path):
+            return path
+        
+        print(f"Cannot find include file for package {p.name} in {p.libPackage.path}, please check the package files.")
+        exit(1)
+
+    @staticmethod
+    def findCmakeIncludeFilePath(p:AppPackage):
+        path = os.path.join(p.libPackage.path, f"{p.name}@{p.version}.cmake")
+        if os.path.exists(path):
+            return 
+        
+        path = os.path.join(p.libPackage.path, f"{p.name}.cmake")
+        if os.path.exists(path):
+            return path
+        
+        path = os.path.join(p.libPackage.path, ".package.cmake")
+        if os.path.exists(path):
+            return path
+        
+        print(f"Cannot find include file for package {p.name}@{p.version} in {p.libPackage.path}, please check the package files.")
+        exit(1)
 
     @staticmethod
     def cmakePostProcess(package:list[AppPackage], env: EnvConfig) -> str:
@@ -87,7 +120,7 @@ autoLoadPackage()
         for p in package:
             path = ""
             if p.libPackage.autoScan == False:
-                path = os.path.join(p.libPackage.path, p.name+".cmake")
+                path = MakeUtils.findCmakeIncludeFilePath(p)
             else:
                 path = MakeUtils.createCmakeAutoScanPackage(p, env)
 
@@ -108,15 +141,15 @@ autoLoadPackage()
 
 # inclue packages.json to project
 OTHER_FILES += packages.json 
- 
+
 """
         for p in package:
             path = ""
             if p.libPackage.autoScan == False:
-                path = os.path.join(p.libPackage.path, p.name+".pri")
+                path = MakeUtils.findQMakeIncludeFilePath(p)
             else:
                 path = MakeUtils.createQMakeAutoScanPackage(p, env)
-            str += f"\n# {p.libPackage.group}/{p.libPackage.name}@{p.libPackage.version}\n"
+            str += f"\n# {p.libPackage.name}@{p.libPackage.version}\n"
             str += f"# {p.libPackage.summary}\n"
             str += "include(" + path +")\n"
 

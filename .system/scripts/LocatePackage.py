@@ -18,13 +18,14 @@ class LocatePackages:
                 self.success = True
                 return
             else:
-                print(f"Package {self.package.group}/{self.package.name} not found in user defined path: { self.package.path}")
+                print(f"Package {self.package.name} not found in user defined path: { self.package.path}")
                 exit(1)
 
-        lib : LibPackage
-        for lib  in self.env.libs:
-            if lib.isMatch(self.package):
-                self.package.libPackage = lib
-                self.success = True
-                return
+        if self.package.name in self.env.libs:
+            libs: list[LibPackage] = self.env.libs[self.package.name]
+            for lib in libs:
+                if lib.isMatch(self.package):
+                    self.package.libPackage = lib
+                    self.success = True
+                    return
                     
