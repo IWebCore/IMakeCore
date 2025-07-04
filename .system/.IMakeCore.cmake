@@ -29,12 +29,17 @@ function(loadToDefinitions)
     loadTo(DEFINITIONS_CACHE ${ARGV})
 endfunction()
 
+function(loadToForms)
+    loadTo(FORMS_CACHE ${ARGV})
+endfunction()
+
 function(prepareCacheVariables)
     set(HEADERS_CACHE CACHE INTERNAL "" FORCE)
     set(SOURCES_CACHE CACHE INTERNAL "" FORCE)
     set(INCLUDES_CACHE CACHE INTERNAL "" FORCE)
     set(LIBRARIES_CACHE CACHE INTERNAL "" FORCE)
     set(DEFINITIONS_CACHE CACHE INTERNAL "" FORCE)
+    set(FORMS_CACHE CACHE INTERNAL "" FORCE)
 endfunction()
 
 function(resolvePackageInfo)
@@ -49,7 +54,7 @@ function(resolvePackageInfo)
         COMMAND  ${Python_EXECUTABLE} -B ${script_path} ${CMAKE_CURRENT_LIST_DIR} cmake
         OUTPUT_VARIABLE infoVal
         RESULT_VARIABLE result
-        COMMAND_ECHO STDOUT
+#        COMMAND_ECHO STDOUT
     )
 
     if (NOT infoVal STREQUAL "")
@@ -68,7 +73,7 @@ endfunction()
 
 function(assambleTarget)
     foreach(target $CACHE{TARGET_CACHE})
-        target_sources(${target} PRIVATE ${SOURCES_CACHE} ${HEADERS_CACHE})
+        target_sources(${target} PRIVATE ${SOURCES_CACHE} ${HEADERS_CACHE} ${FORMS_CACHE})
         target_include_directories(${target} PRIVATE $CACHE{INCLUDES_CACHE})
         target_link_libraries(${target} PRIVATE $CACHE{LIBRARY_CACHE})
         target_compile_definitions(${target} PRIVATE $CACHE{DEFINITIONS_CACHE})
@@ -218,6 +223,17 @@ function(autoLoadResources)
     endif()
 endfunction()
 
+function(autoLoadForms)
+    set(filePath ${imakecore_current_lib_dir}/__uis.txt)
+    if(EXISTS ${filePath})
+        findFilesByFiles(${filePath} fileNames)
+        LoadToForms(${fileNames})
+    else()
+        findFilesByPython(fileNames ${imakecore_current_lib_dir} .ui)
+        LoadToForms(${fileNames})
+    endif()
+endfunction()
+
 function(autoLoadDefinitions)
     set(filePath ${imakecore_current_lib_dir}/__definitions.txt)
     if(EXISTS ${filePath})
@@ -237,4 +253,5 @@ function(autoLoadPackage)
     autoLoadSources()
     autoLoadResources()
     autoLoadDefinitions()
+    autoLoadForms()
 endfunction()

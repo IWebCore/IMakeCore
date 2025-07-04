@@ -59,7 +59,7 @@ autoLoadPackage()
     
     @staticmethod
     def createCmakeAutoScanPackage(pkg:AppPackage, env : EnvConfig) -> str:
-        path = os.path.join(env.appLibPath, pkg.group+"@"+pkg.name+ "@" + pkg.version +".cmake")
+        path = os.path.join(env.appLibPath, pkg.name+ "@" + pkg.libPackage.version +".cmake")
         content = f"""\
 # SYSTEM AUTO GENERATED DO NOT EDIT!!!
 set(imakecore_current_lib_dir "{os.path.normpath(pkg.libPackage.path).replace(os.sep, "/")}")
@@ -125,7 +125,7 @@ autoLoadPackage()
                 path = MakeUtils.createCmakeAutoScanPackage(p, env)
 
             path = path.replace("\\", "/")
-            str += f"\n# {p.libPackage.group}/{p.libPackage.name}@{p.libPackage.version}\n"
+            str += f"\n# {p.libPackage.name}@{p.libPackage.version}\n"
             str += f"# {p.libPackage.summary}\n"
             str += "include(" + path +")\n"
 

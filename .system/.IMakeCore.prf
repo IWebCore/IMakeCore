@@ -109,6 +109,10 @@ defineTest(loadToResources){
     loadTo(RESOURCES $$ARGS)
 }
 
+defineTest(loadToForms){
+    loadTo(FORMS $$ARGS)
+}
+
 defineTest(loadToLibraries){
     loadTo(LIBS $$ARGS)
 }
@@ -153,6 +157,17 @@ defineTest(autoLoadResources){
     }else{
         fileNames = $$findFilesByPython($$imakecore_current_lib_dir .rcc)
         loadToResources($$fileNames)
+    }
+}
+
+defineTest(autoLoadForms){
+    filePath = $$imakecore_current_lib_dir/__forms.txt
+    exists($$filePath) {
+        fileNames = $$findFilesByFile($$filePath)
+        loadToForms($$fileNames)
+    }else{
+        fileNames = $$findFilesByPython($$imakecore_current_lib_dir .ui)
+        loadToForms($$fileNames)
     }
 }
 
