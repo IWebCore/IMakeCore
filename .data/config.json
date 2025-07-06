@@ -1,0 +1,12 @@
+{
+    "servers":[
+        "http://localhost:8550"
+    ],
+    "libstores":[
+        "D:/code/packages/IWebCore/",
+        "/mnt/d/code/packages/IWebCore/"
+    ],
+    "globalLibStore":"./.lib",
+    "username":"annonymous",
+    "email":"annonymous@ipubcore.com"
+}

@@ -26,6 +26,9 @@ class Utils:
         if version == "*":
             return SpecifierSet(">=0")
         
+        if version.lower() == "x":
+            return SpecifierSet("<0")
+
         try:
             Version(version)
             return SpecifierSet(f"=={version}")

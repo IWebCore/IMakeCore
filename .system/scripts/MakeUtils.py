@@ -1,9 +1,19 @@
+import json
 import os
 import shutil
 from typing import List
 from scripts.data import *
+from pathlib import Path
 
 class MakeUtils:
+
+    @staticmethod
+    def createDumpJson(packages:list[AppPackage], env : EnvConfig):
+        
+        path = os.path.join(env.appPath, ".data","dump.json")
+        with open(path, "w") as f:
+            dict_list = [package.__dict__() for package in packages]
+            json.dump(dict_list, f, indent=4)  # indent 使格式美观
 
     @staticmethod
     def createIncludeFile(packType:str, package:list[AppPackage], env : EnvConfig):
@@ -39,9 +49,29 @@ class MakeUtils:
                     print(f"Package {lib.name} requires {dep.name} version {dep.version} but it is not found in the list of packages.")
                     exit(1)
 
+    @staticmethod
+    def updatePackageForceLocal(packages:list[AppPackage], env : EnvConfig):
+        env.appLibStore = os.path.normpath(env.appLibStore)
+        for package in packages:
+            if package.forceLocal:
+                if env.appLibStore in os.path.normpath(package.path):
+                    continue
+                
+                newPath = os.path.join(env.appLibStore, package.name+ "@" + package.libPackage.version)
+                oldPath = package.path
+                package.path = newPath
+                package.libPackage.path = newPath
+
+                if os.path.exists(newPath):
+                    continue
+                print("copy package to local lib store", f"package {package.name}@{package.libPackage.version}")
+                shutil.copytree(oldPath, newPath)
+
+
+
     staticmethod
     def createQMakeAutoScanPackage(pkg:AppPackage, env : EnvConfig) -> str:
-        path = os.path.join(env.appLibPath, pkg.libPackage.name+ "@" + pkg.libPackage.version +".pri")
+        path = os.path.join(env.appLibStore, pkg.libPackage.name+ "@" + pkg.libPackage.version +".pri")
         content = f"""\
 # SYSTEM AUTO GENERATED DO NOT EDIT!!!
 imakecore_current_lib_dir = "{os.path.normpath(pkg.libPackage.path).replace(os.sep, "/")}"
@@ -59,7 +89,7 @@ autoLoadPackage()
     
     @staticmethod
     def createCmakeAutoScanPackage(pkg:AppPackage, env : EnvConfig) -> str:
-        path = os.path.join(env.appLibPath, pkg.name+ "@" + pkg.libPackage.version +".cmake")
+        path = os.path.join(env.appLibStore, pkg.name+ "@" + pkg.libPackage.version +".cmake")
         content = f"""\
 # SYSTEM AUTO GENERATED DO NOT EDIT!!!
 set(imakecore_current_lib_dir "{os.path.normpath(pkg.libPackage.path).replace(os.sep, "/")}")
@@ -124,7 +154,7 @@ autoLoadPackage()
             else:
                 path = MakeUtils.createCmakeAutoScanPackage(p, env)
 
-            path = path.replace("\\", "/")
+            path = os.path.normpath(path).replace(os.sep, "/")
             str += f"\n# {p.libPackage.name}@{p.libPackage.version}\n"
             str += f"# {p.libPackage.summary}\n"
             str += "include(" + path +")\n"
@@ -144,11 +174,13 @@ OTHER_FILES += packages.json
 
 """
         for p in package:
+
             path = ""
             if p.libPackage.autoScan == False:
                 path = MakeUtils.findQMakeIncludeFilePath(p)
             else:
                 path = MakeUtils.createQMakeAutoScanPackage(p, env)
+            path = os.path.normpath(path).replace(os.sep, "/")
             str += f"\n# {p.libPackage.name}@{p.libPackage.version}\n"
             str += f"# {p.libPackage.summary}\n"
             str += "include(" + path +")\n"

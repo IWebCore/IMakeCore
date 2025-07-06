@@ -9,6 +9,7 @@ defineTest(IQMakeCoreInit){
 
     script_path = $$getPythonFilePath("IMakeCore.py")
     cmd = $$python -B $$script_path $$PWD qmake
+    message($$cmd)
 
     !exists($$PWD/packages.json){
 #        error("$$PWD/package.json configure file not exist, please create one")

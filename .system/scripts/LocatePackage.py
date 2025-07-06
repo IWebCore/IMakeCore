@@ -20,11 +20,12 @@ class LocatePackages:
             else:
                 print(f"Package {self.package.name} not found in user defined path: { self.package.path}")
                 exit(1)
-
+        
         if self.package.name in self.env.libs:
             libs: list[LibPackage] = self.env.libs[self.package.name]
             for lib in libs:
                 if lib.isMatch(self.package):
+                    self.package.path = lib.path
                     self.package.libPackage = lib
                     self.success = True
                     return

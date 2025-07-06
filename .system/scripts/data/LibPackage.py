@@ -45,7 +45,6 @@ class LibPackage:
         self.name = self.json.get("name")
         self.version = self.json.get("version")
         self.summary = self.json.get("summary")
-        self.description = self.json.get("description")
         self.autoScan = self.json.get("autoScan", False)
         dependencies = self.json.get("dependencies", {})
         for key, value in dependencies.items():

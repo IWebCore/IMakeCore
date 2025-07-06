@@ -7,22 +7,29 @@ from scripts.Utils import Utils
 
 class EnvConfig:
     def __init__(self, appPath:str, makeType:str):
-        self.appPath = appPath
-        self.sysPath = os.getenv("IMAKECORE_ROOT")
         self.makeType = makeType
 
-        self.sysCachePath = os.path.normpath(os.path.join(self.sysPath, ".cache"))
-        self.appLibPath = os.path.normpath(os.path.join(self.appPath, ".lib"))
+        self.appPath = appPath
+        self.appConfig = {}
         self.appDataPath = os.path.normpath(os.path.join(self.appPath, ".data"))
+        self.appLibStore = os.path.normpath(os.path.join(self.appPath, ".lib"))
+
+        self.sysPath = os.getenv("IMAKECORE_ROOT")
+        self.sysConfig = {}
+        self.sysCachePath = os.path.normpath(os.path.join(self.sysPath, ".cache"))
         self.sysDataPath = os.path.normpath(os.path.join(self.sysPath, ".data"))
+        self.sysLibStore = os.path.normpath(os.path.join(self.sysPath, ".lib"))
 
         self.servers = []
-        self.libstore = []
-        self.libs = {}  # key :values
-    
+        self.libstores = []
+        self.libs : list[LibPackage] = {}  # key :values
+
+        self.loadAppConfig()
+        self.loadSystemConfig()
+        self.normalizeLibStores()
+
         self.checkDirectoryExists()
-        self.loadServerConfig()
-        self.loadLibStoreConfig()
+    
         self.parseLibs()
 
     def checkDirectoryExists(self):
@@ -32,60 +39,47 @@ class EnvConfig:
         if not os.path.exists(self.sysDataPath):
             os.makedirs(self.sysDataPath, exist_ok=True)
 
-        if not os.path.exists(self.appLibPath):
-            os.makedirs(self.appLibPath, exist_ok=True)
+        if not os.path.exists(self.appLibStore):
+            os.makedirs(self.appLibStore, exist_ok=True)
         
         if not os.path.exists(self.sysCachePath):
             os.makedirs(self.sysCachePath, exist_ok=True)
 
-    def loadServerConfig(self):
+    def loadAppConfig(self):
+        appConfigJson = os.path.join(self.appPath, ".data", "config.json")
+        if os.path.exists(appConfigJson):
+            self.appConfig = Utils.loadJson(appConfigJson)
+            self.appLibStore = self.appConfig.get("localLibStore", self.appLibStore)
+            self.libstores.append(self.appLibStore)
+            self.libstores.extend(self.appConfig.get("libstores", []))
+            self.servers.extend(self.appConfig.get("servers", []))
+                
 
-        appConfig = os.path.join(self.appPath, ".data", ".SERVER")
-        if os.path.exists(appConfig):
-            with open(appConfig, "rt") as f:
-                for line in f:
-                    if line.strip():
-                        self.servers.append(line.strip())
+    def loadSystemConfig(self):
+        sysConfigJson = os.path.join(self.sysPath, ".data", "config.json")
+        if os.path.exists(sysConfigJson):
+            self.sysConfig = Utils.loadJson(sysConfigJson)
+            self.sysLibStore = self.sysConfig.get("globalLibStore", self.sysLibStore)
+            self.libstores.extend(self.sysConfig.get("libstores", []))
+            self.libstores.append(self.sysLibStore)
+            self.servers.extend(self.sysConfig.get("servers", []))
 
-        sysConfig = os.path.join(self.sysPath, ".data", ".SERVER")
-        if os.path.exists(sysConfig):
-            with open(sysConfig, "rt") as f:
-                for line in f:
-                    if line.strip():
-                        self.servers.append(line.strip())
-        
-    def loadLibStoreConfig(self):
-        
-        # self.libstore.append(os.path.join(self.appPath, ".lib"))
+    def normalizeLibStores(self):
+        temp : list[str] = []
+        for libstore in self.libstores:
+            path = libstore.strip()
+            if os.path.isabs(path):
+                path = os.path.normpath(path)
+            else:
+                path = os.path.normpath(os.path.join(self.sysPath, ".data", path))
 
-        packageFile = os.path.join(self.appPath, "package.json")
-        if os.path.exists(packageFile):
-            with open(packageFile, "rt") as f:
-                packageInfo = Utils.loadJson(f)
-                if "libstore" in packageInfo:
-                    for libstore in packageInfo["libstore"]:
-                        self.libstore.append(os.path.normpath(os.path.join(libstore)))
+            if os.path.exists(path) and path not in temp:
+                temp.append(path)
 
-        appConfig = os.path.join(self.appPath, ".data", ".LIBSTORE")
-        if os.path.exists(appConfig):
-            with open(appConfig, "rt") as f:
-                for line in f:
-                    if line.strip():
-                        self.libstore.append(line.strip())
+        self.libstores = temp
 
-        sysConfig = os.path.join(self.sysPath, ".data", ".LIBSTORE")
-        if os.path.exists(sysConfig):
-            with open(sysConfig, "rt") as f:
-                for line in f:
-                    if line.strip():
-                        self.libstore.append(line.strip())
-
-        self.libstore.append(os.path.normpath(self.sysPath))
-    
     def parseLibs(self):
-        for libstore in self.libstore:
-            if not os.path.exists(libstore):
-                continue
+        for libstore in self.libstores:
             dirs = [d for d in os.listdir(libstore) if os.path.isdir(os.path.join(libstore, d))]
             for dir in dirs:
                 path = os.path.join(libstore, dir)
@@ -96,5 +90,4 @@ class EnvConfig:
                     self.libs[lib.name].append(lib)
         
         for name in self.libs:
-            libs = self.libs[name]
-            libs.sort(key=lambda x: Version(x.version), reverse=True)
+            self.libs[name].sort(key=lambda x: Version(x.version), reverse=True)

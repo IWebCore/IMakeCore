@@ -23,9 +23,9 @@ class DownloadPackage:
             self.success = True
 
     def download(self):
-        if self.package.url is not None and len(self.package.url) > 0:
-            if not self.downloadByUrl(self.package.url):
-                print(f"Failed to download {self.package.name} from given url: {self.package.url}")
+        if self.package.urls is not None and len(self.package.urls) > 0:
+            if not self.downloadByUrl(self.package.urls):
+                print(f"Failed to download {self.package.name} from given urls: {self.package.urls}")
                 exit(1)
             return True
         
@@ -72,18 +72,18 @@ class DownloadPackage:
             urls.append(url)
         return urls
     
-    def downloadByUrl(self, url):
-        try:
-            response = requests.get(url)
-            if response.status_code == 200:
-                with open(self.cachePath, "wb") as f:
-                    f.write(response.content)
-                self.success = True
-                return True
-            else:
-                return False
-        except:
-            return False
+    def downloadByUrl(self, urls: list[str]):
+        for url in urls:
+            try:
+                response = requests.get(url)
+                if response.status_code == 200:
+                    with open(self.cachePath, "wb") as f:
+                        f.write(response.content)
+                    self.success = True
+                    return True
+            except:
+                pass
+        return False
         
     def downloadByServer(self):
         # TODO: implement download by server latter
