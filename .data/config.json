@@ -3,10 +3,10 @@
         "http://localhost:8550"
     ],
     "libstores":[
-        "D:/code/packages/IWebCore/",
-        "/mnt/d/code/packages/IWebCore/"
+        "D:/code/packages/IWebCore1/",
+        "/mnt/d/code/packages/IWebCore1/"
     ],
-    "globalLibStore":"./.lib",
+    "globalLibStore":"../.lib",
     "username":"annonymous",
     "email":"annonymous@ipubcore.com"
 }

@@ -13,13 +13,14 @@ class DownloadPackage:
         self.success = False
         
         self.cachePath = os.path.join(env.sysCachePath, f"{self.package.name}_{str(time.time())}.zip")
-        self.packagePath = ""
-        print(self.cachePath)
-
+        self.libPath = os.path.join(env.sysLibStore, f"{self.package.name}@{self.package.version}")
+        
         self.process()
 
     def process(self):
         if self.download() and self.uppackPackage() and self.matchPackage():
+            self.package.path = self.libPath
+            self.package.libPackage = LibPackage(self.libPath)
             self.success = True
 
     def download(self):
@@ -29,9 +30,14 @@ class DownloadPackage:
                 exit(1)
             return True
         
+        if self.package.version == "*":
+            print(f"Failed to download {self.package.name} with version *")
+            exit(1)
+            
         if not self.downloadByServer():
             print(f"Failed to download {self.package.name} from server")
             exit(1)
+            
         return True
 
     def uppackPackage(self):
@@ -44,17 +50,16 @@ class DownloadPackage:
             print(f"Downloaded package is not the same as required")
             exit(1)
         
-        self.packagePath = os.path.join(self.env.sysPath, self.package.group, f"{self.package.name}@{json.get('version')}")
-        if not os.path.exists(self.packagePath):
-            os.makedirs(self.packagePath, exist_ok=False)
+        if not os.path.exists(self.libPath):
+            os.makedirs(self.libPath, exist_ok=False)
         
         with zipfile.ZipFile(self.cachePath, 'r') as zip_ref:
-            zip_ref.extractall(self.packagePath)
+            zip_ref.extractall(self.libPath)
 
         return True
         
     def matchPackage(self):
-        lib = LibPackage(self.packagePath)
+        lib = LibPackage(self.libPath)
         if not lib.success:
             print(f"Failed to load library package: {self.package.name}")
             exit(1)
@@ -80,13 +85,30 @@ class DownloadPackage:
                     with open(self.cachePath, "wb") as f:
                         f.write(response.content)
                     self.success = True
+                    print(f'download {self.package.name} from {url} success')
                     return True
             except:
                 pass
+            
         return False
         
     def downloadByServer(self):
-        # TODO: implement download by server latter
+    
+        for server in self.env.servers:
+            url = os.path.join(server, "package", "download", self.package.name, self.package.version).replace(os.sep, "/")
+            
+            try:
+                response = requests.get(url)
+                if response.status_code == 200:
+                    with open(self.cachePath, "wb") as f:
+                        f.write(response.content)
+                        
+                    print(f'download {self.package.name}@{self.package.version} from {server} success')
+                    self.success = True
+                    return True
+            except:
+                pass
+            
         return False
     
 
@@ -103,8 +125,7 @@ class DownloadPackage:
             
 
     def checkDownloadedPackage(self, val):
-        if val.get("group", "") == self.package.group       \
-            and val.get("name", "") == self.package.name    \
+        if val.get("name", "") == self.package.name \
             and self.package.versionSpec.contains(Version(val.get("version"))):
             return True
         return False

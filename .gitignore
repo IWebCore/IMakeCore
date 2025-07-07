@@ -1,2 +1,4 @@
 /.system/scripts/__pycache__
 /.system/scripts/data/__pycache__
+/.cache
+/.lib

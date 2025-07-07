@@ -18,7 +18,9 @@ class EnvConfig:
         self.sysConfig = {}
         self.sysCachePath = os.path.normpath(os.path.join(self.sysPath, ".cache"))
         self.sysDataPath = os.path.normpath(os.path.join(self.sysPath, ".data"))
+        
         self.sysLibStore = os.path.normpath(os.path.join(self.sysPath, ".lib"))
+
 
         self.servers = []
         self.libstores = []
@@ -53,16 +55,25 @@ class EnvConfig:
             self.libstores.append(self.appLibStore)
             self.libstores.extend(self.appConfig.get("libstores", []))
             self.servers.extend(self.appConfig.get("servers", []))
-                
+        else:
+            self.libstores.append(self.appLibStore)  
 
     def loadSystemConfig(self):
         sysConfigJson = os.path.join(self.sysPath, ".data", "config.json")
         if os.path.exists(sysConfigJson):
             self.sysConfig = Utils.loadJson(sysConfigJson)
             self.sysLibStore = self.sysConfig.get("globalLibStore", self.sysLibStore)
+            if os.path.isabs(self.sysLibStore):
+                self.sysLibStore = os.path.normpath(self.sysLibStore)
+            else:
+                self.sysLibStore = os.path.normpath(os.path.join(self.sysPath, ".data", self.sysLibStore))
+               
             self.libstores.extend(self.sysConfig.get("libstores", []))
             self.libstores.append(self.sysLibStore)
             self.servers.extend(self.sysConfig.get("servers", []))
+        else: 
+            self.libstores.append(self.sysLibStore)
+            
 
     def normalizeLibStores(self):
         temp : list[str] = []

@@ -67,8 +67,6 @@ class MakeUtils:
                 print("copy package to local lib store", f"package {package.name}@{package.libPackage.version}")
                 shutil.copytree(oldPath, newPath)
 
-
-
     staticmethod
     def createQMakeAutoScanPackage(pkg:AppPackage, env : EnvConfig) -> str:
         path = os.path.join(env.appLibStore, pkg.libPackage.name+ "@" + pkg.libPackage.version +".pri")
