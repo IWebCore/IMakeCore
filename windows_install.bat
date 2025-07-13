@@ -46,8 +46,9 @@ timeout /T 2 /NOBREAK >nul
 :: 环境变量设置
 echo Setting Environment Variables...
 setx IMAKECORE_ROOT "!target!" /m >nul
-setx IQMakeCore "%%IMAKECORE_ROOT%%/.system/IMakeCore.prf" /m >nul
-setx ICMakeCore "%%IMAKECORE_ROOT%%/.system/IMakeCore.cmake" /m >nul
+setx IQMakeCore "%%IMAKECORE_ROOT%%/.system/.IMakeCore.prf" /m >nul
+setx ICMakeCore "%%IMAKECORE_ROOT%%/.system/.IMakeCore.cmake" /m >nul
+setx PATH "%PATH%;%IMAKECORE_ROOT%\.programs\windows" /m >nul
 
 timeout /T 2 /NOBREAK >nul
 

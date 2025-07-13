@@ -1,12 +1,11 @@
 {
-    "servers":[
-        "http://localhost:8550"
+    "email": "annoymous@tom.com",
+    "globalLibStore": "../.lib",
+    "libstores": [
+        "D:/code/packages/IMakeCore/.lib"
     ],
-    "libstores":[
-        "D:/code/packages/IWebCore1/",
-        "/mnt/d/code/packages/IWebCore1/"
+    "servers": [
+        "https://pub.iwebcore.org"
     ],
-    "globalLibStore":"../.lib",
-    "username":"annonymous",
-    "email":"annonymous@ipubcore.com"
+    "user": "annoymous"
 }
