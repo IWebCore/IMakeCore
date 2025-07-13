@@ -2,7 +2,7 @@
     "email": "annoymous@tom.com",
     "globalLibStore": "../.lib",
     "libstores": [
-        "D:/code/packages/IMakeCore/.lib"
+        "D:/code/packages/IWebCore"
     ],
     "servers": [
         "https://pub.iwebcore.org"
