@@ -1,7 +1,6 @@
 import os
 from packaging.version import *
 from packaging.specifiers import *
-# from scripts.data.LibPackage import LibPackage
 from scripts.Utils import Utils
 
 class AppPackage:
@@ -47,9 +46,13 @@ class AppPackage:
     def __str__(self):
         return f"Package(name={self.name}, version={self.version}, path={self.path})"
 
-    def __dict__(self):
+    def toDict(self):
         return {
-            "name": self.name,
+            "requestPackage": self.name,
+            "requestVersion": self.version,
+            "isGlobal": self.libPackage.isGlobal,
+            "publisher" : self.libPackage.publisher,
+            "name": self.libPackage.name,
             "version": self.libPackage.version,
             "path": self.libPackage.path,
             "autoScan" : self.libPackage.autoScan,

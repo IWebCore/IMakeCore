@@ -1,11 +1,9 @@
 {
-    "email": "annoymous@tom.com",
-    "globalLibStore": "../.lib",
+    "globalLibStore": ".lib",
     "libstores": [
-        "D:/code/packages/IWebCore"
     ],
     "servers": [
         "https://pub.iwebcore.org"
     ],
-    "user": "annoymous"
+    "user": "default"
 }

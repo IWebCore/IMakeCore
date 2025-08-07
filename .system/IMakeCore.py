@@ -5,6 +5,7 @@ from scripts.DownloadPackage import *
 from scripts.MakeUtils import *
 
 def loadPackages(app : AppConfig, env:EnvConfig):
+    package : AppPackage
     for package in app.packages:
         if not (LocatePackages(package, env).success \
             or DownloadPackage(package, env).success):

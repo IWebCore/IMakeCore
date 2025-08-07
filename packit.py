@@ -34,7 +34,7 @@ if __name__ == '__main__':
         # Get current directory name
     current_dir = os.path.basename(os.getcwd())
     # Define directories and files to exclude
-    exclude_dirs = ['.lib', '.lib1', '.github', '.git', '.cache', '.vscode']
+    exclude_dirs = ['.lib', '.github', '.git', '.cache', '.vscode']
     exclude_files = ['.gitignore', f'{current_dir}.zip']
     
     # Create output filename with timestamp

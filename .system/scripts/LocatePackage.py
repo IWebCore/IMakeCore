@@ -29,4 +29,16 @@ class LocatePackages:
                     self.package.libPackage = lib
                     self.success = True
                     return
-                    
+                
+            return
+        
+        keys = list(self.env.libs.keys())
+        for key in keys:
+            if key.endswith(self.package.name): 
+                libs: list[LibPackage] = self.env.libs[key]
+                for lib in libs:
+                    if lib.isMatch(self.package):
+                        self.package.path = lib.path
+                        self.package.libPackage = lib                        
+                        self.success = True
+                        return

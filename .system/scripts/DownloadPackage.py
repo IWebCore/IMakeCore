@@ -1,8 +1,10 @@
 import json
 import os
 import time
+from urllib.parse import urlencode
 import zipfile
 from packaging.version import Version
+import urllib
 from scripts.data import *
 import requests
 
@@ -46,8 +48,10 @@ class DownloadPackage:
         if not self.checkDownloadedPackage(json):
             print(f"Downloaded package is not the same as required")
             exit(1)
+            
+        name = json.get("publisher", "") + "@" + json.get("name", "") + "@" + json.get('version', "")
         
-        self.libPath = os.path.join(self.env.sysLibStore, f"{self.package.name}@{json.get('version' )}")
+        self.libPath = os.path.join(self.env.sysLibStore, name)
         if not os.path.exists(self.libPath):
             os.makedirs(self.libPath, exist_ok=False)
         
@@ -83,27 +87,30 @@ class DownloadPackage:
                     with open(self.cachePath, "wb") as f:
                         f.write(response.content)
                     self.success = True
-                    print(f'download {self.package.name} from {url} success')
+                    print(f'download from {url} success: {self.package.name}@{self.package.version}')
                     return True
             except:
                 pass
             
         return False
-        
+    
     def downloadByServer(self):
     
         for server in self.env.servers:
-            url = os.path.join(server, "package", "download", self.package.name, self.package.version).replace(os.sep, "/")
-            if self.package.version == "*" or self.package.version == "latest":
-                url = os.path.join(server, "package", "download", self.package.name, "latest").replace(os.sep, "/")
+            url : str = ""
+            version : str = self.package.version
+            if version == "*":
+                version = "latest"
+            url = os.path.join(server, "package", "download").replace(os.sep, "/")
+            url = url + "?" + urlencode({"name": self.package.name, "version": version})
             
             try:
                 response = requests.get(url)
                 if response.status_code == 200:
                     with open(self.cachePath, "wb") as f:
                         f.write(response.content)
-                        
-                    print(f'download {self.package.name} from {server} success')
+                    
+                    print(f'download from {server} success: {self.package.name}@{self.package.version}')
                     self.success = True
                     return True
             except:

@@ -20,7 +20,7 @@ defineTest(IQMakeCoreInit){
         message($$res)
     }
     ! isEqual(result, 0) {
-        message("packages configuration failed")
+        error("packages configuration failed")
         return(false)
     }
     message("packages configured successfully")

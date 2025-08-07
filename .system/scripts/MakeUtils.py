@@ -10,9 +10,9 @@ class MakeUtils:
     @staticmethod
     def createDumpJson(packages:list[AppPackage], env : EnvConfig):
         
-        path = os.path.join(env.appPath, ".data","dump.json")
+        path = os.path.join(env.appDataPath,"dump.json")
         with open(path, "w") as f:
-            dict_list = [package.__dict__() for package in packages]
+            dict_list = [package.toDict() for package in packages]
             json.dump(dict_list, f, indent=4)  # indent 使格式美观
 
     @staticmethod
@@ -46,7 +46,7 @@ class MakeUtils:
                         cond = True
                         break
                 if not cond:
-                    print(f"Package {lib.name} requires {dep.name} version {dep.version} but it is not found in the list of packages.")
+                    print(f"Package {lib.name} requires {dep.fullName} version {dep.version} but it is not found in the list of packages.")
                     exit(1)
 
     @staticmethod
@@ -57,7 +57,7 @@ class MakeUtils:
                 if env.appLibStore in os.path.normpath(package.path):
                     continue
                 
-                newPath = os.path.join(env.appLibStore, package.name+ "@" + package.libPackage.version)
+                newPath = os.path.join(env.appLibStore, package.libPackage.publisher + "@" + package.libPackage.name + "@" + package.libPackage.version)
                 oldPath = package.path
                 package.path = newPath
                 package.libPackage.path = newPath
@@ -69,7 +69,7 @@ class MakeUtils:
 
     staticmethod
     def createQMakeAutoScanPackage(pkg:AppPackage, env : EnvConfig) -> str:
-        path = os.path.join(env.appLibStore, pkg.libPackage.name+ "@" + pkg.libPackage.version +".pri")
+        path = os.path.join(env.appLibStore, pkg.libPackage.publisher + "@" + pkg.libPackage.name+ "@" + pkg.libPackage.version +".pri")
         content = f"""\
 # SYSTEM AUTO GENERATED DO NOT EDIT!!!
 imakecore_current_lib_dir = "{os.path.normpath(pkg.libPackage.path).replace(os.sep, "/")}"
@@ -87,7 +87,7 @@ autoLoadPackage()
     
     @staticmethod
     def createCmakeAutoScanPackage(pkg:AppPackage, env : EnvConfig) -> str:
-        path = os.path.join(env.appLibStore, pkg.name+ "@" + pkg.libPackage.version +".cmake")
+        path = os.path.join(env.appLibStore,  pkg.libPackage.publisher + "@" + pkg.libPackage.name + "@" + pkg.libPackage.version +".cmake")
         content = f"""\
 # SYSTEM AUTO GENERATED DO NOT EDIT!!!
 set(imakecore_current_lib_dir "{os.path.normpath(pkg.libPackage.path).replace(os.sep, "/")}")
@@ -105,6 +105,10 @@ autoLoadPackage()
     
     @staticmethod
     def findQMakeIncludeFilePath(p:AppPackage):
+        path = os.path.join(p.libPackage.path, f"{p.libPackage.publisher}@{p.libPackage.name}@{p.version}.pri")
+        if os.path.exists(path):
+            return path
+        
         path = os.path.join(p.libPackage.path, f"{p.name}@{p.version}.pri")
         if os.path.exists(path):
             return path
@@ -122,6 +126,10 @@ autoLoadPackage()
 
     @staticmethod
     def findCmakeIncludeFilePath(p:AppPackage):
+        path = os.path.join(p.libPackage.path, f"{p.libPackage.publisher}@{p.libPackage.name}@{p.version}.cmake")
+        if os.path.exists(path):
+            return path
+        
         path = os.path.join(p.libPackage.path, f"{p.name}@{p.version}.cmake")
         if os.path.exists(path):
             return 
@@ -162,6 +170,7 @@ autoLoadPackage()
     
     @staticmethod
     def qmakePostProcess(package:list[AppPackage], env : EnvConfig) -> str:
+        
         str = """\
 ###################################
 # SYSTEM CONFIGURED, DO NOT EDIT!!!
@@ -179,7 +188,7 @@ OTHER_FILES += packages.json
             else:
                 path = MakeUtils.createQMakeAutoScanPackage(p, env)
             path = os.path.normpath(path).replace(os.sep, "/")
-            str += f"\n# {p.libPackage.name}@{p.libPackage.version}\n"
+            str += f"\n# {p.libPackage.publisher}@{p.libPackage.name}@{p.libPackage.version}\n"
             str += f"# {p.libPackage.summary}\n"
             str += "include(" + path +")\n"
 
