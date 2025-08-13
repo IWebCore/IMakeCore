@@ -59,6 +59,19 @@ if not defined pathExists (
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v Path /t REG_EXPAND_SZ /d "!newPath!" /f >nul
 )
 
+echo Refreshing Environment Variables...
+timeout /T 1 /NOBREAK >nul
+
+powershell -command "[System.Environment]::SetEnvironmentVariable('dummy', 'dummy', 'Machine'); [System.Environment]::SetEnvironmentVariable('dummy', $null, 'Machine')" >nul
+
+rundll32.exe user32.dll,UpdatePerUserSystemParameters 1, True >nul
+
+powershell -command "$HWND_BROADCAST = 0xffff; $WM_SETTINGCHANGE = 0x001A; $null = [WinAPI.SendMessageTimeout]::Invoke($HWND_BROADCAST, $WM_SETTINGCHANGE, [IntPtr]::Zero, 'Environment', 2, 5000, [ref] $null)" >nul
+
+for /f "tokens=2*" %%A in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v Path 2^>nul ^| findstr /i "Path"') do (
+    set "PATH=%%B"
+)
+
 timeout /T 2 /NOBREAK >nul
 
 echo Task Finished, Press Any Key To Exit...
