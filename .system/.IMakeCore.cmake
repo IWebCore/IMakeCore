@@ -33,6 +33,10 @@ function(loadToForms)
     loadTo(FORMS_CACHE ${ARGV})
 endfunction()
 
+function(loadToPrecompileHeaders)
+    loadTo(PRECOMPILE_HEADERS_CACHE ${ARGV})
+endfunction()
+
 function(prepareCacheVariables)
     set(HEADERS_CACHE CACHE INTERNAL "" FORCE)
     set(SOURCES_CACHE CACHE INTERNAL "" FORCE)
@@ -40,10 +44,16 @@ function(prepareCacheVariables)
     set(LIBRARIES_CACHE CACHE INTERNAL "" FORCE)
     set(DEFINITIONS_CACHE CACHE INTERNAL "" FORCE)
     set(FORMS_CACHE CACHE INTERNAL "" FORCE)
+    set(PRECOMPILE_HEADERS_CACHE CACHE INTERNAL "" FORCE)
 endfunction()
 
 function(resolvePackageInfo)
-    find_program(Python_EXECUTABLE python) 
+    if(WIN32)
+        find_program(Python_EXECUTABLE python)
+    else()
+        find_package(Python 3 REQUIRED COMPONENTS Interpreter)
+    endif()
+
     if("${Python_EXECUTABLE}" STREQUAL "")
         message(FATAL_ERROR "Python not found")
         return()
@@ -54,7 +64,6 @@ function(resolvePackageInfo)
         COMMAND  ${Python_EXECUTABLE} -B ${script_path} ${CMAKE_CURRENT_LIST_DIR} cmake
         OUTPUT_VARIABLE infoVal
         RESULT_VARIABLE result
-#        COMMAND_ECHO STDOUT
     )
 
     if (NOT infoVal STREQUAL "")
@@ -77,6 +86,17 @@ function(assambleTarget)
         target_include_directories(${target} PRIVATE $CACHE{INCLUDES_CACHE})
         target_link_libraries(${target} PRIVATE $CACHE{LIBRARY_CACHE})
         target_compile_definitions(${target} PRIVATE $CACHE{DEFINITIONS_CACHE})
+        
+        # 应用预编译头文件（如果存在）
+        if(PRECOMPILE_HEADERS_CACHE AND NOT "${PRECOMPILE_HEADERS_CACHE}" STREQUAL "")
+            # 检查 CMake 版本是否支持 target_precompile_headers（需要 CMake 3.16+）
+            if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
+                # message(-- ${target} PRIVATE ${PRECOMPILE_HEADERS_CACHE})
+                # target_precompile_headers(${target} PRIVATE ${PRECOMPILE_HEADERS_CACHE})
+            else()
+                # message(WARNING "CMake version ${CMAKE_VERSION} does not support target_precompile_headers. Need CMake 3.16 or higher for precompiled headers.")
+            endif()
+        endif()
     endforeach()
 endfunction()
 
@@ -247,6 +267,16 @@ function(autoLoadDefinitions)
     endif()
 endfunction()
 
+function(autoLoadPrecompileHeaders)
+    if(MSVC)
+        set(filePath ${imakecore_current_lib_dir}/__precompileheaders.txt)
+        if(EXISTS ${filePath})
+            findFilesByFiles(${filePath} fileNames)
+            loadToPrecompileHeaders(${fileNames})
+        endif()
+    endif()
+endfunction()
+
 function(autoLoadPackage)
     autoLoadInclude()
     autoLoadHeaders()
@@ -254,4 +284,5 @@ function(autoLoadPackage)
     autoLoadResources()
     autoLoadDefinitions()
     autoLoadForms()
+    autoLoadPrecompileHeaders()
 endfunction()

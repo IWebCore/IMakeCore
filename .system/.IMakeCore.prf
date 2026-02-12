@@ -236,6 +236,7 @@ defineTest(autoLoadPackage){
     autoLoadSources()
     autoLoadResources()
     autoLoadDefinitions()
+    autoLoadForms()
     autoLoadPrecompileHeaders()
 }
 
