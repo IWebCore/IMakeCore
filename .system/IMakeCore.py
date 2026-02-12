@@ -15,8 +15,6 @@ def loadPackages(app : AppConfig, env:EnvConfig):
 if __name__ == '__main__':
     appPath = sys.argv[1]
     packType = sys.argv[2]
-    # appPath = "D:/code/project/IPubCore"
-    # packType = "qmake" 
 
     env = EnvConfig(appPath, packType)
     app = AppConfig(appPath)

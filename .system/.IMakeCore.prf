@@ -8,8 +8,7 @@ defineTest(IQMakeCoreInit){
     findPythonInterpreter()
 
     script_path = $$getPythonFilePath("IMakeCore.py")
-#    cmd = $$python -B $$script_path $$PWD qmake
-    cmd = $$quote($$python) -B $$quote($$script_path) $$quote($$PWD) qmake
+    cmd = $$python -B $$script_path $$PWD qmake
 #    message($$cmd)
 
     !exists($$PWD/packages.json){
@@ -94,6 +93,16 @@ defineTest(loadTo){
     export($$dest)
 }
 
+defineTest(assignTo){
+    allData = $$ARGS
+    allData = $$ARGS
+    dest = $$take_first(allData)
+    for(f, allData){
+        $$dest = $$f
+    }
+    export($$dest)
+}
+
 defineTest(loadToSources){
     loadTo(SOURCES $$ARGS)
 }
@@ -117,6 +126,22 @@ defineTest(loadToForms){
 
 defineTest(loadToLibraries){
     loadTo(LIBS $$ARGS)
+}
+
+defineTest(loadToDefinitions){
+    allData = $$ARGS
+    for(line, allData){
+        !isEmpty(line){
+            line = $$getQuotedString($$line)
+            DEFINES += $$line
+        }
+    }
+    export(DEFINES)
+}
+
+defineTest(loadToPrecompileHeaders){
+    # PRECOMPILED_HEADER = $$ARGS
+    assignTo(PRECOMPILED_HEADER $$ARGS)
 }
 
 defineTest(autoLoadInclude) {
@@ -187,22 +212,21 @@ defineReplace(getQuotedString) {
     return($$str)
 }
 
-defineTest(loadToDefinitions){
-    allData = $$ARGS
-    for(line, allData){
-        !isEmpty(line){
-            line = $$getQuotedString($$line)
-            DEFINES += $$line
-        }
-    }
-    export(DEFINES)
-}
-
 defineTest(autoLoadDefinitions){
     filePath = $$imakecore_current_lib_dir/__definitions.txt
     exists($$filePath) {
         fileNames = $$cat($$filePath, lines)
         loadToDefinitions($$fileNames)
+    }
+}
+
+defineTest(autoLoadPrecompileHeaders){
+    msvc {  # gcc do not take effect
+        filePath = $$imakecore_current_lib_dir/__precompileheaders.txt
+        exists($$filePath) {
+            fileNames = $$findFilesByFile($$filePath)
+            loadToPrecompileHeaders($$fileNames)
+        }
     }
 }
 
@@ -212,5 +236,6 @@ defineTest(autoLoadPackage){
     autoLoadSources()
     autoLoadResources()
     autoLoadDefinitions()
+    autoLoadPrecompileHeaders()
 }
 

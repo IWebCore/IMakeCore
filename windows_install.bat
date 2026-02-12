@@ -7,13 +7,15 @@
 )
 
 setlocal enabledelayedexpansion
-for /f "tokens=*" %%a in ('powershell -command "Add-Type -AssemblyName System.Windows.Forms; $d=New-Object System.Windows.Forms.FolderBrowserDialog; $d.Description='Please Select Install Directory'; if($d.ShowDialog()-eq'OK'){ $d.SelectedPath }"') do (
-    set "target=%%a"
+
+rem 设置默认安装路径为用户目录下的 IMakeCore 目录
+for /f "tokens=*" %%a in ('powershell -command "[Environment]::GetFolderPath('UserProfile')"') do (
+    set "userProfile=%%a"
 )
 
-if not defined target (
-    set /p "target=please input directory path"
-)
+set "target=!userProfile!\IMakeCore"
+
+echo Default installation directory: !target!
 
 if "!target!"=="" (
     echo error: Path Invalid, Please Restart Script Again
@@ -21,10 +23,15 @@ if "!target!"=="" (
     exit /b 1
 )
 
+rem 如果目录不存在，则创建它
 if not exist "!target!\" (
-    echo error: Path Invalid, Please Restart Script Again
-    pause
-    exit /b 1
+    echo Creating directory: !target!
+    mkdir "!target!"
+    if errorlevel 1 (
+        echo Error: Failed to create directory
+        pause
+        exit /b 1
+    )
 )
 
 echo Copying Files...

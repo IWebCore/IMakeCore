@@ -1,8 +1,9 @@
 {
-    "globalLibStore": ".lib",
+    "globalLibStore":".lib",
     "libstores": [
     ],
     "servers": [
+	"http://115.191.52.106",
         "https://pub.iwebcore.org"
     ],
     "user": "default"
