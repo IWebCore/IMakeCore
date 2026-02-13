@@ -38,23 +38,19 @@ jobs:
         # 创建临时目录存放发布文件
         mkdir -p release_assets
         
-        # 复制主要安装脚本和文档
-        cp windows_install.bat release_assets/
-        cp linux_install.sh release_assets/
-        cp README.md release_assets/
-        cp .gitignore release_assets/
-        
-        # 创建完整的项目打包
+        # 创建完整的项目打包目录
         mkdir -p release_assets/IMakeCore
         
-        # 复制所有项目文件到打包目录
-        echo "Copying project files..."
-        cp -r .programs release_assets/IMakeCore/
-        cp -r .system release_assets/IMakeCore/
-        cp windows_install.bat release_assets/IMakeCore/
-        cp linux_install.sh release_assets/IMakeCore/
-        cp README.md release_assets/IMakeCore/
-        cp .gitignore release_assets/IMakeCore/
+        # 复制所有文件到打包目录，排除 .git .github .gitignore
+        echo "Copying project files (excluding .git, .github, .gitignore)..."
+        # 使用 find 命令排除不需要的目录和文件
+        find . -type f -not -path "./.git/*" -not -path "./.github/*" -not -name ".gitignore" -not -name ".git" | while read file; do
+          # 获取相对路径并创建目标目录
+          rel_path="${file#./}"
+          dest_dir="release_assets/IMakeCore/$(dirname "$rel_path")"
+          mkdir -p "$dest_dir"
+          cp "$file" "$dest_dir/"
+        done
         
         # 创建版本信息文件
         cat > release_assets/IMakeCore/VERSION << EOF
@@ -63,32 +59,12 @@ jobs:
         Git Tag: ${{ steps.vars.outputs.tag }}
         EOF
         
-        # 创建打包文件（Windows 和 Linux 格式）
+        # 创建ZIP包
         cd release_assets
-        echo "Creating ZIP archive for Windows..."
+        echo "Creating ZIP archive..."
         zip -r "IMakeCore-${{ steps.vars.outputs.version }}.zip" IMakeCore/
         
-        echo "Creating TAR.GZ archive for Linux..."
-        tar -czf "IMakeCore-${{ steps.vars.outputs.version }}.tar.gz" IMakeCore/
-        
-        # 为每个平台创建独立的安装包
-        echo "Creating Windows standalone package..."
-        mkdir -p "IMakeCore-Windows-${{ steps.vars.outputs.version }}"
-        cp windows_install.bat "IMakeCore-Windows-${{ steps.vars.outputs.version }}/"
-        cp -r ../.programs "IMakeCore-Windows-${{ steps.vars.outputs.version }}/"
-        cp -r ../.system "IMakeCore-Windows-${{ steps.vars.outputs.version }}/"
-        cp README.md "IMakeCore-Windows-${{ steps.vars.outputs.version }}/"
-        zip -r "IMakeCore-Windows-${{ steps.vars.outputs.version }}.zip" "IMakeCore-Windows-${{ steps.vars.outputs.version }}/"
-        
-        echo "Creating Linux standalone package..."
-        mkdir -p "IMakeCore-Linux-${{ steps.vars.outputs.version }}"
-        cp linux_install.sh "IMakeCore-Linux-${{ steps.vars.outputs.version }}/"
-        cp -r ../.programs "IMakeCore-Linux-${{ steps.vars.outputs.version }}/"
-        cp -r ../.system "IMakeCore-Linux-${{ steps.vars.outputs.version }}/"
-        cp README.md "IMakeCore-Linux-${{ steps.vars.outputs.version }}/"
-        tar -czf "IMakeCore-Linux-${{ steps.vars.outputs.version }}.tar.gz" "IMakeCore-Linux-${{ steps.vars.outputs.version }}/"
-        
-        # 列出生成的所有文件
+        # 列出生成的文件
         echo "Generated release assets:"
         ls -la
     
@@ -100,13 +76,7 @@ jobs:
         prerelease: ${{ contains(github.ref, '-rc.') || contains(github.ref, '-beta.') || contains(github.ref, '-alpha.') }}
         generate_release_notes: true
         files: |
-          release_assets/windows_install.bat
-          release_assets/linux_install.sh
-          release_assets/README.md
           release_assets/IMakeCore-${{ steps.vars.outputs.version }}.zip
-          release_assets/IMakeCore-${{ steps.vars.outputs.version }}.tar.gz
-          release_assets/IMakeCore-Windows-${{ steps.vars.outputs.version }}.zip
-          release_assets/IMakeCore-Linux-${{ steps.vars.outputs.version }}.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
