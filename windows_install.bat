@@ -23,9 +23,15 @@ if "!target!"=="" (
     exit /b 1
 )
 
+if exist "!target!\" (
+    rmdir /s /q "!target!" 2>nul
+    if errorlevel 1 (
+        echo Warning: Failed to remove directory, continuing...
+    )
+)
+
 rem 如果目录不存在，则创建它
 if not exist "!target!\" (
-    echo Creating directory: !target!
     mkdir "!target!"
     if errorlevel 1 (
         echo Error: Failed to create directory
@@ -50,6 +56,7 @@ setx IQMakeCore "%%IMAKECORE_ROOT%%/.system/.IMakeCore.prf" /m >nul
 setx ICMakeCore "%%IMAKECORE_ROOT%%/.system/.IMakeCore.cmake" /m >nul
 
 set "pathToAdd=%%IMAKECORE_ROOT%%\.programs\windows"
+set "expandedPathToAdd=!target!\.programs\windows"
 
 for /f "tokens=2*" %%A in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v Path 2^>nul ^| findstr /i "Path"') do (
     set "currentPath=%%B"
@@ -57,7 +64,17 @@ for /f "tokens=2*" %%A in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Ses
 
 set "pathExists="
 if defined currentPath (
-    echo !currentPath! | findstr /c:"!pathToAdd!" >nul && set "pathExists=1"
+    rem 检查两种形式的路径：带环境变量的形式和扩展后的形式
+    rem 使用字符串替换方法检查路径是否存在
+    set "tempPath=;!currentPath!;"
+    set "tempPath=!tempPath:;!pathToAdd!;=;!"
+    if "!tempPath!" neq ";!currentPath!;" set "pathExists=1"
+    
+    if not defined pathExists (
+        set "tempPath=;!currentPath!;"
+        set "tempPath=!tempPath:;!expandedPathToAdd!;=;!"
+        if "!tempPath!" neq ";!currentPath!;" set "pathExists=1"
+    )
 )
 
 if not defined pathExists (
