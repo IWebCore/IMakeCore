@@ -62,25 +62,37 @@ for /f "tokens=2*" %%A in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Ses
     set "currentPath=%%B"
 )
 
+rem 确保 currentPath 被定义（即使为空）
+if not defined currentPath set "currentPath="
+
+rem 使用 PowerShell 进行更可靠的路径检查
 set "pathExists="
-if defined currentPath (
-    rem 检查两种形式的路径：带环境变量的形式和扩展后的形式
-    rem 使用字符串替换方法检查路径是否存在
-    set "tempPath=;!currentPath!;"
-    set "tempPath=!tempPath:;!pathToAdd!;=;!"
-    if "!tempPath!" neq ";!currentPath!;" set "pathExists=1"
-    
-    if not defined pathExists (
-        set "tempPath=;!currentPath!;"
-        set "tempPath=!tempPath:;!expandedPathToAdd!;=;!"
-        if "!tempPath!" neq ";!currentPath!;" set "pathExists=1"
+if "!currentPath!" neq "" (
+    rem 检查环境变量形式的路径
+    powershell -command "$path = '%currentPath%'; $search = '%pathToAdd%'; if ($path -split ';' -contains $search) { exit 1 } else { exit 0 }" >nul
+    if !errorlevel! equ 1 (
+        set "pathExists=1"
+    ) else (
+        rem 检查扩展形式的路径
+        powershell -command "$path = '%currentPath%'; $search = '%expandedPathToAdd%'; if ($path -split ';' -contains $search) { exit 1 } else { exit 0 }" >nul
+        if !errorlevel! equ 1 (
+            set "pathExists=1"
+        )
     )
 )
 
 if not defined pathExists (
-    set "newPath=!currentPath!;!pathToAdd!"
+    rem 路径不存在，需要添加
+    if "!currentPath!" equ "" (
+        set "newPath=!pathToAdd!"
+    ) else (
+        set "newPath=!currentPath!;!pathToAdd!"
+    )
     
     reg add "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v Path /t REG_EXPAND_SZ /d "!newPath!" /f >nul
+    echo Added !pathToAdd! to system PATH
+) else (
+    echo !pathToAdd! already exists in system PATH, skipping...
 )
 
 echo Refreshing Environment Variables...
