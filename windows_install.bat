@@ -94,33 +94,6 @@ if not defined pathExists (
 ) else (
     echo !pathToAdd! already exists in system PATH, skipping...
 )
-:CheckPathExists
-setlocal enabledelayedexpansion
-set "checkPath=%~1"
-set "searchPath=%~2"
-
-rem 将路径用分号包围以便检查
-set "checkPath=;!checkPath!;"
-
-rem 移除搜索路径前后的反斜杠变体
-set "searchPath1=!searchPath!"
-set "searchPath2=!searchPath:\=!"
-if "!searchPath1:~-1!" equ "\" (
-    set "searchPath3=!searchPath1:~0,-1!"
-) else (
-    set "searchPath3=!searchPath1!\"
-)
-
-rem 检查所有可能的变体
-set "found="
-for %%V in (";!searchPath1!;" ";!searchPath2!;" ";!searchPath3!;") do (
-    if "!checkPath:%%~V=!" neq "!checkPath!" set "found=1"
-)
-
-endlocal & if defined found (set "%~3=1") else (set "%~3=")
-exit /b
-
-:skipFunctions
 
 echo Refreshing Environment Variables...
 timeout /T 1 /NOBREAK >nul
