@@ -1,0 +1,17 @@
+{
+    
+    "name":"cpp-httplib",
+    "version":"0.22.0",
+    "author": "yhirose",
+    "summary":"A C++11 single-file header-only cross platform HTTP/HTTPS library.",
+    "license":"MIT",
+    "changelog":"default",
+    "keywords": ["http", "https", "header-only", "cross-platform", "c++11", "single-file", "library", "web", "server", "client"],
+    "links":[
+        "https://github.com/yhirose",
+        "https://github.com/yhirose/cpp-httplib"
+    ],
+    "autoScan":true,
+    "isGlobal": true,
+    "publisher": "yuekeyuan"
+}   

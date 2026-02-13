@@ -1,0 +1,18 @@
+{
+    "name":"zlib",
+    "version":"1.3.1",
+    "summary":"cross-platform C++ zip library",
+    "license":"MIT",
+    "author":"zlib",
+    "homepage":"http://zlib.net/",
+    "description":"QuaZip is a cross-platform C++ zip library based on the Qt library. It provides a simple and intuitive API for manipulating zip archives.",
+    "autoScan": true,
+    "keywords": ["zip", "zlib"],
+    "links":[
+        "http://gailly.net/",
+        "https://en.wikipedia.org/wiki/Mark_Adler",
+        "https://www.zlib.net/"
+    ],
+    "isGlobal": true,
+    "publisher": "yuekeyuan"
+}

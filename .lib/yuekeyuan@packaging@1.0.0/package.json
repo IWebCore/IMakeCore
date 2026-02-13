@@ -1,0 +1,12 @@
+{
+    "name":"packaging",
+    "version":"1.0.0",
+    "summary":"python-packaging-like lib for c++, used for version management",
+    "license":"none",
+    "author":"deepseek",
+    "autoScan": true,
+    "keywords": ["packaging", "lib", "version"],
+    "changelog": "default",
+    "publisher": "yuekeyuan",
+    "isGlobal": true
+}

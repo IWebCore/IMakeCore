@@ -1,0 +1,15 @@
+{
+    "name":"HTTPRequest",
+    "version":"0.2.0",
+    "author": "elnormous",
+    "summary":"HTTPRequest is a single-header C++ library for making HTTP requests.",
+    "license":"UNLICENSED",
+    "changelog":"init project",
+    "keywords": ["http", "request", "header-only"],
+    "links":[
+        "https://github.com/elnormous/HTTPRequest"
+    ],
+    "autoScan" : true,
+    "isGlobal": true,
+    "publisher": "yuekeyuan"
+}

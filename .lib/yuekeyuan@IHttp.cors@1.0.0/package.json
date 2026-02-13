@@ -1,0 +1,15 @@
+{
+    "name":"IHttp.cors",
+    "version":"1.0.0",
+    "author": "yuekeyuan",
+    "summary":"cors support for IHttp",
+    "dependencies": {
+        "IHttp": "*"
+    },
+    "keywords": ["cors", "http"],
+    "license":"AGPL-3.0-only",
+    "autoScan" : true,
+    "changelog":"init project",
+    "isGlobal": true,
+    "publisher": "yuekeyuan"
+}

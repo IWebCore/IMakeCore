@@ -1,0 +1,14 @@
+{
+    "name":"stachenov.quazip",
+    "version":"1.5.0",
+    "summary":"cross-platform C++ zip library",
+    "license":"MIT",
+    "author":"stachenov",
+    "homepage":"https://github.com/stachenov/quazip",
+    "description":"QuaZip is a cross-platform C++ zip library based on the Qt library. It provides a simple and intuitive API for manipulating zip archives.",
+    "autoScan": true,
+    "keywords": ["zip", "archive", "quazip", "qt", "cross-platform", "c++", "library", "qt5", "qt6"],
+    "changelog":"default",
+    "isGlobal": true,
+    "publisher": "yuekeyuan"
+}

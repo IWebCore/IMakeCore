@@ -1,0 +1,19 @@
+{
+    "name":"cpr",
+    "version":"1.20.0",
+    "author": "cpr",
+    "summary":"C++ Requests: Curl for People",
+    "dependencies": {},
+    "keywords": ["cpr", "http", "client"],
+    "license":"MIT",
+    "autoScan" : true,
+    "changelog": "default",
+    "links":[
+        "https://github.com/libcpr",
+        "https://github.com/libcpr/cpr",
+        "https://github.com/com8",
+        "https://github.com/KingKili"
+    ],
+    "isGlobal": true,
+    "publisher": "yuekeyuan"
+}

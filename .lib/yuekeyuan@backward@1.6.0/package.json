@@ -1,0 +1,16 @@
+{
+    "name":"backward",
+    "version":"1.6.0",
+    "author": "François-Xavier Bourlet",
+    "summary":"Printing nice Python-styled stack traces with colors and source snippets, especially on crashes.",
+    "dependencies": {},
+    "keywords": ["cpr", "backward", "log", "stack trace", "header-only"],
+    "license":"MIT",
+    "autoScan" : true,
+    "links":[
+        "https://github.com/bombela/backward-cpp",
+        "https://github.com/bombela"
+    ],
+    "isGlobal": false,
+    "publisher": "yuekeyuan"
+}

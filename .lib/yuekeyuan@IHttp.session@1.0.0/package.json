@@ -1,0 +1,14 @@
+{
+    "name":"IHttp.session",
+    "version":"1.0.0",
+    "author": "yuekeyuan",
+    "summary":"session support for IHttp",
+    "keywords": ["session", "IHttp", "IWebCore", "http", "web", "plugin", "middleware"],
+    "dependencies": {
+        "IHttp": "*"
+    },
+    "license":"AGPL-3.0-only",
+    "autoScan" : true,
+    "isGlobal": true,
+    "publisher": "yuekeyuan"
+}
