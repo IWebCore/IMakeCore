@@ -1,0 +1,20 @@
+{
+    "name":"ICore",
+    "version":"1.1.0",
+    "author": "yuekeyuan",
+    "autoScan" : true,
+    "summary":"core library for IWebCore",
+    "license":"AGPL-3.0-only",
+    "keywords": ["core", "IWebCore", "annotation", "bean", "config", "dependency injection", "task"],
+    "links":[
+        "https://github.com/IWebCore/ICore"
+    ],
+    "changelog":[
+        "make asio as unnessary dependency"
+    ],
+    "dependencies": {
+        "nlohmann.json": "*"
+    },
+    "isGlobal": true,
+    "publisher": "yuekeyuan"
+}

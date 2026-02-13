@@ -1,0 +1,27 @@
+﻿#pragma once
+
+#include "core/util/IHeaderUtil.h"
+#include "core/abort/IAbortInterface.h"
+
+$PackageWebCoreBegin
+
+class IGlobalAbort : public IAbortInterface<IGlobalAbort>
+{
+    $AsAbort(
+        UnVisibleMethod,
+        UnReachableCode,
+        UnImplimentedMethod,
+        SingletonInstanceCreateError,
+        DuplicatedKey
+    )
+public:
+    IGlobalAbort() = default;
+
+protected:
+    virtual QMap<int, QString> abortDescription() const final;
+    virtual QString abortComment() final;
+};
+
+extern template class IAbortInterface<IGlobalAbort>;
+
+$PackageWebCoreEnd

@@ -1,0 +1,17 @@
+{
+    "name":"nlohmann.json",
+    "version":"3.12.0",
+    "author": "nlohmann",
+    "summary":"json library for C++",
+    "license":"MIT",
+    "dependencies": {
+    },
+    "links":[
+        "https://github.com/nlohmann/json"
+    ],
+    "keywords": ["json", "header-only", "library", "c++", "nlohmann"],
+    "autoScan":true,
+    "changelog":"default",
+    "isGlobal": true,
+    "publisher": "yuekeyuan"
+}

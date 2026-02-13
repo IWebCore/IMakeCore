@@ -1,0 +1,13 @@
+{
+    "name":"INody",
+    "version":"1.0.0",
+    "summary":"c++ http template egine",
+    "license":"AGPL-3.0-only",
+    "author":"yuekeyuan",
+    "autoScan": true,
+    "keywords": ["template", "http", "engine", "c++", "yuekeyuan"],
+    "homepage":"https://github.com/IWebCore/INody",
+    "changelog":"init project",
+    "isGlobal": true,
+    "publisher": "yuekeyuan"
+}
