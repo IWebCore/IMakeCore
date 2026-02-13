@@ -1,0 +1,88 @@
+name: Create Release Package
+
+on:
+  push:
+    tags:
+      - 'v*'  # 匹配 v 开头的标签，例如 v1.0.0, v2.1.0-rc.1
+
+permissions:
+  contents: write  # 允许创建 releases
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # 获取所有历史记录，用于生成 changelog
+    
+    - name: Set up environment
+      id: vars
+      run: |
+        # 从标签名提取版本号（去除 v 前缀）
+        VERSION="${GITHUB_REF#refs/tags/}"
+        VERSION=${VERSION#v}
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        
+        # 设置发布日期
+        echo "release_date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+        
+        echo "Version: $VERSION"
+        echo "Tag: ${GITHUB_REF#refs/tags/}"
+    
+    - name: Prepare release assets
+      run: |
+        # 创建临时目录存放发布文件
+        mkdir -p release_assets
+        
+        # 创建完整的项目打包目录
+        mkdir -p release_assets/IMakeCore
+        
+        # 复制所有文件到打包目录，排除 .git .github .gitignore
+        echo "Copying project files (excluding .git, .github, .gitignore)..."
+        # 使用 find 命令排除不需要的目录和文件
+        find . -type f -not -path "./.git/*" -not -path "./.github/*" -not -name ".gitignore" -not -name ".git" | while read file; do
+          # 获取相对路径并创建目标目录
+          rel_path="${file#./}"
+          dest_dir="release_assets/IMakeCore/$(dirname "$rel_path")"
+          mkdir -p "$dest_dir"
+          cp "$file" "$dest_dir/"
+        done
+        
+        # 创建版本信息文件
+        cat > release_assets/IMakeCore/VERSION << EOF
+        Version: ${{ steps.vars.outputs.version }}
+        Release Date: ${{ steps.vars.outputs.release_date }}
+        Git Tag: ${{ steps.vars.outputs.tag }}
+        EOF
+        
+        # 创建ZIP包
+        cd release_assets
+        echo "Creating ZIP archive..."
+        zip -r "IMakeCore-${{ steps.vars.outputs.version }}.zip" IMakeCore/
+        
+        # 列出生成的文件
+        echo "Generated release assets:"
+        ls -la
+    
+    - name: Generate changelog
+      id: changelog
+      uses: softprops/action-gh-release@v1
+      with:
+        draft: false
+        prerelease: ${{ contains(github.ref, '-rc.') || contains(github.ref, '-beta.') || contains(github.ref, '-alpha.') }}
+        generate_release_notes: true
+        files: |
+          release_assets/IMakeCore-${{ steps.vars.outputs.version }}.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Output release info
+      run: |
+        echo "Release created successfully!"
+        echo "Version: ${{ steps.vars.outputs.version }}"
+        echo "Tag: ${{ steps.vars.outputs.tag }}"
+        echo "Release Date: ${{ steps.vars.outputs.release_date }}"
