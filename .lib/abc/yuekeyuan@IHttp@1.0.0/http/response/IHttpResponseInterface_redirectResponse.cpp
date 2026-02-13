@@ -1,0 +1,56 @@
+﻿#include "IHttpResponseInterface.h"
+#include "core/util/ICodecUtil.h"
+
+$PackageWebCoreBegin
+
+    template class IHttpResponseInterface<IRedirectResponse>;
+
+IRedirectResponse::IRedirectResponse()
+{
+    m_raw->m_status = IHttpStatus::FOUND_302;
+}
+
+IRedirectResponse::IRedirectResponse(const char *data, IHttpStatus status)
+{
+    m_raw->m_status = status;
+    this->m_redirectPath = data;
+    updateLocationPath();
+}
+
+IRedirectResponse::IRedirectResponse(const QString &path, IHttpStatus status)
+{
+    m_raw->m_status = status;
+    this->m_redirectPath = path;
+    updateLocationPath();
+}
+
+IRedirectResponse::IRedirectResponse(const std::string &path, IHttpStatus status)
+    : IRedirectResponse(QString::fromStdString(path), status)
+{
+}
+
+IRedirectResponse::IRedirectResponse(const IString &&path, IHttpStatus status)
+    : IRedirectResponse(path.toStdString(), status)
+{
+}
+
+std::string IRedirectResponse::prefixMatcher()
+{
+    return "$redirect:";
+}
+
+void IRedirectResponse::updateLocationPath()
+{
+    if(m_redirectPath.isEmpty()){
+        return;
+    }
+    auto path = ICodecUtil::pathEncode(m_redirectPath);
+    m_raw->m_headers.insert(IHttpHeader::Location, path.toUtf8());
+}
+
+IRedirectResponse operator"" _redirect(const char* str, size_t size)
+{
+    return QString::fromLocal8Bit(str, static_cast<int>(size));
+}
+
+$PackageWebCoreEnd

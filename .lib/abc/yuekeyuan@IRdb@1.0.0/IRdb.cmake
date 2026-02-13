@@ -1,0 +1,28 @@
+loadToIncludes(${CMAKE_CURRENT_LIST_DIR})
+
+loadToSources(
+    ${CMAKE_CURRENT_LIST_DIR}/rdb/IRdbCatagory.cpp 
+    ${CMAKE_CURRENT_LIST_DIR}/rdb/IRdbManage.cpp 
+    ${CMAKE_CURRENT_LIST_DIR}/rdb/IRdbUtil.cpp 
+    ${CMAKE_CURRENT_LIST_DIR}/rdb/ISqlQuery.cpp 
+    ${CMAKE_CURRENT_LIST_DIR}/rdb/clause/IRdbCondition.cpp 
+    ${CMAKE_CURRENT_LIST_DIR}/rdb/clause/IRdbGroupByClause.cpp 
+    ${CMAKE_CURRENT_LIST_DIR}/rdb/clause/IRdbHavingClause.cpp 
+    ${CMAKE_CURRENT_LIST_DIR}/rdb/clause/IRdbLimitClause.cpp 
+    ${CMAKE_CURRENT_LIST_DIR}/rdb/clause/IRdbOrderByClause.cpp 
+    ${CMAKE_CURRENT_LIST_DIR}/rdb/clause/IRdbWhereClause.cpp 
+    ${CMAKE_CURRENT_LIST_DIR}/rdb/database/IRdbConnection.cpp 
+    ${CMAKE_CURRENT_LIST_DIR}/rdb/database/IRdbConnectionTrait.cpp 
+    ${CMAKE_CURRENT_LIST_DIR}/rdb/database/IRdbDataSource.cpp 
+    ${CMAKE_CURRENT_LIST_DIR}/rdb/database/IRdbDatabaseWare.cpp 
+    ${CMAKE_CURRENT_LIST_DIR}/rdb/dialect/IRdbDialectWare.cpp 
+    ${CMAKE_CURRENT_LIST_DIR}/rdb/dialect/IRdbMariaDbDialect.cpp 
+    ${CMAKE_CURRENT_LIST_DIR}/rdb/dialect/IRdbMysqlDialect.cpp 
+    ${CMAKE_CURRENT_LIST_DIR}/rdb/dialect/IRdbPostgresDialect.cpp 
+    ${CMAKE_CURRENT_LIST_DIR}/rdb/dialect/IRdbSqlServerDialect.cpp 
+    ${CMAKE_CURRENT_LIST_DIR}/rdb/dialect/IRdbSqliteDialect.cpp 
+    ${CMAKE_CURRENT_LIST_DIR}/rdb/entity/IRdbEntityInfo.cpp 
+    ${CMAKE_CURRENT_LIST_DIR}/rdb/entity/IRdbTableInfo.cpp 
+    ${CMAKE_CURRENT_LIST_DIR}/rdb/entity/IRdbViewInfo.cpp 
+    ${CMAKE_CURRENT_LIST_DIR}/rdb/impl/IRdbUuidValueGenerator.cpp
+)

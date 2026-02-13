@@ -1,0 +1,21 @@
+{
+    "name":"asio",
+    "version":"1.30.2",
+    "author": "chriskohlhoff",
+    "summary":"asio library for C++",
+    "keywords": ["asio", "chriskohlhoff", "c++", "network", "networking", "sockets", ":c++11", 
+            "header-only", "boost", "ssl", "tls", "openssl",
+             "websockets", "http", "https", 
+             "websocket", "http-server", "http-client",
+            "websocket-server", "websocket-client"],
+    "dependencies": {},
+    "links":[
+        "https://think-async.com/Asio/",
+        "https://github.com/chriskohlhoff/asio"
+    ],
+    "license":"Boost Software License 1.0",
+    "changelog":"default",
+    "autoScan" : true,
+    "isGlobal": true,
+    "publisher": "yuekeyuan"
+}

@@ -1,0 +1,16 @@
+{
+    "name":"IRdb",
+    "version":"1.0.0",
+    "author": "yuekeyuan",
+    "summary":"relational database operation library",
+    "license":"AGPL-3.0-only",
+    "dependencies": {
+        "ICore": "*"
+    },
+    "keywords": ["rdb", "orm", "reflection", "bean", "database"],
+    "homepage": "https://github.com/IWebCore/IRdb",
+    "changelog":"init project",
+    "autoScan":true,
+    "isGlobal": true,
+    "publisher": "yuekeyuan"
+}
