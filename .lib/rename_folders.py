@@ -115,6 +115,10 @@ def process_folder(folder_path, lib_dir, dry_run=False):
             print(f"  错误: 目标文件夹已存在: {new_name}")
             return False
         
+        # 在重命名之前先删除不需要的文件和文件夹
+        # 这样可以避免.git文件夹锁定导致重命名失败
+        delete_unwanted_items(folder_path, dry_run)
+        
         if dry_run:
             print(f"  [干运行] 将重命名为: {new_name}")
             # 在干运行模式下，我们假设重命名会成功
@@ -128,9 +132,6 @@ def process_folder(folder_path, lib_dir, dry_run=False):
             except Exception as e:
                 print(f"  错误: 无法重命名文件夹: {e}")
                 return False
-    
-    # 删除不需要的文件和文件夹
-    delete_unwanted_items(folder_path, dry_run)
     
     return True
 
