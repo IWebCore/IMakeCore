@@ -44,7 +44,7 @@ chmod -R 777 "$TARGET" || {
 }
 
 # 设置环境变量
- "Setting environment variables..."
+echo "Setting environment variables..."
 
 cat > /etc/profile.d/imakecore_vars.sh << EOF
 #!/bin/sh
