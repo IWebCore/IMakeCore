@@ -13,8 +13,8 @@ class DownloadPackage:
         self.package = package
         self.env = env
         self.success = False
-        
-        self.cachePath = os.path.join(env.sysCachePath, f"{self.package.name}_{str(time.time())}.zip")
+        name = str(self.package.name).replace("/", "@")
+        self.cachePath = os.path.join(env.sysCachePath, f"{name}_{str(time.time())}.zip")
         self.libPath = ""
         
         self.process()
@@ -25,6 +25,7 @@ class DownloadPackage:
             self.package.path = self.libPath
             self.package.libPackage = LibPackage(self.libPath)
             self.success = True
+            print(f"install package success: {self.package.libPackage.publisher}@{self.package.libPackage.name}@{self.package.libPackage.version}")
 
     def download(self):
         if self.package.urls is not None and len(self.package.urls) > 0:
@@ -36,7 +37,7 @@ class DownloadPackage:
         if not self.downloadByServer():
             print(f"Failed to download {self.package.name} version {self.package.version} from server")
             exit(1)
-            
+        
         return True
 
     def uppackPackage(self):
@@ -87,7 +88,7 @@ class DownloadPackage:
                     with open(self.cachePath, "wb") as f:
                         f.write(response.content)
                     self.success = True
-                    print(f'download from {url} success: {self.package.name}@{self.package.version}')
+                    print(f'download from {url} success: {self.package.name}')
                     return True
             except:
                 pass
@@ -103,19 +104,15 @@ class DownloadPackage:
                 version = "latest"
             url = os.path.join(server, "package", "download").replace(os.sep, "/")
             url = url + "?" + urlencode({"name": self.package.name, "version": version})
-            
             try:
                 response = requests.get(url)
                 if response.status_code == 200:
                     with open(self.cachePath, "wb") as f:
                         f.write(response.content)
-                    
-                    print(f'download from {server} success: {self.package.name}@{self.package.version}')
                     self.success = True
                     return True
-            except:
+            except :
                 pass
-            
         return False
     
     def readPackageJson(self):
@@ -131,10 +128,15 @@ class DownloadPackage:
             
 
     def checkDownloadedPackage(self, val):
-        if val.get("name", "") != self.package.name:
-            return False
-        
+        if "/" in self.package.name:
+            newName = val.get("publisher") + "/" + val.get("name")
+            if newName != self.package.name:
+                return False
+        else:
+            if val.get("name", "") != self.package.name:
+                return False
+
         if self.package.version == "*" or self.package.version == "latest":
             return True
-        
+
         return self.package.versionSpec.contains(Version(val.get("version")))
