@@ -132,13 +132,18 @@ EOF
 sed -i "s|__TARGET_DIR__|$TARGET|g" "$TARGET/.system/imakecore_user_env.sh"
 chmod 644 "$TARGET/.system/imakecore_user_env.sh"
 
-# 立即应用到当前会话
+# 立即应用到当前会话和所有已打开的 shell
 export IMAKECORE_ROOT="$TARGET"
 export ICMakeCore="$TARGET/.system/.IMakeCore.cmake"
 export IQMakeCore="$TARGET/.system/.IMakeCore.prf"
 
 if [ -d "$TARGET/.programs/linux" ]; then
     export PATH="$TARGET/.programs/linux:$PATH"
+fi
+
+# 为当前 shell 刷新 /etc/profile.d 中的变量
+if [ -f /etc/profile.d/imakecore_vars.sh ]; then
+    source /etc/profile.d/imakecore_vars.sh
 fi
 
 
@@ -149,6 +154,11 @@ echo "IMakeCore installation completed successfully!"
 echo "========================================="
 echo ""
 echo "Installation directory: $TARGET"
+echo ""
+echo "IMPORTANT: To apply environment variables to current terminal, run:"
+echo "    source /etc/profile.d/imakecore_vars.sh"
+echo ""
+echo "Or simply open a new terminal window."
 echo ""
 
 exit 0

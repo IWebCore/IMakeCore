@@ -8,10 +8,12 @@
 
 setlocal enabledelayedexpansion
 
+rem 设置 UTF-8 编码以支持中文路径
+chcp 65001 >nul 2>&1
+
 rem 设置默认安装路径为用户目录下的 IMakeCore 目录
-for /f "tokens=*" %%a in ('powershell -command "[Environment]::GetFolderPath('UserProfile')"') do (
-    set "userProfile=%%a"
-)
+rem 使用 PowerShell 直接获取并设置变量，避免批处理解析路径时的编码问题
+for /f "delims=" %%a in ('powershell -command "$u = [Environment]::GetFolderPath('UserProfile'); Write-Host $u"') do set "userProfile=%%a"
 
 set "target=!userProfile!\IMakeCore"
 
@@ -51,12 +53,13 @@ if errorlevel 1 (
 timeout /T 2 /NOBREAK >nul
 
 echo Setting Environment Variables...
-setx IMAKECORE_ROOT "!target!" /m >nul
-setx IQMakeCore "%%IMAKECORE_ROOT%%/.system/.IMakeCore.prf" /m >nul
-setx ICMakeCore "%%IMAKECORE_ROOT%%/.system/.IMakeCore.cmake" /m >nul
 
-set "pathToAdd=%%IMAKECORE_ROOT%%\.programs\windows"
-set "expandedPathToAdd=!target!\.programs\windows"
+rem 使用 PowerShell 设置持久化环境变量
+powershell -command "[Environment]::SetEnvironmentVariable('IMAKECORE_ROOT', '!target!', 'Machine')" >nul
+powershell -command "[Environment]::SetEnvironmentVariable('IQMakeCore', '!target!\\.system\\.IMakeCore.prf', 'Machine')" >nul
+powershell -command "[Environment]::SetEnvironmentVariable('ICMakeCore', '!target!\\.system\\.IMakeCore.cmake', 'Machine')" >nul
+
+set "pathToAdd=!target!\.programs\windows"
 
 for /f "tokens=2*" %%A in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v Path 2^>nul ^| findstr /i "Path"') do (
     set "currentPath=%%B"
@@ -68,16 +71,9 @@ if not defined currentPath set "currentPath="
 rem 使用 PowerShell 进行更可靠的路径检查
 set "pathExists="
 if "!currentPath!" neq "" (
-    rem 检查环境变量形式的路径
     powershell -command "$path = '%currentPath%'; $search = '%pathToAdd%'; if ($path -split ';' -contains $search) { exit 1 } else { exit 0 }" >nul
     if !errorlevel! equ 1 (
         set "pathExists=1"
-    ) else (
-        rem 检查扩展形式的路径
-        powershell -command "$path = '%currentPath%'; $search = '%expandedPathToAdd%'; if ($path -split ';' -contains $search) { exit 1 } else { exit 0 }" >nul
-        if !errorlevel! equ 1 (
-            set "pathExists=1"
-        )
     )
 )
 
@@ -98,15 +94,22 @@ if not defined pathExists (
 echo Refreshing Environment Variables...
 timeout /T 1 /NOBREAK >nul
 
-powershell -command "[System.Environment]::SetEnvironmentVariable('dummy', 'dummy', 'Machine'); [System.Environment]::SetEnvironmentVariable('dummy', $null, 'Machine')" >nul
-
-rundll32.exe user32.dll,UpdatePerUserSystemParameters 1, True >nul
-
-powershell -command "$HWND_BROADCAST = 0xffff; $WM_SETTINGCHANGE = 0x001A; $null = [WinAPI.SendMessageTimeout]::Invoke($HWND_BROADCAST, $WM_SETTINGCHANGE, [IntPtr]::Zero, 'Environment', 2, 5000, [ref] $null)" >nul
-
+rem 刷新系统环境变量到当前进程
+for /f "tokens=2*" %%A in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v IMAKECORE_ROOT 2^>nul ^| findstr /i "IMAKECORE_ROOT"') do (
+    set "IMAKECORE_ROOT=%%B"
+)
+for /f "tokens=2*" %%A in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v IQMakeCore 2^>nul ^| findstr /i "IQMakeCore"') do (
+    set "IQMakeCore=%%B"
+)
+for /f "tokens=2*" %%A in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v ICMakeCore 2^>nul ^| findstr /i "ICMakeCore"') do (
+    set "ICMakeCore=%%B"
+)
 for /f "tokens=2*" %%A in ('reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v Path 2^>nul ^| findstr /i "Path"') do (
     set "PATH=%%B"
 )
+
+rem 使用 PowerShell 广播环境变量变更消息到所有窗口
+powershell -command "$HWND_BROADCAST = 0xffff; $WM_SETTINGCHANGE = 0x001A; $null = [WinAPI.SendMessageTimeout]::Invoke($HWND_BROADCAST, $WM_SETTINGCHANGE, [IntPtr]::Zero, 'Environment', 2, 5000, [ref] $null)" >nul
 
 timeout /T 2 /NOBREAK >nul
 
