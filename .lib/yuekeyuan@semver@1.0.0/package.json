@@ -1,0 +1,9 @@
+{
+    "name":"semver",
+    "version":"1.0.0",
+    "author": "yuekeyuan",
+    "summary":"cmd library",
+    "autoScan" : true,
+    "isGlobal": true,
+    "publisher": "yuekeyuan"
+}

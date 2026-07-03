@@ -20,7 +20,7 @@ class AppConfig:
 
         self.loadPackages()
 
-        
+
     def loadPackages(self):
         forceLocal = self.json.get("forceLocal", False)
         if 'packages' in self.json:

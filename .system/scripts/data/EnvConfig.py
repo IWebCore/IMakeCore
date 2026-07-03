@@ -1,35 +1,36 @@
 import os
+import sys
 from packaging.version import *
 from packaging.specifiers import *
 from scripts.data.AppPackage import AppPackage
 from scripts.data.LibPackage import LibPackage
+from scripts.data.GlobalData import GlobalData
 from scripts.Utils import Utils
 
 class EnvConfig:
     def __init__(self, appPath:str, makeType:str):
+        self.appPath = appPath
         self.makeType = makeType
 
-        self.appPath = appPath
         self.appConfig = {}
         self.appDataPath = os.path.normpath(os.path.join(self.appPath, ".data"))
         self.appLibStore :str = os.path.normpath(os.path.join(self.appPath, ".lib"))
-        
         self.sysPath = os.getenv("IMAKECORE_ROOT")
-        self.sysConfig = {}
         self.sysCachePath = os.path.normpath(os.path.join(self.sysPath, ".cache"))
-        self.sysDataPath = os.path.normpath(os.path.join(self.sysPath, ".data"))
-        self.sysLibStore = os.path.normpath(os.path.join(self.sysPath, ".lib"))
-        
         self.userName : str = "local"
 
         self.servers = []
         self.libstores = []
-        self.libs : list[LibPackage] = {}  # key :values
+        self.libs : dict[str, list[LibPackage]] = {}
+
+        self._global = GlobalData()
+        self.sysLibStore = self._global.get_sys_lib_store()
+        self.servers = self._global.get_servers()
+        self.libstores = self._global.get_libstores()
+        self.userName = self._global.get_user_name()
 
         self.loadAppConfig()
-        self.loadSystemConfig()
         self.checkDirectoryExists()
-    
         self.parseLibs()
         
     def loadAppConfig(self):
@@ -56,67 +57,54 @@ class EnvConfig:
         else:
             self.libstores.append(self.appLibStore)
 
-    def loadSystemConfig(self):
-        sysConfigJson = os.path.join(self.sysDataPath, "config.json")
-        if os.path.exists(sysConfigJson):
-            self.sysConfig = Utils.loadJson(sysConfigJson)
-            self.sysLibStore = self.sysConfig.get("globalLibStore", self.sysLibStore)
-            if os.path.isabs(self.sysLibStore):
-                self.sysLibStore = os.path.normpath(self.sysLibStore)
-            else:
-                self.sysLibStore = os.path.normpath(os.path.join(self.sysPath, self.sysLibStore))
-            
-            libStores = self.sysConfig.get("libstores", [])
-            for libStore in libStores:
-                if os.path.isabs(libStore):
-                    libStore = os.path.normpath(libStore)
-                else:
-                    libStore = os.path.normpath(os.path.join(self.sysPath, libStore))
-                self.libstores.append(libStore)
-            
-            self.userName = self.sysConfig.get("user", "local")
-            
-            self.libstores.append(self.sysLibStore)
-            self.servers.extend(self.sysConfig.get("servers", []))
-        else: 
-            assert False, "System config file not found"
-
     def checkDirectoryExists(self):
-        
         if not os.path.exists(self.appLibStore):
             os.makedirs(self.appLibStore, exist_ok=True)
-        
         if not os.path.exists(self.sysLibStore):
             os.makedirs(self.sysLibStore, exist_ok=True)
-        
         if not os.path.exists(self.appDataPath):
             os.makedirs(self.appDataPath, exist_ok=True)
-
-        if not os.path.exists(self.sysDataPath):
-            os.makedirs(self.sysDataPath, exist_ok=True)
-        
+        if not os.path.exists(self._global.sys_data_path):
+            os.makedirs(self._global.sys_data_path, exist_ok=True)
         if not os.path.exists(self.sysCachePath):
             os.makedirs(self.sysCachePath, exist_ok=True)
 
-        libStores : list[str] = []
-        for libstore in self.libstores:
-            if os.path.exists(libstore):
-                libStores.append(libstore)
+        libStores = [ls for ls in self.libstores if os.path.exists(ls)]
         self.libstores = libStores
 
     def parseLibs(self):
-        for libstore in self.libstores:
-            dirs = [d for d in os.listdir(libstore) if os.path.isdir(os.path.join(libstore, d))]
-            for dir in dirs:
-                path = os.path.join(libstore, dir)
-                lib = LibPackage(path)
-                if lib.success:
-                    if lib.publisher == "":
-                        lib.publisher = self.userName
-                    name = lib.publisher + "/" + lib.name
-                    if name not in self.libs:
-                        self.libs[name] = []
-                    self.libs[name].append(lib)
+        """Query package metadata from the SQLite database (populated by updateDb.py).
         
+        No filesystem scanning — all package data is read from package.db.
+        """
+        from scripts.data.LibPackage import LibPackageTable
+        from scripts.db_base import get_session
+
+        try:
+            session = get_session()
+        except Exception as e:
+            print(f"\n  ERROR: Failed to connect to package database: {e}")
+            print("  Please run 'python -B .system/scripts/updateDb.py' first to initialize the database.\n")
+            sys.exit(1)
+
+        try:
+            try:
+                rows = session.query(LibPackageTable).all()
+            except Exception as e:
+                print(f"\n  ERROR: Database table not found: {e}")
+                print("  Please run 'python -B .system/scripts/updateDb.py' to create the database tables.\n")
+                sys.exit(1)
+
+            for row in rows:
+                lib = LibPackage.from_db_row(row)
+                if lib.publisher == "":
+                    lib.publisher = self.userName
+                name = lib.publisher + "/" + lib.name
+                if name not in self.libs:
+                    self.libs[name] = []
+                self.libs[name].append(lib)
+        finally:
+            session.close()
+
         for name in self.libs:
             self.libs[name].sort(key=lambda x: Version(x.version), reverse=True)

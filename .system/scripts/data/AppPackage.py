@@ -55,7 +55,6 @@ class AppPackage:
             "name": self.libPackage.name,
             "version": self.libPackage.version,
             "path": self.libPackage.path,
-            "autoScan" : self.libPackage.autoScan,
             "summary" : self.libPackage.summary,
             "forceLocal":self.forceLocal
         }

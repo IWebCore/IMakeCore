@@ -50,32 +50,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-rem xcopy 不会复制点开头的目录（如 .system），需要额外复制
-for /f "delims=" %%d in ('dir /b /ad "%~dp0.*" 2^>nul') do (
-    xcopy "%~dp0%%d\*.*" "!target!\%%d\" /y /e /i /q >nul 2>&1
-)
-
 timeout /T 2 /NOBREAK >nul
-
-rem 确保 .system 目录存在
-if not exist "!target!\.system\" (
-    mkdir "!target!\.system"
-)
-
-rem 创建默认配置文件（如果不存在）
-if not exist "!target!\.system\.IMakeCore.prf" (
-    (
-        echo # IMakeCore Configuration File
-        echo IMAKECORE_PLATFORM=windows
-    ) > "!target!\.system\.IMakeCore.prf"
-)
-
-if not exist "!target!\.system\.IMakeCore.cmake" (
-    (
-        echo # IMakeCore CMake Configuration
-        echo set(IMAKECORE_ROOT "!target!")
-    ) > "!target!\.system\.IMakeCore.cmake"
-)
 
 echo Setting Environment Variables...
 

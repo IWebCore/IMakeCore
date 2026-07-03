@@ -9,6 +9,9 @@
     "autoScan": true,
     "keywords": ["zip", "archive", "quazip", "qt", "cross-platform", "c++", "library", "qt5", "qt6"],
     "changelog":"default",
-    "isGlobal": true,
+    "resolve":{
+        "root" : ["quazip"], 
+        "definitions" : ["QUAZIP_STATIC"]
+    },
     "publisher": "yuekeyuan"
 }

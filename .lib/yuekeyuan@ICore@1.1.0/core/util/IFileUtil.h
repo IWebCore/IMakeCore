@@ -9,6 +9,7 @@ namespace IFileUtil
 {
     QString readFileAsString(const QString& path, bool& ok);
     IResult<QString> readFileAsString(const QString& path);
+
     QByteArray readFileAsByteArray(const QString& path, bool* ok=nullptr);
     QStringList readFileAsStringList(const QString& path);
     QString readFileAsString2(const QString& path);
@@ -18,4 +19,3 @@ namespace IFileUtil
 }
 
 $PackageWebCoreEnd
-
