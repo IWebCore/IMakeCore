@@ -43,6 +43,38 @@ chmod -R 777 "$TARGET" || {
     exit 1
 }
 
+# 确保 .system 目录存在（必须在创建 imakecore_user_env.sh 之前）
+if [ ! -d "$TARGET/.system" ]; then
+    mkdir -p "$TARGET/.system" || {
+        echo "Error: Failed to create .system directory"
+        exit 1
+    }
+    chmod 777 "$TARGET/.system" || {
+        echo "Warning: Failed to set .system directory permissions"
+    }
+fi
+
+# 创建默认配置文件（如果不存在）
+if [ ! -f "$TARGET/.system/.IMakeCore.prf" ]; then
+    cat > "$TARGET/.system/.IMakeCore.prf" << 'EOF'
+# IMakeCore Configuration File
+IMAKECORE_PLATFORM=linux
+EOF
+    chmod 644 "$TARGET/.system/.IMakeCore.prf" || {
+        echo "Warning: Failed to set .IMakeCore.prf permissions"
+    }
+fi
+
+if [ ! -f "$TARGET/.system/.IMakeCore.cmake" ]; then
+    cat > "$TARGET/.system/.IMakeCore.cmake" << EOF
+# IMakeCore CMake Configuration
+set(IMAKECORE_ROOT "$TARGET")
+EOF
+    chmod 644 "$TARGET/.system/.IMakeCore.cmake" || {
+        echo "Warning: Failed to set .IMakeCore.cmake permissions"
+    }
+fi
+
 # 设置环境变量
 echo "Setting environment variables..."
 
@@ -132,7 +164,7 @@ EOF
 sed -i "s|__TARGET_DIR__|$TARGET|g" "$TARGET/.system/imakecore_user_env.sh"
 chmod 644 "$TARGET/.system/imakecore_user_env.sh"
 
-# 立即应用到当前会话和所有已打开的 shell
+# 立即应用到当前会话和所有已打开的 shell（与 /etc/profile.d 中的格式保持一致）
 export IMAKECORE_ROOT="$TARGET"
 export ICMakeCore="$TARGET/.system/.IMakeCore.cmake"
 export IQMakeCore="$TARGET/.system/.IMakeCore.prf"
