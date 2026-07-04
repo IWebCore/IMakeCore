@@ -2,11 +2,19 @@
 import os
 from packaging.version import *
 from packaging.specifiers import *
-from scripts.data.AppPackage import AppPackage
+from scripts.data.models import LibPackageTable
 from scripts.Utils import Utils
-from scripts.db_base import Base, get_session
+from scripts.data.models import get_session
 
 class LibPackage:
+
+    @staticmethod
+    def split_name(name):
+        if "/" in name:
+            parts = name.split("/", 1)
+            return parts[0].strip(), parts[1].strip(), False
+        return "", name.strip(), True
+
     class Dependency:
         def __init__(self, name:str, version:str):
             self.fullName = name
@@ -84,14 +92,6 @@ class LibPackage:
             
         assert self.name and self.version, f"Invalid package.json, package name or version is missing. Path:{self.path}"
 
-    def isMatch(self, appPackage:AppPackage):
-        if "/" in appPackage.name:
-            return self.publisher == appPackage.name.split("/")[0]  \
-                    and self.name == appPackage.name.split("/")[1]  \
-                    and appPackage.versionSpec.contains(self.version)
-         
-        return self.isGlobal and self.name == appPackage.name and appPackage.versionSpec.contains(self.version)
-
     @classmethod
     def from_db_row(cls, row):
         """Create a LibPackage instance from a LibPackageTable ORM row."""
@@ -113,7 +113,6 @@ class LibPackage:
 
     @classmethod
     def query_all_from_db(cls):
-        """Query all LibPackageTable rows and return as list of LibPackage instances."""
         session = get_session()
         try:
             rows = session.query(LibPackageTable).all()
@@ -121,99 +120,46 @@ class LibPackage:
         finally:
             session.close()
 
-
-# ============================================================
-# SQLAlchemy ORM models — defined under .data/ as per convention
-# ============================================================
-
-from sqlalchemy import Column, Integer, String, Boolean, Text, JSON, UniqueConstraint
-
-
-class LibPackageTable(Base):
-    """ORM model mirroring LibPackage fields, stored in package.db"""
-    __tablename__ = "lib_package"
-    __table_args__ = (
-        UniqueConstraint("publisher", "name", "version", name="uq_lib_package"),
-    )
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    publisher = Column(String(200), default="")
-    name = Column(String(200), nullable=False)
-    is_global = Column(Boolean, default=True)
-    version = Column(String(50), nullable=False)
-    summary = Column(Text, default="")
-    mode = Column(String(50), default="sources")
-    path = Column(String(1000), default="")
-    dependencies = Column(JSON, default=[])
-
-    def __repr__(self):
-        return f"<LibPackageTable {self.publisher}/{self.name}@{self.version}>"
-
-
-class LibPackageDetailTable(Base):
-    """Per-package file scan results — one row per library.
-    File paths are stored as semicolon-separated strings,
-    convertible to/from Python lists via helper methods.
-    """
-    __tablename__ = "lib_package_detail"
-    __table_args__ = (
-        UniqueConstraint("group", "name", "version", name="uq_lib_package_detail"),
-    )
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    path = Column(String(1000), default="")
-    name = Column(String(200), nullable=False)
-    group = Column(String(200), default="")
-    version = Column(String(50), nullable=False)
-    headers = Column(Text, default="")
-    sources = Column(Text, default="")
-    uis = Column(Text, default="")
-    resources = Column(Text, default="")
-    definitions = Column(Text, default="")
-    includes = Column(Text, default="")
-    precompile_headers = Column(Text, default="")
-    dynamic_definition = Column(Text, default="")
-
-    # Semicolon separator for file lists
-    SEP = ";"
-
-    def __repr__(self):
-        return f"<LibPackageDetailTable {self.group}/{self.name}@{self.version}>"
+    def getDetail(self):
+        from scripts.data.models import LibPackageDetailTable
+        from scripts.data.models import get_session as _gs
+        s = _gs()
+        try:
+            return s.query(LibPackageDetailTable).filter_by(
+                group=self.publisher, name=self.name, version=self.version
+            ).first()
+        finally:
+            s.close()
 
     @classmethod
-    def list_to_str(cls, file_list):
-        """Convert a list of strings to semicolon-separated string."""
-        if not file_list:
-            return ""
-        return cls.SEP.join(file_list)
+    def _virtual_from_resolve(cls, path, name, publisher, version, resolve):
+        lp = cls.__new__(cls)
+        lp.name = name
+        lp.publisher = publisher or "local"
+        lp.version = version or "default"
+        lp.path = os.path.normpath(path)
+        lp.isGlobal = True
+        lp.summary = f"[virtual] {lp.publisher}/{lp.name}"
+        lp.mode = resolve.get("mode", "sources") if resolve else "sources"
+        lp.dependencies = []
+        lp.success = True
+        lp.autoScan = False
+        lp._virtual_resolve = resolve
+        return lp
 
-    @classmethod
-    def str_to_list(cls, file_str):
-        """Convert a semicolon-separated string back to list of strings."""
-        if not file_str or not file_str.strip():
-            return []
-        return [f for f in file_str.split(cls.SEP) if f.strip()]
-
-    def get_headers(self):
-        return self.str_to_list(self.headers)
-
-    def get_sources(self):
-        return self.str_to_list(self.sources)
-
-    def get_uis(self):
-        return self.str_to_list(self.uis)
-
-    def get_resources(self):
-        return self.str_to_list(self.resources)
-
-    def get_definitions(self):
-        return self.str_to_list(self.definitions)
-
-    def get_includes(self):
-        return self.str_to_list(self.includes)
-
-    def get_precompile_headers(self):
-        return self.str_to_list(self.precompile_headers)
-
-    def get_dynamic_definition(self):
-        return self.str_to_list(self.dynamic_definition)
+    def isMatch(self, package):
+        """Match against either AppPackage (legacy) or RefPackage."""
+        from scripts.data.RefPackage import RefPackage
+        if isinstance(package, RefPackage):
+            if "/" in package.name:
+                return (self.publisher == package.name.split("/")[0]
+                        and self.name == package.name.split("/")[1]
+                        and package.version_range.contains(Version(self.version)))
+            return (self.isGlobal and self.name == package.name
+                    and package.version_range.contains(Version(self.version)))
+        if "/" in package.name:
+            return (self.publisher == package.name.split("/")[0]
+                    and self.name == package.name.split("/")[1]
+                    and package.versionSpec.contains(Version(self.version)))
+        return (self.isGlobal and self.name == package.name
+                and package.versionSpec.contains(Version(self.version)))

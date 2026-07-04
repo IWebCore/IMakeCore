@@ -4,8 +4,14 @@ from scripts.util.make.MakePackageGenerator import MakePackageGenerator
 
 class CmakePackageGenerator(MakePackageGenerator):
 
+    @staticmethod
+    def _get_lp(pkg):
+        return getattr(pkg, "real_package", None) or getattr(pkg, "libPackage", None)
+
     def generate(self, pkg, env):
-        lp = pkg.libPackage
+        lp = self._get_lp(pkg)
+        if lp is None:
+            return ""
         output_path = self._lib_output_path(lp, env, "cmake")
 
         detail = self._get_detail_from_db(lp.publisher, lp.name, lp.version)
@@ -102,8 +108,9 @@ class CmakePackageGenerator(MakePackageGenerator):
             if not path:
                 continue
             path = os.path.normpath(path).replace(os.sep, "/")
-            result += f"\n# {p.libPackage.publisher}@{p.libPackage.name}@{p.libPackage.version}\n"
-            result += f"# {p.libPackage.summary}\n"
+            lp = self._get_lp(p)
+            result += f"\n# {lp.publisher}@{lp.name}@{lp.version}\n"
+            result += f"# {lp.summary}\n"
             result += "include(" + path + ")\n"
 
         return result

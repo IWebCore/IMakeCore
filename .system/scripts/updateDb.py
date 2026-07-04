@@ -10,8 +10,8 @@ _system_dir = os.path.dirname(_script_dir)
 if _system_dir not in sys.path:
     sys.path.insert(0, _system_dir)
 
-from scripts.db_base import Base, get_engine, get_session
-from scripts.data.LibPackage import LibPackageTable, LibPackageDetailTable
+from scripts.data.models import Base, get_engine, get_session
+from scripts.data.models import LibPackageTable, LibPackageDetailTable
 from scripts.data.GlobalData import GlobalData
 from scripts.util.PackageScanner import PackageScanner
 from scripts.Utils import Utils

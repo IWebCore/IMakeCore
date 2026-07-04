@@ -1,26 +1,23 @@
 import sys
 from scripts.data import *
-from scripts.LocatePackage import *
-from scripts.DownloadPackage import *
+from scripts.data.AppData import AppData
+from scripts.util.PackageResolver import PackageResolver
 from scripts.MakeUtils import *
-
-def loadPackages(app : AppConfig, env:EnvConfig):
-    package : AppPackage
-    for package in app.packages:
-        if not (LocatePackages(package, env).success \
-            or DownloadPackage(package, env).success):
-            print(f"Failed to locate or download package: {package.name} : {package.version}")
-            exit(1)
 
 if __name__ == '__main__':
     appPath = sys.argv[1]
     packType = sys.argv[2]
 
     env = EnvConfig(appPath, packType)
-    app = AppConfig(appPath)
-    loadPackages(app, env)
-    
-    MakeUtils.updatePackageForceLocal(app.packages, env)
-    MakeUtils.checkPackageDependencies(app.packages)
-    MakeUtils.createDumpJson(app.packages, env)
-    MakeUtils.createIncludeFile(packType, app.packages, env)
+    app_data = AppData(appPath)
+
+    resolver = PackageResolver(app_data, env)
+    resolver.resolve_all()
+
+    all_pkgs = app_data.all_packages()
+
+    MakeUtils.checkPackageDependencies(all_pkgs)
+    MakeUtils.createDumpJson(all_pkgs, env)
+    MakeUtils.createIncludeFile(packType, all_pkgs, env)
+
+    app_data.save_cache()

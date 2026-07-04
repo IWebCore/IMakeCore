@@ -2,7 +2,6 @@ import os
 import sys
 from packaging.version import *
 from packaging.specifiers import *
-from scripts.data.AppPackage import AppPackage
 from scripts.data.LibPackage import LibPackage
 from scripts.data.GlobalData import GlobalData
 from scripts.Utils import Utils
@@ -77,8 +76,8 @@ class EnvConfig:
         
         No filesystem scanning — all package data is read from package.db.
         """
-        from scripts.data.LibPackage import LibPackageTable
-        from scripts.db_base import get_session
+        from scripts.data.models import LibPackageTable
+        from scripts.data.models import get_session
 
         try:
             session = get_session()

@@ -1,6 +1,6 @@
 import os
-from scripts.db_base import get_session
-from scripts.data.LibPackage import LibPackageDetailTable
+from scripts.data.models import get_session
+from scripts.data.models import LibPackageDetailTable
 
 
 class MakePackageGenerator:

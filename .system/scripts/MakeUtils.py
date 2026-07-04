@@ -12,10 +12,24 @@ class MakeUtils:
     _cmake_gen = CmakePackageGenerator()
 
     @staticmethod
+    def _get_lp(pkg):
+        """Get LibPackage from either AppPackage (.libPackage) or RefPackage (.real_package)."""
+        return getattr(pkg, "real_package", None) or getattr(pkg, "libPackage", None)
+
+    @staticmethod
     def createDumpJson(packages, env):
         path = os.path.join(env.appDataPath, "dump.json")
+        result = []
+        for p in packages:
+            lp = MakeUtils._get_lp(p)
+            if lp:
+                result.append({
+                    "name": lp.name, "publisher": lp.publisher,
+                    "version": lp.version, "path": lp.path,
+                    "summary": lp.summary, "isGlobal": lp.isGlobal,
+                })
         with open(path, "w") as f:
-            json.dump([p.toDict() for p in packages], f, indent=4)
+            json.dump(result, f, indent=4)
 
     @staticmethod
     def createIncludeFile(packType, packages, env):
@@ -41,9 +55,12 @@ class MakeUtils:
     @staticmethod
     def checkPackageDependencies(libs):
         for lib in libs:
-            for dep in lib.libPackage.dependencies:
-                if not any(dep.matchLib(l2.libPackage) for l2 in libs):
-                    print(f"Package {lib.name} requires {dep.fullName} version {dep.version} "
+            lp = MakeUtils._get_lp(lib)
+            if not lp:
+                continue
+            for dep in lp.dependencies:
+                if not any(dep.matchLib(MakeUtils._get_lp(l2)) for l2 in libs):
+                    print(f"Package {lp.name} requires {dep.fullName} version {dep.version} "
                           f"but it is not found in the list of packages.")
                     exit(1)
 
@@ -51,7 +68,12 @@ class MakeUtils:
     def updatePackageForceLocal(packages, env):
         env.appLibStore = os.path.normpath(env.appLibStore)
         for package in packages:
-            if not package.forceLocal:
+            is_local = getattr(package, "forceLocal", False) or \
+                       getattr(package, "origin", "default") == "local"
+            if not is_local:
+                continue
+            lp = MakeUtils._get_lp(package)
+            if not lp:
                 continue
             if env.appLibStore in os.path.normpath(package.path):
                 continue

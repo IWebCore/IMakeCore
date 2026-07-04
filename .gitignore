@@ -5,3 +5,5 @@
 /.vscode
 /.system/.vscode
 /.omo
+*.pyc
+/.system/scripts/util/make/__pycache__
