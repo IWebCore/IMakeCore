@@ -1,5 +1,4 @@
-﻿#include "core/util/IHeaderUtil.h"
-#include "Version.h"
+﻿#include "Version.h"
 
 $IPackageBegin(packaging)
 

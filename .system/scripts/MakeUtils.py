@@ -28,7 +28,7 @@ class MakeUtils:
                     "version": lp.version, "path": lp.path,
                     "summary": lp.summary, "isGlobal": lp.isGlobal,
                 })
-        with open(path, "w") as f:
+        with open(path, "w", encoding="utf-8") as f:
             json.dump(result, f, indent=4)
 
     @staticmethod
@@ -45,11 +45,11 @@ class MakeUtils:
         content = gen.post_process(packages, env)
 
         if os.path.exists(out_path):
-            with open(out_path, "rt") as f:
+            with open(out_path, "rt", encoding="utf-8") as f:
                 if f.read() == content:
                     exit(0)
 
-        with open(out_path, "wt") as f:
+        with open(out_path, "wt", encoding="utf-8") as f:
             f.write(content)
 
     @staticmethod

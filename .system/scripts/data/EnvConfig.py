@@ -67,6 +67,8 @@ class EnvConfig:
             os.makedirs(self._global.sys_data_path, exist_ok=True)
         if not os.path.exists(self.sysCachePath):
             os.makedirs(self.sysCachePath, exist_ok=True)
+        if not os.path.exists(os.path.join(self.appPath, ".support")):
+            os.makedirs(os.path.join(self.appPath, ".support"), exist_ok=True)
 
         libStores = [ls for ls in self.libstores if os.path.exists(ls)]
         self.libstores = libStores

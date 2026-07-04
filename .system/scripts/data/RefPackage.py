@@ -1,6 +1,8 @@
 from packaging.specifiers import SpecifierSet
 from scripts.Utils import Utils
 
+VALID_MODES = {"source", "static", "dynamic", "default"}
+
 
 class GitRef:
     def __init__(self, url, tag=None, branch=None, hash=None):
@@ -28,21 +30,36 @@ class RefPackage:
         self._is_external = False
 
     @classmethod
-    def from_string(cls, name, version, origin="default", default_publisher="", default_is_global=True):
+    def from_package_json(cls, name, value, app_data):
+        from scripts.data.LibPackage import LibPackage
+        publisher, pkg_name, is_global = LibPackage.split_name(name)
+
+        if isinstance(value, str):
+            return cls._from_string_impl(pkg_name, value, app_data.global_origin,
+                                         publisher, is_global)
+        if isinstance(value, dict):
+            return cls._from_config_impl(pkg_name, value, app_data.global_origin,
+                                         publisher, is_global)
+        print(f"ERROR: Invalid package value for '{name}': type {type(value).__name__}.")
+        exit(1)
+
+    @classmethod
+    def _from_string_impl(cls, name, version, origin, publisher, is_global):
         version = version.strip()
         ref = cls()
         ref.name = name
-        ref.publisher = default_publisher
-        ref.is_global = default_is_global
+        ref.publisher = publisher
+        ref.is_global = is_global
         ref.version = version
         ref.version_range = Utils.parseVersionSpecifier(version)
         ref.origin = origin
+        ref.mode = "default"
         if version == "x":
             ref.skip = True
         return ref
 
     @classmethod
-    def from_config(cls, name, config, global_origin="default", default_publisher="", default_is_global=True):
+    def _from_config_impl(cls, name, config, global_origin, publisher, is_global):
         version = config.get("version", "*").strip()
         ref = cls()
         ref.name = name
@@ -52,8 +69,8 @@ class RefPackage:
             ref.skip = True
             return ref
 
-        ref.publisher = config.get("publisher", default_publisher)
-        ref.is_global = config.get("isGlobal", default_is_global)
+        ref.publisher = config.get("publisher", publisher)
+        ref.is_global = config.get("isGlobal", is_global)
 
         if "origin" in config:
             ref.origin = config["origin"]
@@ -90,6 +107,10 @@ class RefPackage:
             ref.resolve = config["resolve"]
 
         ref.mode = config.get("mode", "default")
+        if ref.mode not in VALID_MODES:
+            print(f"ERROR: Package '{name}' has invalid mode '{ref.mode}'."
+                  f" Must be one of: {', '.join(sorted(VALID_MODES))}.")
+            exit(1)
         return ref
 
     @staticmethod

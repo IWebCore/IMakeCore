@@ -23,6 +23,7 @@ class QmakePackageGenerator(MakePackageGenerator):
         if paths is None:
             return ""
 
+        mode = getattr(pkg, "mode", "default")
         lib_path = self._normalize_path(lp.path)
         lines = self._header_comment(lp)
         lines.append(f'current_lib_path = "{lib_path}"')
@@ -31,13 +32,30 @@ class QmakePackageGenerator(MakePackageGenerator):
         self._emit_includes(lines, paths["includes"])
         self._emit_definitions(lines, paths["definitions"])
         self._emit_continuation(lines, "HEADERS", paths["headers"], '    $$current_lib_path/{item}')
-        self._emit_continuation(lines, "SOURCES", paths["sources"], '    $$current_lib_path/{item}')
-        self._emit_continuation(lines, "FORMS", paths["uis"], '    $$current_lib_path/{item}')
-        self._emit_continuation(lines, "RESOURCES", paths["resources"], '    $$current_lib_path/{item}')
+
+        if mode in ("static", "dynamic"):
+            self._emit_lib_link(lines, pkg, env)
+        else:
+            self._emit_continuation(lines, "SOURCES", paths["sources"], '    $$current_lib_path/{item}')
+            self._emit_continuation(lines, "FORMS", paths["uis"], '    $$current_lib_path/{item}')
+            self._emit_continuation(lines, "RESOURCES", paths["resources"], '    $$current_lib_path/{item}')
+
         self._emit_single(lines, paths["precompile_headers"], "PRECOMPILED_HEADER", '$$current_lib_path/{item}')
 
         content = "\n".join(lines) + "\n"
         return self._write_if_changed(output_path, content)
+
+    @staticmethod
+    def _emit_lib_link(lines, pkg, env):
+        lp = QmakePackageGenerator._get_lp(pkg)
+        if lp is None:
+            return
+        mode = getattr(pkg, "mode", "static")
+        pkg_dir = f"{lp.publisher}@{lp.name}@{lp.version}_{mode}"
+        target = f"{lp.publisher}@{lp.name}@{lp.version}"
+        lines.append(f'win32-msvc*: LIBS += $$PWD/../.support/{pkg_dir}/$${{QMAKE_HOST.arch}}-pc-$${{QMAKE_HOST.os}}-$${{QMAKE_SPEC}}-{mode}/{target}.lib')
+        lines.append(f'else:        LIBS += $$PWD/../.support/{pkg_dir}/$${{QMAKE_HOST.arch}}-pc-$${{QMAKE_HOST.os}}-$${{QMAKE_SPEC}}-{mode}/lib{target}.a')
+        lines.append("")
 
     @staticmethod
     def _emit_includes(lines, includes):

@@ -61,20 +61,8 @@ class AppData:
                 self.packages.append(ref)
 
     def _parse_one(self, name, value):
-        publisher, pkg_name, is_global = LibPackage.split_name(name)
-
-        if isinstance(value, str):
-            ref = RefPackage.from_string(pkg_name, value, self.global_origin,
-                                         default_publisher=publisher, default_is_global=is_global)
-            return ref if not ref.skip else None
-
-        if isinstance(value, dict):
-            ref = RefPackage.from_config(pkg_name, value, self.global_origin,
-                                         default_publisher=publisher, default_is_global=is_global)
-            return ref if not ref.skip else None
-
-        print(f"ERROR: Invalid package value for '{name}': type {type(value).__name__}.")
-        exit(1)
+        ref = RefPackage.from_package_json(name, value, self)
+        return ref if not ref.skip else None
 
     def _load_cache(self):
         if not os.path.exists(self.cache_path):
@@ -97,7 +85,7 @@ class AppData:
                     "path": ref.real_package.path,
                 }
         os.makedirs(os.path.dirname(self.cache_path), exist_ok=True)
-        with open(self.cache_path, "w") as f:
+        with open(self.cache_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
 
     def get_cached(self, ref):
