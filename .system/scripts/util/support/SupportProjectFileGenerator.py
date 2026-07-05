@@ -1,18 +1,21 @@
+from __future__ import annotations
+
 import os
+from typing import Any
 
 CONDITION_QMAKE = "imakecore_condition.pri"
 CONDITION_CMAKE = "imakecore_condition.cmake"
 
 
 class SupportProjectFileGenerator:
-    def __init__(self, project_name, lib_packages, pack_type, env):
+    def __init__(self, project_name: str, lib_packages: list[Any], pack_type: str, env: Any) -> None:
         self.project_name = project_name
         self.lib_packages = lib_packages
         self.pack_type = pack_type
         self.env = env
         self.support_dir = os.path.normpath(os.path.join(env.appPath, ".support"))
 
-    def generate(self):
+    def generate(self) -> str:
         os.makedirs(self.support_dir, exist_ok=True)
         self._ensure_condition_file()
         if self.pack_type == "qmake":
@@ -23,7 +26,7 @@ class SupportProjectFileGenerator:
             f.write(content)
         return out_path
 
-    def _ensure_condition_file(self):
+    def _ensure_condition_file(self) -> None:
         name = CONDITION_QMAKE if self.pack_type == "qmake" else CONDITION_CMAKE
         path = os.path.join(self.support_dir, name)
         if os.path.exists(path):
@@ -43,8 +46,8 @@ class SupportProjectFileGenerator:
         with open(path, "wt", encoding="utf-8") as f:
             f.write(content)
 
-    def _qmake_content(self):
-        lines = []
+    def _qmake_content(self) -> str:
+        lines: list[str] = []
         lines.append("# SYSTEM AUTO GENERATED DO NOT EDIT!!!")
         lines.append(f"# {self.project_name} support subdirs project")
         lines.append("")
@@ -64,8 +67,8 @@ class SupportProjectFileGenerator:
         lines.append("")
         return "\n".join(lines) + "\n"
 
-    def _cmake_content(self):
-        lines = []
+    def _cmake_content(self) -> str:
+        lines: list[str] = []
         lines.append("# SYSTEM AUTO GENERATED DO NOT EDIT!!!")
         lines.append(f"# {self.project_name} support subdirs project")
         lines.append("")

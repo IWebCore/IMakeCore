@@ -114,20 +114,8 @@ class UpdateDb:
         scanner = PackageScanner(package_dir, pkg_data.get("resolve"))
         scan_result = scanner.scan()
 
-        detail = LibPackageDetailTable(
-            path=os.path.normpath(package_dir),
-            name=name,
-            group=publisher,
-            version=version,
-            headers=LibPackageDetailTable.list_to_str(scan_result.headers),
-            sources=LibPackageDetailTable.list_to_str(scan_result.sources),
-            uis=LibPackageDetailTable.list_to_str(scan_result.uis),
-            resources=LibPackageDetailTable.list_to_str(scan_result.resources),
-            definitions=LibPackageDetailTable.list_to_str(scan_result.definitions),
-            includes=LibPackageDetailTable.list_to_str(scan_result.includes),
-            precompile_headers=LibPackageDetailTable.list_to_str(scan_result.precompile_headers),
-            dynamic_definition=LibPackageDetailTable.list_to_str(scan_result.dynamic_definition),
-        )
+        detail = LibPackageDetailTable.from_scan_result(
+            scan_result, os.path.normpath(package_dir), name, publisher, version)
         session.add(detail)
 
         self.total_packages += 1

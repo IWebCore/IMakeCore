@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import os
+from typing import Any
 from scripts.data.models import get_session
 from scripts.data.models import LibPackageDetailTable
 
@@ -6,11 +9,11 @@ from scripts.data.models import LibPackageDetailTable
 class MakePackageGenerator:
 
     @staticmethod
-    def _normalize_path(p):
+    def _normalize_path(p: str) -> str:
         return os.path.normpath(p).replace(os.sep, "/")
 
     @staticmethod
-    def _get_detail_from_db(publisher, name, version):
+    def _get_detail_from_db(publisher: str, name: str, version: str) -> LibPackageDetailTable | None:
         session = get_session()
         try:
             return session.query(LibPackageDetailTable).filter_by(
@@ -20,7 +23,7 @@ class MakePackageGenerator:
             session.close()
 
     @staticmethod
-    def _get_file_paths(detail):
+    def _get_file_paths(detail: LibPackageDetailTable | None) -> dict[str, list[str]] | None:
         if detail is None:
             return None
         return {
@@ -31,15 +34,16 @@ class MakePackageGenerator:
             "definitions": detail.get_definitions(),
             "includes": detail.get_includes(),
             "precompile_headers": detail.get_precompile_headers(),
+            "dynamic_definition": detail.get_dynamic_definition(),
         }
 
     @staticmethod
-    def _lib_output_path(lp, env, suffix):
+    def _lib_output_path(lp: Any, env: Any, suffix: str) -> str:
         name = f"{lp.publisher}@{lp.name}@{lp.version}.{suffix}"
         return os.path.join(env.appLibStore, name)
 
     @staticmethod
-    def _write_if_changed(path, content):
+    def _write_if_changed(path: str, content: str) -> str:
         if os.path.exists(path):
             with open(path, "rt", encoding="utf-8") as f:
                 if f.read() == content:
@@ -50,7 +54,7 @@ class MakePackageGenerator:
         return path
 
     @staticmethod
-    def _header_comment(lp):
+    def _header_comment(lp: Any) -> list[str]:
         return [
             "# SYSTEM AUTO GENERATED DO NOT EDIT!!!",
             f"# {lp.publisher}@{lp.name}@{lp.version}",
@@ -58,8 +62,8 @@ class MakePackageGenerator:
             "",
         ]
 
-    def generate(self, pkg, env):
+    def generate(self, pkg: Any, env: Any) -> str:
         raise NotImplementedError
 
-    def post_process(self, packages, env):
+    def post_process(self, packages: list[Any], env: Any) -> str:
         raise NotImplementedError

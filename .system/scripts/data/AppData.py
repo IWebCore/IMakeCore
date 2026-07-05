@@ -1,22 +1,26 @@
+from __future__ import annotations
+
 import os
 import json
 import shutil
 import hashlib
+from typing import Any
 from datetime import datetime
 from scripts.Utils import Utils
 from scripts.data.RefPackage import RefPackage
 from scripts.data.LibPackage import LibPackage
 
+
 class AppData:
-    def __init__(self, project_path):
+    def __init__(self, project_path: str) -> None:
         self.path = project_path
-        self.json = {}
-        self.local_lib_store = ""
-        self.global_origin = "default"
-        self.packages = []
-        self.external_packages = []
-        self.cache = {}
-        self.cache_path = ""
+        self.json: dict[str, Any] = {}
+        self.local_lib_store: str = ""
+        self.global_origin: str = "default"
+        self.packages: list[RefPackage] = []
+        self.external_packages: list[RefPackage] = []
+        self.cache: dict[str, Any] = {}
+        self.cache_path: str = ""
 
         json_path = os.path.join(self.path, "packages.json")
         if not os.path.exists(json_path):
@@ -47,10 +51,10 @@ class AppData:
         self.cache_path = os.path.join(self.path, ".data", "resolve-cache.json")
         self._load_cache()
 
-    def all_packages(self):
+    def all_packages(self) -> list[RefPackage]:
         return self.packages + self.external_packages
 
-    def _parse_packages(self):
+    def _parse_packages(self) -> None:
         raw = self.json.get("packages", {})
         if not raw:
             print("ERROR: packages.json does not contain 'packages' field.")
@@ -60,11 +64,11 @@ class AppData:
             if ref is not None:
                 self.packages.append(ref)
 
-    def _parse_one(self, name, value):
+    def _parse_one(self, name: str, value: str | dict[str, Any]) -> RefPackage | None:
         ref = RefPackage.from_package_json(name, value, self)
         return ref if not ref.skip else None
 
-    def _load_cache(self):
+    def _load_cache(self) -> None:
         if not os.path.exists(self.cache_path):
             return
         try:
@@ -72,8 +76,8 @@ class AppData:
         except Exception:
             self.cache = {}
 
-    def save_cache(self):
-        data = {"version": 1, "last_update": datetime.now().isoformat(), "resolved": {}}
+    def save_cache(self) -> None:
+        data: dict[str, Any] = {"version": 1, "last_update": datetime.now().isoformat(), "resolved": {}}
         for ref in self.all_packages():
             if ref.real_package and ref.real_package.success:
                 key = f"{ref.real_package.publisher}/{ref.real_package.name}"
@@ -88,7 +92,7 @@ class AppData:
         with open(self.cache_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
 
-    def get_cached(self, ref):
+    def get_cached(self, ref: RefPackage) -> LibPackage | None:
         key = f"{ref.publisher}/{ref.name}"
         entry = self.cache.get("resolved", {}).get(key)
         if not entry:
@@ -101,7 +105,7 @@ class AppData:
         return LibPackage(path)
 
     @staticmethod
-    def _compute_ref_hash(ref):
+    def _compute_ref_hash(ref: RefPackage) -> str:
         raw = json.dumps({"n": ref.name, "v": ref.version, "p": ref.publisher,
                            "o": ref.origin, "path": ref.path, "url": ref.url,
                            "g": ref.git.url if ref.git else None,

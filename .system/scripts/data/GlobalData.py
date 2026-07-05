@@ -3,28 +3,31 @@ GlobalData.py — System-level config parser for IMAKECORE.
 Provides libstore paths, server URLs, and user info from IMAKECORE_ROOT/.data/config.json.
 Shared between updateDb.py and EnvConfig.py.
 """
+from __future__ import annotations
+
 import os
 import sys
+from typing import Any
 from scripts.Utils import Utils
 
 
 class GlobalData:
-    def __init__(self):
+    def __init__(self) -> None:
         self.imakecore_root = os.getenv("IMAKECORE_ROOT")
         if not self.imakecore_root:
             print("ERROR: IMAKECORE_ROOT environment variable is not set.")
             sys.exit(1)
 
-        self.config = {}
+        self.config: dict[str, Any] = {}
         self.sys_data_path = os.path.join(self.imakecore_root, ".data")
         self.sys_lib_store = os.path.normpath(os.path.join(self.imakecore_root, ".lib"))
-        self.servers = []
-        self.libstores = []
-        self.user_name = "local"
+        self.servers: list[str] = []
+        self.libstores: list[str] = []
+        self.user_name: str = "local"
 
         self._load()
 
-    def _load(self):
+    def _load(self) -> None:
         config_path = os.path.join(self.sys_data_path, "config.json")
         if not os.path.exists(config_path):
             print(f"ERROR: System config not found at {config_path}")
@@ -45,19 +48,19 @@ class GlobalData:
         self.servers = self.config.get("servers", [])
         self.user_name = self.config.get("user", "local")
 
-    def _resolve_store_path(self, path):
+    def _resolve_store_path(self, path: str) -> str:
         if os.path.isabs(path):
             return os.path.normpath(path)
         return os.path.normpath(os.path.join(self.imakecore_root, path))
 
-    def get_sys_lib_store(self):
+    def get_sys_lib_store(self) -> str:
         return self.sys_lib_store
 
-    def get_libstores(self):
+    def get_libstores(self) -> list[str]:
         return self.libstores
 
-    def get_servers(self):
+    def get_servers(self) -> list[str]:
         return self.servers
 
-    def get_user_name(self):
+    def get_user_name(self) -> str:
         return self.user_name

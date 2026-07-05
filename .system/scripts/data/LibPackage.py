@@ -1,84 +1,87 @@
+from __future__ import annotations
 
 import os
+from typing import Any
 from packaging.version import *
 from packaging.specifiers import *
 from scripts.data.models import LibPackageTable
 from scripts.Utils import Utils
 from scripts.data.models import get_session
 
+
 class LibPackage:
 
     @staticmethod
-    def split_name(name):
+    def split_name(name: str) -> tuple[str, str, bool]:
         if "/" in name:
             parts = name.split("/", 1)
             return parts[0].strip(), parts[1].strip(), False
         return "", name.strip(), True
 
     class Dependency:
-        def __init__(self, name:str, version:str):
+        def __init__(self, name: str, version: str) -> None:
             self.fullName = name
             self.version = version
             self.versionSpec = Utils.parseVersionSpecifier(version)
-            
-        def matchLib(self, libPackage):
+
+        def matchLib(self, libPackage: LibPackage) -> bool:
             if "/" in self.fullName:
                 return self.fullName == (libPackage.publisher + "/" + libPackage.name)  \
                         and self.versionSpec.contains(Version(libPackage.version))
-            
+
             return self.fullName == libPackage.name     \
                     and self.versionSpec.contains(Version(libPackage.version))  \
                     and libPackage.isGlobal
-                    
-    def __init__(self):
-        self.name : str = ""
-        self.publisher : str = ""
-        self.isGlobal : bool = False
-        self.version : str = ""
-        self.summary : str = ""
-        self.autoScan : bool = False
-        self.mode : str = "sources"
-        self.path : str = ""
-        self.dependencies : List[LibPackage.Dependency] = []
-        self.success : bool = True
-        self._supported_modes = ["source", "static"]
 
-    def __init__(self, path:str):
-        self.name : str = ""
-        self.publisher : str = ""
-        self.isGlobal : bool = False
-        self.version : str = ""
-        self.summary : str = ""
-        self.autoScan : bool = False
-        self.mode : str = "sources"
-        self.path : str = path
-        self.dependencies : List[LibPackage.Dependency] = []
-        self.success : bool = True
-        self._supported_modes = ["source", "static"]
+    def __init__(self) -> None:
+        self.name: str = ""
+        self.publisher: str = ""
+        self.isGlobal: bool = False
+        self.version: str = ""
+        self.summary: str = ""
+        self.autoScan: bool = False
+        self.mode: str = "sources"
+        self.path: str = ""
+        self.dependencies: list[LibPackage.Dependency] = []
+        self.success: bool = True
+        self._supported_modes: list[str] = ["source", "static"]
+
+    def __init__(self, path: str) -> None:
+        self.name: str = ""
+        self.publisher: str = ""
+        self.isGlobal: bool = False
+        self.version: str = ""
+        self.summary: str = ""
+        self.autoScan: bool = False
+        self.mode: str = "sources"
+        self.path: str = path
+        self.dependencies: list[LibPackage.Dependency] = []
+        self.success: bool = True
+        self._supported_modes: list[str] = ["source", "static"]
 
         try:
             self.loadPackage()
-        except:
+        except Exception:
             self.success = False
 
         if self.success:
             self.checkPackage()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.fullName}@{self.version}"
-    
-    def loadPackage(self):
-        path= os.path.join(self.path, "package.json")
+
+    def loadPackage(self) -> None:
+        path = os.path.join(self.path, "package.json")
         if not os.path.exists(path):
             self.success = False
             return
-        
+
         self.json = Utils.loadJson(path)
-        
+
         self.publisher = self.json.get("publisher", "")
         self.name = self.json.get("name")
         self.isGlobal = self.json.get("isGlobal", True)
-        
+
         self.version = self.json.get("version")
         self.summary = self.json.get("summary")
         self.autoScan = False  # deprecated, always False
@@ -96,16 +99,16 @@ class LibPackage:
         for key, value in dependencies.items():
             dep = LibPackage.Dependency(key, value)
             self.dependencies.append(dep)
-    
-    def checkPackage(self):
+
+    def checkPackage(self) -> None:
         if not self.isGlobal and self.publisher == "":
             self.success = False
             assert False, f"Invalid package.json, package {self.name} is not global and publisher is missing. Path:{self.path}"
-            
+
         assert self.name and self.version, f"Invalid package.json, package name or version is missing. Path:{self.path}"
 
     @classmethod
-    def from_db_row(cls, row):
+    def from_db_row(cls, row: LibPackageTable) -> LibPackage:
         """Create a LibPackage instance from a LibPackageTable ORM row."""
         lp = cls.__new__(cls)
         lp.name = row.name
@@ -125,7 +128,7 @@ class LibPackage:
         return lp
 
     @classmethod
-    def query_all_from_db(cls):
+    def query_all_from_db(cls) -> list[LibPackage]:
         session = get_session()
         try:
             rows = session.query(LibPackageTable).all()
@@ -133,19 +136,45 @@ class LibPackage:
         finally:
             session.close()
 
-    def getDetail(self):
+    def getDetail(self) -> Any:
+        if hasattr(self, "_detail_cache") and self._detail_cache is not None:
+            return self._detail_cache
+
         from scripts.data.models import LibPackageDetailTable
         from scripts.data.models import get_session as _gs
         s = _gs()
         try:
-            return s.query(LibPackageDetailTable).filter_by(
+            detail = s.query(LibPackageDetailTable).filter_by(
                 group=self.publisher, name=self.name, version=self.version
             ).first()
+            if detail is not None:
+                self._detail_cache = detail
+                return detail
         finally:
             s.close()
 
+        detail = self._scan_detail()
+        self._detail_cache = detail
+        return detail
+
+    def _scan_detail(self) -> Any:
+        from scripts.util.PackageScanner import PackageScanner
+        from scripts.data.models import LibPackageDetailTable
+
+        scanner = PackageScanner(self.path)
+        result = scanner.scan()
+        return LibPackageDetailTable.from_scan_result(result, self.path, self.name, self.publisher, self.version)
+
+    def is_header_only(self) -> bool:
+        detail = self.getDetail()
+        if detail is None:
+            return False
+        return (len(detail.get_sources()) == 0
+                and len(detail.get_uis()) == 0
+                and len(detail.get_resources()) == 0)
+
     @classmethod
-    def _virtual_from_resolve(cls, path, name, publisher, version, resolve):
+    def _virtual_from_resolve(cls, path: str, name: str, publisher: str | None, version: str | None, resolve: dict[str, Any] | None) -> LibPackage:
         lp = cls.__new__(cls)
         lp.name = name
         lp.publisher = publisher or "local"
@@ -161,7 +190,7 @@ class LibPackage:
         lp._virtual_resolve = resolve
         return lp
 
-    def isMatch(self, package):
+    def isMatch(self, package: Any) -> bool:
         """Match against either AppPackage (legacy) or RefPackage."""
         from scripts.data.RefPackage import RefPackage
         if isinstance(package, RefPackage):

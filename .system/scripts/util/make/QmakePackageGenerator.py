@@ -1,14 +1,17 @@
+from __future__ import annotations
+
 import os
+from typing import Any
 from scripts.util.make.MakePackageGenerator import MakePackageGenerator
 
 
 class QmakePackageGenerator(MakePackageGenerator):
 
     @staticmethod
-    def _get_lp(pkg):
+    def _get_lp(pkg: Any) -> Any:
         return getattr(pkg, "real_package", None) or getattr(pkg, "libPackage", None)
 
-    def generate(self, pkg, env):
+    def generate(self, pkg: Any, env: Any) -> str:
         lp = self._get_lp(pkg)
         if lp is None:
             return ""
@@ -34,6 +37,9 @@ class QmakePackageGenerator(MakePackageGenerator):
         self._emit_continuation(lines, "HEADERS", paths["headers"], '    $$current_lib_path/{item}')
 
         if mode in ("static", "dynamic"):
+            if mode == "dynamic" and paths.get("dynamic_definition"):
+                for d in paths["dynamic_definition"]:
+                    lines.append(f"DEFINES += {d}")
             self._emit_lib_link(lines, pkg, env)
         else:
             self._emit_continuation(lines, "SOURCES", paths["sources"], '    $$current_lib_path/{item}')
@@ -46,19 +52,27 @@ class QmakePackageGenerator(MakePackageGenerator):
         return self._write_if_changed(output_path, content)
 
     @staticmethod
-    def _emit_lib_link(lines, pkg, env):
+    def _emit_lib_link(lines: list[str], pkg: Any, env: Any) -> None:
         lp = QmakePackageGenerator._get_lp(pkg)
         if lp is None:
             return
         mode = getattr(pkg, "mode", "static")
         pkg_dir = f"{lp.publisher}@{lp.name}@{lp.version}_{mode}"
         target = f"{lp.publisher}@{lp.name}@{lp.version}"
-        lines.append(f'win32-msvc*: LIBS += $$PWD/../.support/{pkg_dir}/$${{QMAKE_HOST.arch}}-pc-$${{QMAKE_HOST.os}}-$${{QMAKE_SPEC}}-{mode}/{target}.lib')
-        lines.append(f'else:        LIBS += $$PWD/../.support/{pkg_dir}/$${{QMAKE_HOST.arch}}-pc-$${{QMAKE_HOST.os}}-$${{QMAKE_SPEC}}-{mode}/lib{target}.a')
+        arch_path = f"$$PWD/../.support/{pkg_dir}/$${{QMAKE_HOST.arch}}-pc-$${{QMAKE_HOST.os}}-$${{QMAKE_SPEC}}-{mode}"
+
+        if mode == "dynamic":
+            lines.append(f'win32-msvc*: LIBS += {arch_path}/{target}.lib')
+            lines.append(f'win32-g++:  LIBS += {arch_path}/lib{target}.a')
+            lines.append(f'macx: LIBS += {arch_path}/lib{target}.dylib')
+            lines.append(f'linux: LIBS += {arch_path}/lib{target}.so')
+        else:
+            lines.append(f'win32-msvc*: LIBS += {arch_path}/{target}.lib')
+            lines.append(f'else:        LIBS += {arch_path}/lib{target}.a')
         lines.append("")
 
     @staticmethod
-    def _emit_includes(lines, includes):
+    def _emit_includes(lines: list[str], includes: list[str]) -> None:
         if not includes:
             return
         lines.append("INCLUDEPATH += \\")
@@ -69,7 +83,7 @@ class QmakePackageGenerator(MakePackageGenerator):
         lines.append("")
 
     @staticmethod
-    def _emit_definitions(lines, definitions):
+    def _emit_definitions(lines: list[str], definitions: list[str]) -> None:
         if not definitions:
             return
         for d in definitions:
@@ -77,7 +91,7 @@ class QmakePackageGenerator(MakePackageGenerator):
         lines.append("")
 
     @staticmethod
-    def _emit_continuation(lines, keyword, items, template):
+    def _emit_continuation(lines: list[str], keyword: str, items: list[str], template: str) -> None:
         if not items:
             return
         lines.append(f"{keyword} += \\")
@@ -87,14 +101,14 @@ class QmakePackageGenerator(MakePackageGenerator):
         lines.append("")
 
     @staticmethod
-    def _emit_single(lines, items, keyword, template):
+    def _emit_single(lines: list[str], items: list[str], keyword: str, template: str) -> None:
         if not items:
             return
         for item in items:
             lines.append(f"{keyword} = {template.format(item=item)}")
         lines.append("")
 
-    def post_process(self, packages, env):
+    def post_process(self, packages: list[Any], env: Any) -> str:
         result = """\
 ###################################
 # SYSTEM CONFIGURED, DO NOT EDIT!!!

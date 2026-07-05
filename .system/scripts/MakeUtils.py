@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import json
 import os
 import shutil
+from typing import Any
 from scripts.data import *
 from scripts.util.make.QmakePackageGenerator import QmakePackageGenerator
 from scripts.util.make.CmakePackageGenerator import CmakePackageGenerator
@@ -12,14 +15,14 @@ class MakeUtils:
     _cmake_gen = CmakePackageGenerator()
 
     @staticmethod
-    def _get_lp(pkg):
+    def _get_lp(pkg: Any) -> Any:
         """Get LibPackage from either AppPackage (.libPackage) or RefPackage (.real_package)."""
         return getattr(pkg, "real_package", None) or getattr(pkg, "libPackage", None)
 
     @staticmethod
-    def createDumpJson(packages, env):
+    def createDumpJson(packages: list[Any], env: Any) -> None:
         path = os.path.join(env.appDataPath, "dump.json")
-        result = []
+        result: list[dict[str, Any]] = []
         for p in packages:
             lp = MakeUtils._get_lp(p)
             if lp:
@@ -32,7 +35,7 @@ class MakeUtils:
             json.dump(result, f, indent=4)
 
     @staticmethod
-    def createIncludeFile(packType, packages, env):
+    def createIncludeFile(packType: str, packages: list[Any], env: Any) -> None:
         if packType == "qmake":
             gen = MakeUtils._qmake_gen
             out_path = os.path.join(env.appPath, ".package.pri")
@@ -53,7 +56,7 @@ class MakeUtils:
             f.write(content)
 
     @staticmethod
-    def checkPackageDependencies(libs):
+    def checkPackageDependencies(libs: list[Any]) -> None:
         for lib in libs:
             lp = MakeUtils._get_lp(lib)
             if not lp:
@@ -65,7 +68,7 @@ class MakeUtils:
                     exit(1)
 
     @staticmethod
-    def updatePackageForceLocal(packages, env):
+    def updatePackageForceLocal(packages: list[Any], env: Any) -> None:
         env.appLibStore = os.path.normpath(env.appLibStore)
         for package in packages:
             is_local = getattr(package, "forceLocal", False) or \

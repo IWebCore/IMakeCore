@@ -1,31 +1,12 @@
+from __future__ import annotations
+
 import sys, os
 from scripts.data import *
 from scripts.data.AppData import AppData
-from scripts.data.models import LibPackageDetailTable, get_session
 from scripts.util.PackageResolver import PackageResolver
 from scripts.MakeUtils import *
 from scripts.util.support.SupportProjectFileGenerator import SupportProjectFileGenerator
 from scripts.util.support.SupportLibGenerator import SupportLibGenerator
-
-def _is_header_only(ref):
-    """Check if a resolved package has zero compilable sources (header-only)."""
-    lp = getattr(ref, "real_package", None)
-    if lp is None:
-        return False
-    session = get_session()
-    try:
-        detail = session.query(LibPackageDetailTable).filter_by(
-            group=lp.publisher, name=lp.name, version=lp.version
-        ).first()
-        if detail is None:
-            return False
-        return (len(detail.get_sources()) == 0
-                and len(detail.get_uis()) == 0
-                and len(detail.get_resources()) == 0)
-    except Exception:
-        return False
-    finally:
-        session.close()
 
 if __name__ == '__main__':
     appPath = sys.argv[1]
@@ -41,15 +22,26 @@ if __name__ == '__main__':
 
     for ref in all_pkgs:
         user_mode = getattr(ref, "mode", "default")
-        if _is_header_only(ref):
+        lp = getattr(ref, "real_package", None)
+        if lp is not None and lp.is_header_only():
             if user_mode in ("static", "dynamic"):
-                lp = getattr(ref, "real_package", None)
-                name = getattr(lp, "name", ref.name) if lp else ref.name
-                print(f"ERROR: Package '{name}' is header-only (no sources/ui/resources)."
+                print(f"ERROR: Package '{lp.name}' is header-only (no sources/ui/resources)."
                       f" Cannot use mode='{user_mode}'. Use mode='source' or omit the mode field.")
                 exit(1)
             if user_mode == "default":
                 ref.mode = "source"
+
+    for ref in all_pkgs:
+        if getattr(ref, "mode", "default") != "dynamic":
+            continue
+        lp = getattr(ref, "real_package", None)
+        if lp is None:
+            continue
+        detail = lp.getDetail()
+        if detail is None or len(detail.get_dynamic_definition()) == 0:
+            print(f"ERROR: Package '{lp.name}' has mode='dynamic' but no dynamicDefinition"
+                  f" is defined in its package.json resolve section.")
+            exit(1)
 
     MakeUtils.checkPackageDependencies(all_pkgs)
     MakeUtils.createDumpJson(all_pkgs, env)

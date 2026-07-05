@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 import json
+from typing import Any
 from packaging.specifiers import *
 from packaging.version import *
 
 class Utils:
 
     @staticmethod
-    def loadJson( path):
+    def loadJson(path: str) -> Any:
         with open(path, "rt", encoding="utf-8") as f:   # anoying utf-8 BOM!!!!
             try:
                 content = f.read()
@@ -19,7 +22,7 @@ class Utils:
                 exit(1)
 
     @staticmethod
-    def parseVersionSpecifier(version:str):
+    def parseVersionSpecifier(version: str) -> SpecifierSet:
         if not version.strip():
             return SpecifierSet(">=0")
         

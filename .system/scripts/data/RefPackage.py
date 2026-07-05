@@ -1,11 +1,14 @@
+from __future__ import annotations
+
+from typing import Any
 from packaging.specifiers import SpecifierSet
 from scripts.Utils import Utils
 
-VALID_MODES = {"source", "static", "dynamic", "default"}
+VALID_MODES: set[str] = {"source", "static", "dynamic", "default"}
 
 
 class GitRef:
-    def __init__(self, url, tag=None, branch=None, hash=None):
+    def __init__(self, url: str, tag: str | None = None, branch: str | None = None, hash: str | None = None) -> None:
         self.url = url
         self.tag = tag
         self.branch = branch
@@ -13,24 +16,24 @@ class GitRef:
 
 
 class RefPackage:
-    def __init__(self):
-        self.name = ""
-        self.publisher = ""
-        self.is_global = True
-        self.version = "*"
-        self.version_range = SpecifierSet(">=0")
-        self.path = None
-        self.url = None
-        self.git = None
-        self.origin = "default"
-        self.mode = "default"
-        self.resolve = None
-        self.real_package = None
-        self.skip = False
-        self._is_external = False
+    def __init__(self) -> None:
+        self.name: str = ""
+        self.publisher: str = ""
+        self.is_global: bool = True
+        self.version: str = "*"
+        self.version_range: SpecifierSet = SpecifierSet(">=0")
+        self.path: str | None = None
+        self.url: list[str] | None = None
+        self.git: GitRef | None = None
+        self.origin: str = "default"
+        self.mode: str = "default"
+        self.resolve: dict[str, Any] | None = None
+        self.real_package: Any = None  # LibPackage, deferred import
+        self.skip: bool = False
+        self._is_external: bool = False
 
     @classmethod
-    def from_package_json(cls, name, value, app_data):
+    def from_package_json(cls, name: str, value: str | dict[str, Any], app_data: Any) -> RefPackage:
         from scripts.data.LibPackage import LibPackage
         publisher, pkg_name, is_global = LibPackage.split_name(name)
 
@@ -44,7 +47,7 @@ class RefPackage:
         exit(1)
 
     @classmethod
-    def _from_string_impl(cls, name, version, origin, publisher, is_global):
+    def _from_string_impl(cls, name: str, version: str, origin: str, publisher: str, is_global: bool) -> RefPackage:
         version = version.strip()
         ref = cls()
         ref.name = name
@@ -59,7 +62,7 @@ class RefPackage:
         return ref
 
     @classmethod
-    def _from_config_impl(cls, name, config, global_origin, publisher, is_global):
+    def _from_config_impl(cls, name: str, config: dict[str, Any], global_origin: str, publisher: str, is_global: bool) -> RefPackage:
         version = config.get("version", "*").strip()
         ref = cls()
         ref.name = name
@@ -114,7 +117,7 @@ class RefPackage:
         return ref
 
     @staticmethod
-    def _parse_git(git_val, name):
+    def _parse_git(git_val: str | dict[str, Any], name: str) -> GitRef:
         if isinstance(git_val, str):
             return GitRef(url=git_val)
         if isinstance(git_val, dict):

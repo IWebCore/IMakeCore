@@ -14,5 +14,8 @@
         "https://www.zlib.net/"
     ],
     "isGlobal": true,
+    "resolve":{
+        "dynamicDefinition" : ["ZLIB_DLL"]
+    },
     "publisher": "yuekeyuan"
 }

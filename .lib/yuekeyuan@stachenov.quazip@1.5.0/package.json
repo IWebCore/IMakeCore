@@ -11,7 +11,8 @@
     "changelog":"default",
     "resolve":{
         "root" : ["quazip"], 
-        "definitions" : ["QUAZIP_STATIC"]
+        "definitions" : ["QUAZIP_STATIC"],
+        "dynamicDefinition" : ["QUAZIP_BUILD"]
     },
     "publisher": "yuekeyuan"
 }
