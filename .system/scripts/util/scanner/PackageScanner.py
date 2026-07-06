@@ -1,9 +1,10 @@
 """
 PackageScanner.py — Scan a package directory using resolve rules.
-Returns a ScanResult object with categorized file lists (all relative paths).
+Returns a LibPackageDetail instance with categorized file lists (all relative paths).
 """
 import os
-from scripts.util.FileFilter import FileFilter, GitignoreRule
+from scripts.util.scanner.FileFilter import FileFilter, GitignoreRule
+from scripts.data.LibPackageDetail import LibPackageDetail
 
 
 HEADER_SUFFIXES = (".h", ".hpp", ".hxx")
@@ -12,58 +13,45 @@ RESOURCE_SUFFIXES = (".rcc",)
 UI_SUFFIXES = (".ui",)
 
 
-class ScanResult:
-    def __init__(self):
-        self.headers = []
-        self.sources = []
-        self.uis = []
-        self.resources = []
-        self.definitions = []
-        self.includes = []
-        self.precompile_headers = []
-        self.dynamic_definition = []
-
-    def to_dict(self):
-        return {
-            "headers": self.headers,
-            "sources": self.sources,
-            "uis": self.uis,
-            "resources": self.resources,
-            "definitions": self.definitions,
-            "includes": self.includes,
-            "precompile_headers": self.precompile_headers,
-            "dynamic_definition": self.dynamic_definition,
-        }
-
-
 class PackageScanner:
     def __init__(self, package_path, resolve_data=None):
         self.package_path = os.path.normpath(package_path)
         self.resolve = resolve_data or {}
 
     def scan(self):
-        result = ScanResult()
+        result = LibPackageDetail()
         root_paths = self._resolve_roots()
         ignore_patterns = self._normalize_list(self.resolve.get("ignore"))
         file_filter = self._build_filter(root_paths, ignore_patterns)
 
-        result.headers = self._get_files("headers", HEADER_SUFFIXES, root_paths, file_filter)
-        result.sources = self._get_files("sources", SOURCE_SUFFIXES, root_paths, file_filter)
-        result.uis = self._get_files("uis", UI_SUFFIXES, root_paths, file_filter)
-        result.resources = self._get_files("resources", RESOURCE_SUFFIXES, root_paths, file_filter)
+        headers = self._get_files("headers", HEADER_SUFFIXES, root_paths, file_filter)
+        sources = self._get_files("sources", SOURCE_SUFFIXES, root_paths, file_filter)
+        uis = self._get_files("uis", UI_SUFFIXES, root_paths, file_filter)
+        resources = self._get_files("resources", RESOURCE_SUFFIXES, root_paths, file_filter)
 
         ph = self.resolve.get("precompileHeaders")
+        precompile_headers = []
         if ph is not None:
-            result.precompile_headers = [self._resolve_path(p) for p in self._normalize_list(ph)]
+            precompile_headers = [self._resolve_path(p) for p in self._normalize_list(ph)]
 
+        definitions = []
         defs = self.resolve.get("definitions")
         if defs is not None:
-            result.definitions = self._normalize_list(defs)
+            definitions = self._normalize_list(defs)
 
-        result.includes = self._resolve_includes(root_paths)
-        result.dynamic_definition = self._normalize_list(self.resolve.get("dynamicDefinition"))
+        includes = self._resolve_includes(root_paths)
+        dynamic_definition = self._normalize_list(self.resolve.get("dynamicDefinition"))
 
-        self._to_relative(result, self.package_path)
+        base = self.package_path
+        result.headers = LibPackageDetail.list_to_str(self._rel_paths(headers, base))
+        result.sources = LibPackageDetail.list_to_str(self._rel_paths(sources, base))
+        result.uis = LibPackageDetail.list_to_str(self._rel_paths(uis, base))
+        result.resources = LibPackageDetail.list_to_str(self._rel_paths(resources, base))
+        result.definitions = LibPackageDetail.list_to_str(definitions)
+        result.includes = LibPackageDetail.list_to_str(self._rel_paths(includes, base))
+        result.precompile_headers = LibPackageDetail.list_to_str(self._rel_paths(precompile_headers, base))
+        result.dynamic_definition = LibPackageDetail.list_to_str(dynamic_definition)
+
         return result
 
     def _resolve_roots(self):
@@ -137,14 +125,7 @@ class PackageScanner:
         return list(value)
 
     @staticmethod
-    def _to_relative(result, base):
-        def rel(paths):
-            if not paths:
-                return []
-            return [os.path.relpath(p, base).replace(os.sep, "/") for p in paths]
-        result.headers = rel(result.headers)
-        result.sources = rel(result.sources)
-        result.uis = rel(result.uis)
-        result.resources = rel(result.resources)
-        result.precompile_headers = rel(result.precompile_headers)
-        result.includes = rel(result.includes)
+    def _rel_paths(paths, base):
+        if not paths:
+            return []
+        return [os.path.relpath(p, base).replace(os.sep, "/") for p in paths]

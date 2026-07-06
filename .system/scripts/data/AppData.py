@@ -102,7 +102,7 @@ class AppData:
         path = entry.get("path")
         if not path or not os.path.exists(path):
             return None
-        return LibPackage(path)
+        return LibPackage.fromFolder(path)
 
     @staticmethod
     def _compute_ref_hash(ref: RefPackage) -> str:

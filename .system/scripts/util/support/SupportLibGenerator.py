@@ -3,7 +3,8 @@ from __future__ import annotations
 import os
 import json
 from typing import Any
-from scripts.data.models import LibPackageDetailTable, get_session
+from scripts.data.LibPackageDetail import LibPackageDetail
+from scripts.data.models import get_session
 
 
 class SupportLibGenerator:
@@ -13,10 +14,10 @@ class SupportLibGenerator:
         self.env = env
         self.support_dir = os.path.normpath(os.path.join(env.appPath, ".support"))
 
-    def _get_detail(self, lp: Any) -> LibPackageDetailTable | None:
+    def _get_detail(self, lp: Any) -> LibPackageDetail | None:
         session = get_session()
         try:
-            return session.query(LibPackageDetailTable).filter_by(
+            return session.query(LibPackageDetail).filter_by(
                 group=lp.publisher, name=lp.name, version=lp.version
             ).first()
         finally:

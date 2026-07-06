@@ -29,7 +29,7 @@ class PackageResolver:
             if target is None:
                 print(f"ERROR: Package '{ref.name}' path '{ref.path}' does not exist.")
                 exit(1)
-            lib = LibPackage(target)
+            lib = LibPackage.fromFolder(target)
             if not lib.success:
                 print(f"ERROR: Failed to load package '{ref.name}' from '{target}'.")
                 exit(1)
@@ -121,7 +121,7 @@ class PackageResolver:
                 pkg_json = os.path.join(pkg_dir, "package.json")
                 if not os.path.exists(pkg_json):
                     continue
-                lib = LibPackage(pkg_dir)
+                lib = LibPackage.fromFolder(pkg_dir)
                 if lib.success:
                     result.append(lib)
         self._project_libs = result
@@ -156,7 +156,7 @@ class PackageResolver:
             for ref in self.app_data.all_packages():
                 if not ref.real_package or not ref.real_package.success:
                     continue
-                for dep in ref.real_package.dependencies:
+                for dep in ref.real_package.getDependency():
                     dep_key = f"{dep.fullName}@{dep.version}"
                     if dep_key in seen:
                         continue

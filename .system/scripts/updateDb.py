@@ -11,11 +11,10 @@ if _system_dir not in sys.path:
     sys.path.insert(0, _system_dir)
 
 from scripts.data.models import Base, get_engine, get_session
-from scripts.data.models import LibPackageTable, LibPackageDetailTable
+from scripts.data.LibPackage import LibPackage
+from scripts.data.LibPackageDetail import LibPackageDetail
 from scripts.data.GlobalData import GlobalData
-from scripts.util.PackageScanner import PackageScanner
 from scripts.Utils import Utils
-
 
 class UpdateDb:
     def __init__(self):
@@ -24,10 +23,7 @@ class UpdateDb:
         self.total_packages = 0
 
     def run(self):
-        print("=" * 60)
-        print("IMakeCore updateDb — Rebuilding package database")
-        print("=" * 60)
-
+        
         libstores = self.global_data.get_libstores()
         if not libstores:
             print("ERROR: No system libstores found. Check IMAKECORE_ROOT and config.json.")
@@ -42,7 +38,6 @@ class UpdateDb:
 
         print(f"\n{'=' * 60}")
         print(f"Done. {self.total_packages} packages indexed.")
-        print(f"Database: {self.engine.url}")
         print(f"{'=' * 60}")
 
     def _rebuild_tables(self):
@@ -96,35 +91,14 @@ class UpdateDb:
             print(f"  [WARN] Invalid package.json: {package_dir}")
             return
 
-        lib_pkg = LibPackageTable(
-            publisher=publisher,
-            name=name,
-            is_global=pkg_data.get("isGlobal", True),
-            version=version,
-            summary=pkg_data.get("summary", ""),
-            mode=pkg_data.get("mode", "sources"),
-            path=os.path.normpath(package_dir),
-            dependencies=[
-                {"name": k, "version": v}
-                for k, v in pkg_data.get("dependencies", {}).items()
-            ],
-        )
+        lib_pkg = LibPackage.fromFolderWithJson(package_dir, pkg_data)
         session.add(lib_pkg)
 
-        scanner = PackageScanner(package_dir, pkg_data.get("resolve"))
-        scan_result = scanner.scan()
-
-        detail = LibPackageDetailTable.from_scan_result(
-            scan_result, os.path.normpath(package_dir), name, publisher, version)
+        detail = LibPackageDetail.fromPath(package_dir)
         session.add(detail)
 
         self.total_packages += 1
-        ignore_count = len(pkg_data.get("resolve", {}).get("ignore", []))
-        print(f"  [OK] {publisher}/{name}@{version}"
-              f" (headers={len(scan_result.headers)},"
-              f" sources={len(scan_result.sources)},"
-              f" includes={len(scan_result.includes)},"
-              f" ignores={ignore_count})")
+        print(f"  [OK] {publisher}/{name}@{version}")
 
 
 def main():

@@ -4,19 +4,57 @@ import os
 from typing import Any
 from packaging.version import *
 from packaging.specifiers import *
-from scripts.data.models import LibPackageTable
+from sqlalchemy import Column, Integer, String, Boolean, Text, JSON, UniqueConstraint
+from scripts.data.models import Base, get_session
 from scripts.Utils import Utils
-from scripts.data.models import get_session
 
 
-class LibPackage:
+class LibPackage(Base):
+    __tablename__ = "lib_package"
+    __table_args__ = (UniqueConstraint("publisher", "name", "version", name="uq_lib_package"),)
 
-    @staticmethod
-    def split_name(name: str) -> tuple[str, str, bool]:
-        if "/" in name:
-            parts = name.split("/", 1)
-            return parts[0].strip(), parts[1].strip(), False
-        return "", name.strip(), True
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(200), nullable=False)
+    publisher = Column(String(200), default="")
+    is_global = Column(Boolean, default=True)
+    version = Column(String(50), nullable=False)
+    major_version = Column(Integer, default=0)
+    minor_version = Column(Integer, default=0)
+    patch_version = Column(Integer, default=0)
+    summary = Column(Text, default="")
+    mode = Column(String(50), default="sources")
+    path = Column(String(1000), default="")
+    content = Column(JSON, default={})
+
+    success: bool = True
+
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self._detail_cache: Any = None
+        self._supported_modes: list[str] = ["source", "static"]
+        self.success: bool = True
+
+    def __str__(self) -> str:
+        return f"{self.fullName}@{self.version}"
+
+    def __repr__(self) -> str:
+        return f"<LibPackage {self.publisher}/{self.name}@{self.version}>"
+
+    @property
+    def fullName(self) -> str:
+        if self.publisher:
+            return f"{self.publisher}/{self.name}"
+        return self.name
+
+    @property
+    def isGlobal(self) -> bool:
+        return self.is_global
+
+    @isGlobal.setter
+    def isGlobal(self, value: bool) -> None:
+        self.is_global = value
+
+    # ── Dependency inner class ──────────────────────────────────────────
 
     class Dependency:
         def __init__(self, name: str, version: str) -> None:
@@ -26,169 +64,140 @@ class LibPackage:
 
         def matchLib(self, libPackage: LibPackage) -> bool:
             if "/" in self.fullName:
-                return self.fullName == (libPackage.publisher + "/" + libPackage.name)  \
+                return self.fullName == (libPackage.publisher + "/" + libPackage.name) \
                         and self.versionSpec.contains(Version(libPackage.version))
 
-            return self.fullName == libPackage.name     \
-                    and self.versionSpec.contains(Version(libPackage.version))  \
+            return self.fullName == libPackage.name \
+                    and self.versionSpec.contains(Version(libPackage.version)) \
                     and libPackage.isGlobal
 
-    def __init__(self) -> None:
-        self.name: str = ""
-        self.publisher: str = ""
-        self.isGlobal: bool = False
-        self.version: str = ""
-        self.summary: str = ""
-        self.autoScan: bool = False
-        self.mode: str = "sources"
-        self.path: str = ""
-        self.dependencies: list[LibPackage.Dependency] = []
-        self.success: bool = True
-        self._supported_modes: list[str] = ["source", "static"]
+    # ── Static helpers ──────────────────────────────────────────────────
 
-    def __init__(self, path: str) -> None:
-        self.name: str = ""
-        self.publisher: str = ""
-        self.isGlobal: bool = False
-        self.version: str = ""
-        self.summary: str = ""
-        self.autoScan: bool = False
-        self.mode: str = "sources"
-        self.path: str = path
-        self.dependencies: list[LibPackage.Dependency] = []
-        self.success: bool = True
-        self._supported_modes: list[str] = ["source", "static"]
+    @staticmethod
+    def split_name(name: str) -> tuple[str, str, bool]:
+        if "/" in name:
+            parts = name.split("/", 1)
+            return parts[0].strip(), parts[1].strip(), False
+        return "", name.strip(), True
 
-        try:
-            self.loadPackage()
-        except Exception:
-            self.success = False
+    # ── Factory: from filesystem ────────────────────────────────────────
 
-        if self.success:
-            self.checkPackage()
+    def getDependency(self) -> list[Dependency]:
+        deps: list[LibPackage.Dependency] = []
+        raw = (self.content or {}).get("dependencies", {})
+        for k, v in raw.items():
+            deps.append(LibPackage.Dependency(k, v))
+        return deps
 
-    def __str__(self) -> str:
-        return f"{self.fullName}@{self.version}"
+    @staticmethod
+    def fromFolder(path: str) -> LibPackage:
+        """Read package.json from *path* and return a new LibPackage instance."""
+        json_path = os.path.join(path, "package.json")
+        if not os.path.exists(json_path):
+            raise FileNotFoundError(f"package.json not found in {path}")
+        json_data = Utils.loadJson(json_path)
+        return LibPackage.fromFolderWithJson(path, json_data)
 
-    def loadPackage(self) -> None:
-        path = os.path.join(self.path, "package.json")
-        if not os.path.exists(path):
-            self.success = False
-            return
+    @staticmethod
+    def fromFolderWithJson(path: str, json_data: dict[str, Any]) -> LibPackage:
+        """Build a LibPackage from a directory path and pre-loaded package.json dict."""
+        publisher = json_data.get("publisher", "")
+        name = json_data.get("name", "")
+        version = json_data.get("version", "")
+        if not name or not version:
+            raise ValueError(f"Invalid package.json at {path}: name and version are required")
 
-        self.json = Utils.loadJson(path)
+        parts = version.split(".")
+        major = int(parts[0]) if len(parts) > 0 and parts[0].isdigit() else 0
+        minor = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 0
+        patch = int(parts[2]) if len(parts) > 2 and parts[2].isdigit() else 0
 
-        self.publisher = self.json.get("publisher", "")
-        self.name = self.json.get("name")
-        self.isGlobal = self.json.get("isGlobal", True)
+        raw_mode = json_data.get("mode", "sources")
+        if isinstance(raw_mode, list):
+            mode_str = raw_mode[0] if raw_mode else "sources"
+        else:
+            mode_str = raw_mode
 
-        self.version = self.json.get("version")
-        self.summary = self.json.get("summary")
-        self.autoScan = False  # deprecated, always False
-        self._supported_modes = ["source", "static"]
-        raw_mode = self.json.get("mode")
+        lp = LibPackage(
+            publisher=publisher,
+            name=name,
+            is_global=json_data.get("isGlobal", True),
+            version=version,
+            major_version=major,
+            minor_version=minor,
+            patch_version=patch,
+            summary=json_data.get("summary", ""),
+            mode=mode_str,
+            path=os.path.normpath(path),
+            content=json_data,
+        )
+
+        lp.success = True
+        lp.autoScan = False
+        lp.json = json_data
+
+        # Validate
+        if not lp.isGlobal and lp.publisher == "":
+            raise ValueError(
+                f"Invalid package.json, package {lp.name} is not global "
+                f"and publisher is missing. Path:{path}"
+            )
+
+        # Parse supported modes — "sources" is accepted as a synonym for "source"
+        supported = ["source", "static"]
         if raw_mode is not None:
             if isinstance(raw_mode, str):
                 raw_mode = [raw_mode]
+            normalized = []
             for m in raw_mode:
-                if m not in ("source", "static", "dynamic"):
-                    print(f"ERROR: {self.name}: invalid mode '{m}' in package.json mode list")
-                    exit(1)
-            self._supported_modes = raw_mode if raw_mode else ["source", "static"]
-        dependencies = self.json.get("dependencies", {})
-        for key, value in dependencies.items():
-            dep = LibPackage.Dependency(key, value)
-            self.dependencies.append(dep)
+                m_norm = "source" if m == "sources" else m
+                if m_norm not in ("source", "static", "dynamic"):
+                    raise ValueError(f"ERROR: {lp.name}: invalid mode '{m}' in package.json mode list")
+                normalized.append(m_norm)
+            supported = normalized if normalized else ["source", "static"]
+        lp._supported_modes = supported
 
-    def checkPackage(self) -> None:
-        if not self.isGlobal and self.publisher == "":
-            self.success = False
-            assert False, f"Invalid package.json, package {self.name} is not global and publisher is missing. Path:{self.path}"
-
-        assert self.name and self.version, f"Invalid package.json, package name or version is missing. Path:{self.path}"
-
-    @classmethod
-    def from_db_row(cls, row: LibPackageTable) -> LibPackage:
-        """Create a LibPackage instance from a LibPackageTable ORM row."""
-        lp = cls.__new__(cls)
-        lp.name = row.name
-        lp.publisher = row.publisher
-        lp.isGlobal = row.is_global
-        lp.version = row.version
-        lp.summary = row.summary or ""
-        lp.autoScan = False  # deprecated — always False
-        lp.path = row.path
-        lp.mode = row.mode if isinstance(row.mode, str) else "default"
-        lp._supported_modes = row.mode if isinstance(row.mode, list) else ["source", "static"]
-        lp.dependencies = [
-            LibPackage.Dependency(d.get("name", ""), d.get("version", ""))
-            for d in (row.dependencies or [])
-        ]
-        lp.success = True
         return lp
 
-    @classmethod
-    def query_all_from_db(cls) -> list[LibPackage]:
+    # ── Factory: from database ──────────────────────────────────────────
+
+    @staticmethod
+    def loadFromDb(name: str, publisher: str = "") -> list[LibPackage]:
+        """Query LibPackage from DB by name (and optional publisher).
+
+        If publisher is empty, only return rows where is_global is True.
+        """
         session = get_session()
         try:
-            rows = session.query(LibPackageTable).all()
-            return [cls.from_db_row(row) for row in rows]
+            query = session.query(LibPackage)
+            if publisher:
+                query = query.filter(
+                    LibPackage.publisher == publisher,
+                    LibPackage.name == name,
+                )
+            else:
+                query = query.filter(
+                    LibPackage.name == name,
+                    LibPackage.is_global == True,
+                )
+            return list(query.all())
         finally:
             session.close()
 
     def getDetail(self) -> Any:
         if hasattr(self, "_detail_cache") and self._detail_cache is not None:
             return self._detail_cache
-
-        from scripts.data.models import LibPackageDetailTable
-        from scripts.data.models import get_session as _gs
-        s = _gs()
-        try:
-            detail = s.query(LibPackageDetailTable).filter_by(
-                group=self.publisher, name=self.name, version=self.version
-            ).first()
-            if detail is not None:
-                self._detail_cache = detail
-                return detail
-        finally:
-            s.close()
-
-        detail = self._scan_detail()
-        self._detail_cache = detail
+        from scripts.data.LibPackageDetail import LibPackageDetail
+        detail = LibPackageDetail.from_(self.path)
+        if detail is not None:
+            self._detail_cache = detail
         return detail
-
-    def _scan_detail(self) -> Any:
-        from scripts.util.PackageScanner import PackageScanner
-        from scripts.data.models import LibPackageDetailTable
-
-        scanner = PackageScanner(self.path)
-        result = scanner.scan()
-        return LibPackageDetailTable.from_scan_result(result, self.path, self.name, self.publisher, self.version)
 
     def is_header_only(self) -> bool:
         detail = self.getDetail()
         if detail is None:
             return False
-        return (len(detail.get_sources()) == 0
-                and len(detail.get_uis()) == 0
-                and len(detail.get_resources()) == 0)
-
-    @classmethod
-    def _virtual_from_resolve(cls, path: str, name: str, publisher: str | None, version: str | None, resolve: dict[str, Any] | None) -> LibPackage:
-        lp = cls.__new__(cls)
-        lp.name = name
-        lp.publisher = publisher or "local"
-        lp.version = version or "default"
-        lp.path = os.path.normpath(path)
-        lp.isGlobal = True
-        lp.summary = f"[virtual] {lp.publisher}/{lp.name}"
-        lp.mode = resolve.get("mode", "sources") if resolve else "sources"
-        lp._supported_modes = resolve.get("mode", ["source", "static"]) if resolve else ["source", "static"]
-        lp.dependencies = []
-        lp.success = True
-        lp.autoScan = False
-        lp._virtual_resolve = resolve
-        return lp
+        return detail.is_header_only()
 
     def isMatch(self, package: Any) -> bool:
         """Match against either AppPackage (legacy) or RefPackage."""
@@ -211,3 +220,21 @@ class LibPackage:
                     and package.versionSpec.contains(Version(self.version)))
         return (self.isGlobal and self.name == package.name
                 and package.versionSpec.contains(Version(self.version)))
+
+    @classmethod
+    def _virtual_from_resolve(cls, path: str, name: str, publisher: str | None,
+                              version: str | None, resolve: dict[str, Any] | None) -> LibPackage:
+        lp = cls(
+            name=name,
+            publisher=publisher or "local",
+            version=version or "default",
+            path=os.path.normpath(path),
+            is_global=True,
+            summary=f"[virtual] {publisher or 'local'}/{name}",
+            mode=resolve.get("mode", "sources") if resolve else "sources",
+            dependencies=[],
+            content={},
+        )
+        lp._supported_modes = resolve.get("mode", ["source", "static"]) if resolve else ["source", "static"]
+        lp._virtual_resolve = resolve
+        return lp

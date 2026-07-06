@@ -61,7 +61,7 @@ class MakeUtils:
             lp = MakeUtils._get_lp(lib)
             if not lp:
                 continue
-            for dep in lp.dependencies:
+            for dep in lp.getDependency():
                 if not any(dep.matchLib(MakeUtils._get_lp(l2)) for l2 in libs):
                     print(f"Package {lp.name} requires {dep.fullName} version {dep.version} "
                           f"but it is not found in the list of packages.")

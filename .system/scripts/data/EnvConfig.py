@@ -85,7 +85,6 @@ class EnvConfig:
 
         No filesystem scanning — all package data is read from package.db.
         """
-        from scripts.data.models import LibPackageTable
         from scripts.data.models import get_session
 
         try:
@@ -97,20 +96,19 @@ class EnvConfig:
 
         try:
             try:
-                rows = session.query(LibPackageTable).all()
+                rows = session.query(LibPackage).all()
             except Exception as e:
                 print(f"\n  ERROR: Database table not found: {e}")
                 print("  Please run 'python -B .system/scripts/updateDb.py' to create the database tables.\n")
                 sys.exit(1)
 
             for row in rows:
-                lib = LibPackage.from_db_row(row)
-                if lib.publisher == "":
-                    lib.publisher = self.userName
-                name = lib.publisher + "/" + lib.name
+                if row.publisher == "":
+                    row.publisher = self.userName
+                name = row.publisher + "/" + row.name
                 if name not in self.libs:
                     self.libs[name] = []
-                self.libs[name].append(lib)
+                self.libs[name].append(row)
         finally:
             session.close()
 

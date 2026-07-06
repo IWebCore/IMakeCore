@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from typing import Any
 from scripts.data.models import get_session
-from scripts.data.models import LibPackageDetailTable
+from scripts.data.LibPackageDetail import LibPackageDetail
 
 
 class MakePackageGenerator:
@@ -13,17 +13,17 @@ class MakePackageGenerator:
         return os.path.normpath(p).replace(os.sep, "/")
 
     @staticmethod
-    def _get_detail_from_db(publisher: str, name: str, version: str) -> LibPackageDetailTable | None:
+    def _get_detail_from_db(publisher: str, name: str, version: str) -> LibPackageDetail | None:
         session = get_session()
         try:
-            return session.query(LibPackageDetailTable).filter_by(
-                group=publisher, name=name, version=version
+            return session.query(LibPackageDetail).filter_by(
+                publisher=publisher, name=name, version=version
             ).first()
         finally:
             session.close()
 
     @staticmethod
-    def _get_file_paths(detail: LibPackageDetailTable | None) -> dict[str, list[str]] | None:
+    def _get_file_paths(detail: LibPackageDetail | None) -> dict[str, list[str]] | None:
         if detail is None:
             return None
         return {
