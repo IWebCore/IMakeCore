@@ -66,29 +66,3 @@ class MakeUtils:
                     print(f"Package {lp.name} requires {dep.fullName} version {dep.version} "
                           f"but it is not found in the list of packages.")
                     exit(1)
-
-    @staticmethod
-    def updatePackageForceLocal(packages: list[Any], env: Any) -> None:
-        env.appLibStore = os.path.normpath(env.appLibStore)
-        for package in packages:
-            is_local = getattr(package, "forceLocal", False) or \
-                       getattr(package, "origin", "default") == "local"
-            if not is_local:
-                continue
-            lp = MakeUtils._get_lp(package)
-            if not lp:
-                continue
-            if env.appLibStore in os.path.normpath(package.path):
-                continue
-
-            lp = package.libPackage
-            new_path = os.path.join(env.appLibStore, f"{lp.publisher}@{lp.name}@{lp.version}")
-            old_path = package.path
-            package.path = new_path
-            lp.path = new_path
-
-            if os.path.exists(new_path):
-                continue
-
-            print(f"copy package to local lib store package {package.name}@{lp.version}")
-            shutil.copytree(old_path, new_path)

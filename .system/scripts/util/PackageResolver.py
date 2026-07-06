@@ -81,6 +81,7 @@ class PackageResolver:
             return None
         return resolved
 
+    # 这个函数应该在 path, git， url 中使用， 在 发现 git / url 的时候，直接使用这个路径查找，如果没有找到，则考虑下载。
     def _compute_target_dir(self, ref):
         publisher = ref.publisher or "local"
         ver = ref.version if ref.version not in ("*", "latest", "default", "") else "default"
@@ -108,6 +109,7 @@ class PackageResolver:
             print(f"ERROR: Cloned package '{ref.name}' is invalid.")
             exit(1)
 
+    # 这个考虑在 AppData 中实现这个内容，并且缓存 projectLibs.
     def _get_project_libs(self):
         if self._project_libs is not None:
             return self._project_libs
