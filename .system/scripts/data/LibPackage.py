@@ -28,6 +28,7 @@ class LibPackage(Base):
     content = Column(JSON, default={})
 
     success: bool = True
+    position: str = "system"
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Any
+from packaging.version import Version
 from scripts.data.LibPackage import LibPackage
 from scripts.data.LibName import LibName
 from scripts.data.models import get_session
@@ -32,6 +33,10 @@ class SystemLibProvider(LibProvider):
                 )
             else:
                 return []
-            return list(query.all())
+            result = list(query.all())
+            for p in result:
+                p.position = "system"
+            result.sort(key=lambda x: Version(x.version), reverse=True)
+            return result
         finally:
             session.close()
