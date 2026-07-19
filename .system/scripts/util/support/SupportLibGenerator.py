@@ -18,7 +18,7 @@ class SupportLibGenerator:
         session = get_session()
         try:
             return session.query(LibPackageDetail).filter_by(
-                group=lp.publisher, name=lp.name, version=lp.version
+                publisher=lp.publisher, name=lp.name, version=lp.version
             ).first()
         finally:
             session.close()

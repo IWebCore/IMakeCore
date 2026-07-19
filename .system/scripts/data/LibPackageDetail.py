@@ -33,7 +33,7 @@ class LibPackageDetail(Base):
     SEP: str = ";"
 
     def __repr__(self) -> str:
-        return f"<LibPackageDetail {self.group}/{self.name}@{self.version}>"
+        return f"<LibPackageDetail {self.publisher}/{self.name}@{self.version}>"
 
     # ── List serialization ───────────────────────────────────────────────
 
