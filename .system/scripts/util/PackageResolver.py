@@ -9,7 +9,6 @@ class PackageResolver:
     def __init__(self, app_data, env):
         self.app_data = app_data
         self.env = env
-        self._project_libs = None
 
     def resolve_all(self):
         for ref in self.app_data.packages:
@@ -109,42 +108,19 @@ class PackageResolver:
             print(f"ERROR: Cloned package '{ref.name}' is invalid.")
             exit(1)
 
-    # 这个考虑在 AppData 中实现这个内容，并且缓存 projectLibs.
-    def _get_project_libs(self):
-        if self._project_libs is not None:
-            return self._project_libs
-        result = []
-        lib_dir = self.env.appLibStore
-        if os.path.exists(lib_dir):
-            for entry in os.listdir(lib_dir):
-                pkg_dir = os.path.join(lib_dir, entry)
-                if not os.path.isdir(pkg_dir):
-                    continue
-                pkg_json = os.path.join(pkg_dir, "package.json")
-                if not os.path.exists(pkg_json):
-                    continue
-                lib = LibPackage.fromFolder(pkg_dir)
-                if lib.success:
-                    result.append(lib)
-        self._project_libs = result
-        return result
-
     def _find_in_project_libs(self, ref):
-        matching = [lib for lib in self._get_project_libs() if lib.isMatch(ref)]
+        lib_name = ref.lib_name
+        pkgs = self.env.getProviderManager().getLocalProvider().findPackages(lib_name)
+        matching = [lib for lib in pkgs if lib.isMatch(ref)]
         matching.sort(key=lambda x: Version(x.version), reverse=True)
         return matching[0] if matching else None
 
     def _find_in_env_libs(self, ref):
-        key = f"{ref.publisher}/{ref.name}"
-        if key in self.env.libs:
-            for lib in self.env.libs[key]:
-                if ref.version_range.contains(Version(lib.version)):
-                    return lib
-        for k, libs in self.env.libs.items():
-            if k.endswith(ref.name):
-                for lib in libs:
-                    if ref.version_range.contains(Version(lib.version)):
-                        return lib
+        lib_name = ref.lib_name
+        pkgs = self.env.getProviderManager().getSystemProvider().findPackages(lib_name)
+        for lib in pkgs:
+            if ref.version_range.contains(Version(lib.version)):
+                return lib
         return None
 
     def _resolve_external_deps(self):

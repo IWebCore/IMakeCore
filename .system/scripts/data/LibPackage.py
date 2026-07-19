@@ -7,6 +7,7 @@ from packaging.specifiers import *
 from sqlalchemy import Column, Integer, String, Boolean, Text, JSON, UniqueConstraint
 from scripts.data.models import Base, get_session
 from scripts.Utils import Utils
+from scripts.data.LibName import LibName
 
 
 class LibPackage(Base):
@@ -132,6 +133,7 @@ class LibPackage(Base):
             content=json_data,
         )
 
+        lp.lib_name = LibName(lp.name, publisher=lp.publisher, is_global=lp.isGlobal)
         lp.success = True
         lp.autoScan = False
         lp.json = json_data

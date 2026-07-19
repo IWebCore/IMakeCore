@@ -1,13 +1,10 @@
 from __future__ import annotations
 
 import os
-import sys
 from typing import Any
-from packaging.version import *
-from packaging.specifiers import *
-from scripts.data.LibPackage import LibPackage
 from scripts.data.GlobalData import GlobalData
 from scripts.Utils import Utils
+from scripts.provider.LibProviderManager import LibProviderManager
 
 
 class EnvConfig:
@@ -24,7 +21,6 @@ class EnvConfig:
 
         self.servers: list[str] = []
         self.libstores: list[str] = []
-        self.libs: dict[str, list[LibPackage]] = {}
 
         self._global = GlobalData()
         self.global_data = self._global
@@ -35,7 +31,7 @@ class EnvConfig:
 
         self.loadAppConfig()
         self.checkDirectoryExists()
-        self.parseLibs()
+        self._provider_manager = LibProviderManager(self.appLibStore)
 
     def loadAppConfig(self) -> None:
         appConfigJson = os.path.join(self.appDataPath, "config.json")
@@ -80,37 +76,5 @@ class EnvConfig:
         libStores = [ls for ls in self.libstores if os.path.exists(ls)]
         self.libstores = libStores
 
-    def parseLibs(self) -> None:
-        """Query package metadata from the SQLite database (populated by updateDb.py).
-
-        No filesystem scanning — all package data is read from package.db.
-        """
-        from scripts.data.models import get_session
-
-        try:
-            session = get_session()
-        except Exception as e:
-            print(f"\n  ERROR: Failed to connect to package database: {e}")
-            print("  Please run 'python -B .system/scripts/updateDb.py' first to initialize the database.\n")
-            sys.exit(1)
-
-        try:
-            try:
-                rows = session.query(LibPackage).all()
-            except Exception as e:
-                print(f"\n  ERROR: Database table not found: {e}")
-                print("  Please run 'python -B .system/scripts/updateDb.py' to create the database tables.\n")
-                sys.exit(1)
-
-            for row in rows:
-                if row.publisher == "":
-                    row.publisher = self.userName
-                name = row.publisher + "/" + row.name
-                if name not in self.libs:
-                    self.libs[name] = []
-                self.libs[name].append(row)
-        finally:
-            session.close()
-
-        for name in self.libs:
-            self.libs[name].sort(key=lambda x: Version(x.version), reverse=True)
+    def getProviderManager(self) -> LibProviderManager:
+        return self._provider_manager

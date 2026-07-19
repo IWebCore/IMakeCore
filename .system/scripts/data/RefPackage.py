@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 from packaging.specifiers import SpecifierSet
 from scripts.Utils import Utils
+from scripts.data.LibName import LibName
 
 VALID_MODES: set[str] = {"source", "static", "dynamic", "default"}
 
@@ -29,6 +30,7 @@ class RefPackage:
         self.mode: str = "default"
         self.resolve: dict[str, Any] | None = None
         self.real_package: Any = None  # LibPackage, deferred import
+        self.lib_name: LibName = LibName()
         self.skip: bool = False
         self._is_external: bool = False
 
@@ -53,6 +55,7 @@ class RefPackage:
         ref.name = name
         ref.publisher = publisher
         ref.is_global = is_global
+        ref.lib_name = LibName(name, publisher=publisher, is_global=is_global)
         ref.version = version
         ref.version_range = Utils.parseVersionSpecifier(version)
         ref.origin = origin
@@ -74,6 +77,7 @@ class RefPackage:
 
         ref.publisher = config.get("publisher", publisher)
         ref.is_global = config.get("isGlobal", is_global)
+        ref.lib_name = LibName(name, publisher=ref.publisher, is_global=ref.is_global)
 
         if "origin" in config:
             ref.origin = config["origin"]
