@@ -49,14 +49,24 @@ class LibPackage(Base):
         return self.name
 
     @property
+    def lib_name(self) -> LibName:
+        if hasattr(self, "_lib_name_cache"):
+            return self._lib_name_cache
+        ln = LibName(self.name, publisher=self.publisher, is_global=self.is_global)
+        self._lib_name_cache = ln
+        return ln
+
+    @lib_name.setter
+    def lib_name(self, value: LibName) -> None:
+        self._lib_name_cache = value
+
+    @property
     def isGlobal(self) -> bool:
         return self.is_global
 
     @isGlobal.setter
     def isGlobal(self, value: bool) -> None:
         self.is_global = value
-
-    # ── Dependency inner class ──────────────────────────────────────────
 
     class Dependency:
         def __init__(self, name: str, version: str) -> None:

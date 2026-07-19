@@ -1,6 +1,13 @@
 import os
 from packaging.version import Version
+from packaging.specifiers import SpecifierSet
+from resolvelib import BaseReporter, Resolver
+from resolvelib.resolvers.exceptions import ResolutionImpossible
 from scripts.data.LibPackage import LibPackage
+from scripts.data.RefPackage import RefPackage
+from scripts.data.LibName import LibName
+from scripts.Utils import Utils
+from scripts.provider.ResolveLibProvider import Requirement, ResolveLibProvider
 from scripts.util.download.UrlPackageDownload import UrlPackageDownload
 from scripts.util.download.GitPackageDownload import GitPackageDownload
 
@@ -13,7 +20,7 @@ class PackageResolver:
     def resolve_all(self):
         for ref in self.app_data.packages:
             self._resolve_with_cache(ref)
-        self._resolve_external_deps()
+        self._resolve_transitive()
 
     def _resolve_with_cache(self, ref):
         cached = self.app_data.get_cached(ref)
@@ -67,6 +74,55 @@ class PackageResolver:
             print(f"ERROR: Package '{ref.name}' version '{ref.version}' not found and no download source.")
             exit(1)
 
+    def _resolve_transitive(self):
+        root_reqs: list[Requirement] = []
+        for ref in self.app_data.packages:
+            if not ref.real_package or not ref.real_package.success:
+                continue
+            for dep in ref.real_package.getDependency():
+                lib_name = LibName(dep.fullName)
+                if not lib_name.isValid():
+                    continue
+                root_reqs.append(Requirement(lib_name, dep.versionSpec))
+
+        if not root_reqs:
+            return
+
+        provider = ResolveLibProvider(self.env.getProviderManager())
+        reporter = BaseReporter()
+        resolver = Resolver(provider, reporter)
+
+        try:
+            result = resolver.resolve(root_reqs)
+            for lib_name_str, candidate in result.mapping.items():
+                lib_name = LibName(lib_name_str)
+                existing = self._find_existing(lib_name, candidate.version)
+                if existing is not None:
+                    continue
+                ext = RefPackage()
+                ext.name = lib_name.fullName()
+                ext.publisher = lib_name.publisher
+                ext.version = candidate.version
+                ext.version_range = Utils.parseVersionSpecifier(candidate.version)
+                ext.origin = "default"
+                ext._is_external = True
+                ext.real_package = candidate.pkg
+                self.app_data.external_packages.append(ext)
+
+        except ResolutionImpossible as e:
+            print("ERROR: Dependency resolution failed — no compatible version combination found.")
+            if hasattr(e, 'causes'):
+                for cause in e.causes:
+                    print(f"  - {cause}")
+            exit(1)
+
+    def _find_existing(self, lib_name, version):
+        for ref in self.app_data.all_packages():
+            lp = ref.real_package
+            if lp and lp.lib_name.fullName() == lib_name.fullName() and lp.version == version:
+                return ref
+        return None
+
     def _resolve_path(self, ref):
         if not ref.path or not ref.path.strip():
             return None
@@ -80,7 +136,6 @@ class PackageResolver:
             return None
         return resolved
 
-    # 这个函数应该在 path, git， url 中使用， 在 发现 git / url 的时候，直接使用这个路径查找，如果没有找到，则考虑下载。
     def _compute_target_dir(self, ref):
         publisher = ref.publisher or "local"
         ver = ref.version if ref.version not in ("*", "latest", "default", "") else "default"
@@ -122,44 +177,3 @@ class PackageResolver:
             if ref.version_range.contains(Version(lib.version)):
                 return lib
         return None
-
-    def _resolve_external_deps(self):
-        seen = set()
-        changed = True
-        max_iter = 100
-        iteration = 0
-        while changed and iteration < max_iter:
-            changed = False
-            iteration += 1
-            for ref in self.app_data.all_packages():
-                if not ref.real_package or not ref.real_package.success:
-                    continue
-                for dep in ref.real_package.getDependency():
-                    dep_key = f"{dep.fullName}@{dep.version}"
-                    if dep_key in seen:
-                        continue
-                    seen.add(dep_key)
-                    if self._is_dep_satisfied(dep):
-                        continue
-                    ext = RefPackage()
-                    ext.name = dep.fullName
-                    ext.version = dep.version
-                    ext.version_range = dep.versionSpec
-                    ext.origin = ref.origin
-                    ext._is_external = True
-                    self.resolve_one(ext)
-                    self.app_data.external_packages.append(ext)
-                    changed = True
-        if iteration >= max_iter:
-            print("ERROR: Circular dependency or too many dependency levels.")
-            exit(1)
-
-    def _is_dep_satisfied(self, dep):
-        for ref in self.app_data.all_packages():
-            if ref.real_package and ref.real_package.success:
-                if dep.matchLib(ref.real_package):
-                    return True
-        return False
-
-
-from scripts.data.RefPackage import RefPackage
