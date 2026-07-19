@@ -10,18 +10,29 @@ from scripts.Utils import Utils
 from scripts.data.RefPackage import RefPackage
 from scripts.data.LibPackage import LibPackage
 
-
 class AppData:
     def __init__(self, project_path: str) -> None:
         self.path = project_path
         self.json: dict[str, Any] = {}
+        
         self.local_lib_store: str = ""
+        
         self.global_origin: str = "default"
+        
         self.packages: list[RefPackage] = []
         self.external_packages: list[RefPackage] = []
+        
         self.cache: dict[str, Any] = {}
         self.cache_path: str = ""
+        
+        self._loadConfig()
+        self._parseOrigin()
+        self._parseLocalLibStore()
+        self._loadCache()
 
+        self._parseRefPackages()
+
+    def _loadConfig(self):
         json_path = os.path.join(self.path, "packages.json")
         if not os.path.exists(json_path):
             src = os.path.join(os.getenv("IMAKECORE_ROOT"), ".data", "packages.json")
@@ -29,16 +40,19 @@ class AppData:
 
         self.json = Utils.loadJson(json_path)
 
+    def _parseOrigin(self): 
         if "origin" in self.json:
             self.global_origin = self.json["origin"]
         elif self.json.get("forceLocal", False):
             print("WARNING: 'forceLocal' is deprecated, use 'origin: local'")
             self.global_origin = "local"
 
-        if self.global_origin not in ("local", "system", "default"):
-            print(f"ERROR: Invalid global origin '{self.global_origin}'. Must be local, system, or default.")
+        if self.global_origin not in ("local", "default"):
+            print(f"ERROR: Invalid global origin '{self.global_origin}'. Must be local or default.")
             exit(1)
 
+    def _parseLocalLibStore(self):
+        
         self.local_lib_store = self.json.get("localLibStore")
         if self.local_lib_store is None:
             self.local_lib_store = os.path.join(self.path, ".lib")
@@ -46,29 +60,18 @@ class AppData:
             self.local_lib_store = os.path.join(self.path, self.local_lib_store)
         self.local_lib_store = os.path.normpath(self.local_lib_store)
 
-        self._parse_packages()
-
-        self.cache_path = os.path.join(self.path, ".data", "resolve-cache.json")
-        self._load_cache()
-
-    def all_packages(self) -> list[RefPackage]:
-        return self.packages + self.external_packages
-
-    def _parse_packages(self) -> None:
+    def _parseRefPackages(self) -> None:
         raw = self.json.get("packages", {})
         if not raw:
             print("ERROR: packages.json does not contain 'packages' field.")
             exit(1)
         for name, value in raw.items():
-            ref = self._parse_one(name, value)
-            if ref is not None:
+            ref = RefPackage.from_package_json(name, value, self)
+            if not ref.skip:
                 self.packages.append(ref)
-
-    def _parse_one(self, name: str, value: str | dict[str, Any]) -> RefPackage | None:
-        ref = RefPackage.from_package_json(name, value, self)
-        return ref if not ref.skip else None
-
-    def _load_cache(self) -> None:
+        
+    def _loadCache(self) -> None:
+        self.cache_path = os.path.join(self.path, ".data", "resolve-cache.json")
         if not os.path.exists(self.cache_path):
             return
         try:
@@ -106,8 +109,15 @@ class AppData:
 
     @staticmethod
     def _compute_ref_hash(ref: RefPackage) -> str:
-        raw = json.dumps({"n": ref.name, "v": ref.version, "p": ref.publisher,
-                           "o": ref.origin, "path": ref.path, "url": ref.url,
+        raw = json.dumps({"n": ref.name, 
+                          "v": ref.version, 
+                          "p": ref.publisher,
+                            "o": ref.origin, 
+                           "path": ref.path, 
+                           "url": ref.url,
                            "g": ref.git.url if ref.git else None,
                            "r": ref.resolve}, sort_keys=True)
         return hashlib.sha256(raw.encode()).hexdigest()[:16]
+
+    def all_packages(self) -> list[RefPackage]:
+        return self.packages + self.external_packages
