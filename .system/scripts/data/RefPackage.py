@@ -15,14 +15,12 @@ class GitRef:
         self.branch = branch
         self.hash = hash
 
+
 class RefPackage:
     def __init__(self) -> None:
-        self.name: str = ""
-        self.publisher: str = ""
-        self.is_global: bool = True
         self.lib_name: LibName = LibName()
 
-        self.version: str = "*"
+        self._version: str = "*"
         self.version_range: SpecifierSet = SpecifierSet(">=0")
 
         self.path: str | None = None
@@ -35,10 +33,45 @@ class RefPackage:
         self.skip: bool = False
         self._is_external: bool = False
 
+        self.config: dict[str, Any] | None = None
+
+    # ── Read-only properties delegating to lib_name ──────────────────────
+
+    @property
+    def name(self) -> str:
+        return self.lib_name.name
+
+    @property
+    def publisher(self) -> str:
+        return self.lib_name.publisher
+
+    @property
+    def is_global(self) -> bool:
+        return self.lib_name.is_global
+
+    # ── Version property ─────────────────────────────────────────────────
+
+    @property
+    def version(self) -> str:
+        return self._version
+
+    @version.setter
+    def version(self, value: str) -> None:
+        self._version = value
+
+    # ── Factory: from packages.json entry ────────────────────────────────
+
     @classmethod
     def from_package_json(cls, name: str, value: str | dict[str, Any], app_data: Any) -> RefPackage:
-        from scripts.data.LibPackage import LibPackage
-        publisher, pkg_name, is_global = LibPackage.split_name(name)
+        if "/" in name:
+            parts = name.split("/", 1)
+            publisher = parts[0].strip()
+            pkg_name = parts[1].strip()
+            is_global = False
+        else:
+            publisher = ""
+            pkg_name = name.strip()
+            is_global = True
 
         if isinstance(value, str):
             return cls._from_string_impl(pkg_name, value, app_data.global_origin,
@@ -50,38 +83,35 @@ class RefPackage:
         exit(1)
 
     @classmethod
-    def _from_string_impl(cls, name: str, version: str, global_origin: str, publisher: str, is_global: bool) -> RefPackage:
+    def _from_string_impl(cls, name: str, version: str, global_origin: str,
+                          publisher: str, is_global: bool) -> RefPackage:
         version = version.strip()
         ref = cls()
-        ref.name = name
-        ref.publisher = publisher
-        ref.is_global = is_global
         ref.lib_name = LibName(name, publisher=publisher, is_global=is_global)
-        
-        ref.version = version
+        ref._version = version
         ref.version_range = Utils.parseVersionSpecifier(version)
-        if version == "x":
-            ref.skip = True
-        
         ref.origin = global_origin
         ref.mode = "default"
-        
+        if version == "x":
+            ref.skip = True
         return ref
 
     @classmethod
-    def _from_config_impl(cls, name: str, config: dict[str, Any], global_origin: str, publisher: str, is_global: bool) -> RefPackage:
+    def _from_config_impl(cls, name: str, config: dict[str, Any], global_origin: str,
+                          publisher: str, is_global: bool) -> RefPackage:
         version = config.get("version", "*").strip()
         ref = cls()
-        ref.name = name
-        ref.publisher = config.get("publisher", publisher)
-        ref.is_global = config.get("isGlobal", is_global)
-        ref.lib_name = LibName(name, publisher=ref.publisher, is_global=ref.is_global)
-        
-        ref.version = version
+        ref._version = version
         ref.version_range = Utils.parseVersionSpecifier(version)
+        ref.config = config
+
         if version == "x":
             ref.skip = True
             return ref
+
+        pub = config.get("publisher", publisher)
+        ig = config.get("isGlobal", is_global)
+        ref.lib_name = LibName(name, publisher=pub, is_global=ig)
 
         if "origin" in config:
             ref.origin = config["origin"]
@@ -90,7 +120,7 @@ class RefPackage:
                 exit(1)
         else:
             ref.origin = global_origin
-        
+
         if "resolve" in config:
             ref.resolve = config["resolve"]
 
@@ -109,14 +139,13 @@ class RefPackage:
 
         if has_path:
             ref.path = config["path"]
-            
+
         if has_url:
-            raw = config["url"]
             ref.url = cls._parse_url(config["url"], name)
-            
+
         if has_git:
             ref.git = cls._parse_git(config["git"], name)
-            
+
         return ref
 
     @staticmethod
@@ -133,9 +162,8 @@ class RefPackage:
         print(f"ERROR: Package '{name}' git must be string or object with 'url'.")
         exit(1)
 
-
     @staticmethod
-    def _parse_url(raw : str | list[str], name : str) -> list[str]:
+    def _parse_url(raw: str | list[str], name: str) -> list[str]:
         if isinstance(raw, str):
             return [raw]
         elif isinstance(raw, list) and all(isinstance(u, str) for u in raw):

@@ -22,16 +22,15 @@ class Requirement:
     @classmethod
     def from_dependency(cls, dep) -> Requirement:
         """Create a Requirement from a LibPackage.Dependency object."""
-        lib_name = LibName(dep.fullName)
-        return cls(lib_name, dep.versionSpec)
+        return cls(dep.lib_name, dep.versionSpec)
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, Requirement):
             return NotImplemented
-        return self.lib_name.fullName() == other.lib_name.fullName()
+        return self.lib_name == other.lib_name
 
     def __hash__(self) -> int:
-        return hash(self.lib_name.fullName())
+        return hash(self.lib_name)
 
     def __repr__(self) -> str:
         return f"Req({self.lib_name.fullName()} {self.version_spec})"
@@ -107,11 +106,10 @@ class ResolveLibProvider(AbstractProvider):
 
     def get_dependencies(self, candidate: Candidate) -> list[Requirement]:
         deps: list[Requirement] = []
-        for dep in candidate.pkg.getDependency():
-            lib_name = LibName(dep.fullName)
-            if not lib_name.isValid():
+        for dep in candidate.pkg.getDependency(provider_mgr=self._mgr):
+            if not dep.lib_name.isValid():
                 continue
-            deps.append(Requirement(lib_name, dep.versionSpec))
+            deps.append(Requirement(dep.lib_name, dep.versionSpec))
         return deps
 
 
@@ -130,10 +128,10 @@ class Candidate:
     def __eq__(self, other) -> bool:
         if not isinstance(other, Candidate):
             return NotImplemented
-        return self.name == other.name and self.version == other.version
+        return self.lib_name == other.lib_name and self.version == other.version
 
     def __hash__(self) -> int:
-        return hash((self.name, self.version))
+        return hash((self.lib_name, self.version))
 
     def __repr__(self) -> str:
         return f"Candidate({self.name}=={self.version})"

@@ -30,6 +30,8 @@ class PackageResolver:
         self.resolve_one(ref)
 
     def resolve_one(self, ref):
+        self._resolve_publisher(ref)
+
         if ref.path:
             target = self._resolve_path(ref)
             if target is None:
@@ -76,14 +78,14 @@ class PackageResolver:
 
     def _resolve_transitive(self):
         root_reqs: list[Requirement] = []
+        mgr = self.env.getProviderManager()
         for ref in self.app_data.packages:
             if not ref.real_package or not ref.real_package.success:
                 continue
-            for dep in ref.real_package.getDependency():
-                lib_name = LibName(dep.fullName)
-                if not lib_name.isValid():
+            for dep in ref.real_package.getDependency(provider_mgr=mgr):
+                if not dep.lib_name.isValid():
                     continue
-                root_reqs.append(Requirement(lib_name, dep.versionSpec))
+                root_reqs.append(Requirement(dep.lib_name, dep.versionSpec))
 
         if not root_reqs:
             return
@@ -100,8 +102,7 @@ class PackageResolver:
                 if existing is not None:
                     continue
                 ext = RefPackage()
-                ext.name = lib_name.fullName()
-                ext.publisher = lib_name.publisher
+                ext.lib_name = candidate.lib_name
                 ext.version = candidate.version
                 ext.version_range = Utils.parseVersionSpecifier(candidate.version)
                 ext.origin = "default"
@@ -116,10 +117,23 @@ class PackageResolver:
                     print(f"  - {cause}")
             exit(1)
 
+    def _resolve_publisher(self, ref):
+        """If lib_name lacks publisher, query provider manager to resolve it.
+        If still not found, report error."""
+        if ref.lib_name.publisher:
+            return
+        mgr = self.env.getProviderManager()
+        real = mgr.findRealLibName(ref.lib_name)
+        if real is None:
+            print(f"ERROR: Cannot resolve publisher for package '{ref.lib_name.name}'."
+                  f" The package cannot be resolved.")
+            exit(1)
+        ref.lib_name = real
+
     def _find_existing(self, lib_name, version):
         for ref in self.app_data.all_packages():
             lp = ref.real_package
-            if lp and lp.lib_name.fullName() == lib_name.fullName() and lp.version == version:
+            if lp and lp.lib_name == lib_name and lp.version == version:
                 return ref
         return None
 

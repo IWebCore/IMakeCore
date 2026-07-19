@@ -14,13 +14,5 @@
         "path": "C:\\Users\\Yue\\IMakeCore\\.lib\\yuekeyuan@nlohmann.json@3.12.0",
         "summary": "json library for C++",
         "isGlobal": true
-    },
-    {
-        "name": "nlohmann.json",
-        "publisher": "yuekeyuan",
-        "version": "3.12.0",
-        "path": "C:\\Users\\Yue\\IMakeCore\\.lib\\yuekeyuan@nlohmann.json@3.12.0",
-        "summary": "json library for C++",
-        "isGlobal": true
     }
 ]

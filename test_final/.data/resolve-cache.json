@@ -1,16 +1,16 @@
 {
   "version": 1,
-  "last_update": "2026-07-19T14:37:09.576468",
+  "last_update": "2026-07-19T21:04:31.493538",
   "resolved": {
     "yuekeyuan/ICore": {
-      "ref_hash": "183f0d0663611bd8",
+      "ref_hash": "4552d5dfe0dd08d2",
       "publisher": "yuekeyuan",
       "name": "ICore",
       "version": "1.1.0",
       "path": "C:\\Users\\Yue\\IMakeCore\\.lib\\yuekeyuan@ICore@1.1.0"
     },
     "yuekeyuan/nlohmann.json": {
-      "ref_hash": "7ea1092460b0f43c",
+      "ref_hash": "170d5bd61e7a6b30",
       "publisher": "yuekeyuan",
       "name": "nlohmann.json",
       "version": "3.12.0",

@@ -69,19 +69,29 @@ class LibPackage(Base):
         self.is_global = value
 
     class Dependency:
-        def __init__(self, name: str, version: str) -> None:
-            self.fullName = name
-            self.version = version
-            self.versionSpec = Utils.parseVersionSpecifier(version)
+        def __init__(self, name: str, version: str, provider_mgr=None) -> None:
+            self._fullName: str = name
+            
+            self.version: str = version
+            self.versionSpec: SpecifierSet = Utils.parseVersionSpecifier(version)
+
+            lib_name = LibName.fromRaw(self._fullName)
+            if not lib_name.publisher and provider_mgr is not None:
+                real = provider_mgr.findRealLibName(lib_name)
+                if real is None:
+                    print(f"ERROR: Cannot resolve publisher for dependency '{name}'."
+                          f" The package cannot be resolved.")
+                    exit(1)
+                lib_name = real
+            self.lib_name: LibName = lib_name
+
+        @property
+        def fullName(self) -> str:
+            return self._fullName
 
         def matchLib(self, libPackage: LibPackage) -> bool:
-            if "/" in self.fullName:
-                return self.fullName == (libPackage.publisher + "/" + libPackage.name) \
-                        and self.versionSpec.contains(Version(libPackage.version))
-
-            return self.fullName == libPackage.name \
-                    and self.versionSpec.contains(Version(libPackage.version)) \
-                    and libPackage.isGlobal
+            return self.lib_name == libPackage.lib_name \
+                    and self.versionSpec.contains(Version(libPackage.version))
 
     # ── Static helpers ──────────────────────────────────────────────────
 
@@ -94,11 +104,11 @@ class LibPackage(Base):
 
     # ── Factory: from filesystem ────────────────────────────────────────
 
-    def getDependency(self) -> list[Dependency]:
+    def getDependency(self, provider_mgr=None) -> list[Dependency]:
         deps: list[LibPackage.Dependency] = []
         raw = (self.content or {}).get("dependencies", {})
         for k, v in raw.items():
-            deps.append(LibPackage.Dependency(k, v))
+            deps.append(LibPackage.Dependency(k, v, provider_mgr=provider_mgr))
         return deps
 
     @staticmethod
@@ -216,13 +226,8 @@ class LibPackage(Base):
         """Match against either AppPackage (legacy) or RefPackage."""
         from scripts.data.RefPackage import RefPackage
         if isinstance(package, RefPackage):
-            if "/" in package.name:
-                matched = (self.publisher == package.name.split("/")[0]
-                           and self.name == package.name.split("/")[1]
-                           and package.version_range.contains(Version(self.version)))
-            else:
-                matched = (self.isGlobal and self.name == package.name
-                           and package.version_range.contains(Version(self.version)))
+            matched = (self.lib_name == package.lib_name
+                       and package.version_range.contains(Version(self.version)))
             if not matched:
                 return False
             user_mode = package.mode if package.mode != "default" else "source"

@@ -34,7 +34,7 @@ class LocalLibProvider(LibProvider):
         self._packages.append(lp)
 
     def containLib(self, lib_name: LibName) -> bool:
-        return any(p.lib_name.fullName() == lib_name.fullName() for p in self._packages)
+        return any(p.lib_name == lib_name for p in self._packages)
 
     def findRealLibName(self, lib_name: LibName) -> LibName | None:
         for p in self._packages:
@@ -43,6 +43,6 @@ class LocalLibProvider(LibProvider):
         return None
 
     def findPackages(self, lib_name: LibName) -> list[LibPackage]:
-        result = [p for p in self._packages if p.lib_name.fullName() == lib_name.fullName()]
+        result = [p for p in self._packages if p.lib_name == lib_name]
         result.sort(key=lambda x: Version(x.version), reverse=True)
         return result
