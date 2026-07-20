@@ -13,7 +13,7 @@ if __name__ == '__main__':
     packType = sys.argv[2]
 
     env = EnvConfig(appPath, packType)
-    app_data = AppData(appPath)
+    app_data = AppData(appPath, env)
 
     resolver = PackageResolver(app_data, env)
     resolver.resolve_all()

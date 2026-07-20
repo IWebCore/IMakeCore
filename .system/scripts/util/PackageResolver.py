@@ -30,8 +30,6 @@ class PackageResolver:
         self.resolve_one(ref)
 
     def resolve_one(self, ref):
-        self._resolve_publisher(ref)
-
         if ref.path:
             target = self._resolve_path(ref)
             if target is None:
@@ -51,14 +49,6 @@ class PackageResolver:
             lib = self._find_in_project_libs(ref)
             if lib is None:
                 print(f"ERROR: Package '{ref.name}' not found in project local library. Origin is 'local'.")
-                exit(1)
-            ref.real_package = lib
-            return
-
-        if ref.origin == "system":
-            lib = self._find_in_env_libs(ref)
-            if lib is None:
-                print(f"ERROR: Package '{ref.name}' not found in system package index. Run updateDb.py first.")
                 exit(1)
             ref.real_package = lib
             return
@@ -96,6 +86,7 @@ class PackageResolver:
 
         try:
             result = resolver.resolve(root_reqs)
+            
             for lib_name_str, candidate in result.mapping.items():
                 lib_name = LibName(lib_name_str)
                 existing = self._find_existing(lib_name, candidate.version)
@@ -116,19 +107,6 @@ class PackageResolver:
                 for cause in e.causes:
                     print(f"  - {cause}")
             exit(1)
-
-    def _resolve_publisher(self, ref):
-        """If lib_name lacks publisher, query provider manager to resolve it.
-        If still not found, report error."""
-        if ref.lib_name.publisher:
-            return
-        mgr = self.env.getProviderManager()
-        real = mgr.findRealLibName(ref.lib_name)
-        if real is None:
-            print(f"ERROR: Cannot resolve publisher for package '{ref.lib_name.name}'."
-                  f" The package cannot be resolved.")
-            exit(1)
-        ref.lib_name = real
 
     def _find_existing(self, lib_name, version):
         for ref in self.app_data.all_packages():

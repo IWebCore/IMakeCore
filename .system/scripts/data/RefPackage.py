@@ -7,7 +7,6 @@ from scripts.data.LibName import LibName
 
 VALID_MODES: set[str] = {"source", "static", "dynamic", "default"}
 
-
 class GitRef:
     def __init__(self, url: str, tag: str | None = None, branch: str | None = None, hash: str | None = None) -> None:
         self.url = url
@@ -72,6 +71,17 @@ class RefPackage:
             publisher = ""
             pkg_name = name.strip()
             is_global = True
+
+        # Resolve publisher if missing
+        if not publisher and app_data and app_data.env:
+            mgr = app_data.env.getProviderManager()
+            temp = LibName(pkg_name)
+            real = mgr.findRealLibName(temp)
+            if real is None:
+                print(f"ERROR: Cannot resolve publisher for package '{name}'."
+                      f" The package cannot be found.")
+                exit(1)
+            publisher = real.publisher
 
         if isinstance(value, str):
             return cls._from_string_impl(pkg_name, value, app_data.global_origin,

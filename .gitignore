@@ -8,3 +8,4 @@
 *.pyc
 /.system/scripts/util/make/__pycache__
 /.system/db
+*.pyc

@@ -90,6 +90,10 @@ class LibPackage(Base):
             return self._fullName
 
         def matchLib(self, libPackage: LibPackage) -> bool:
+            if not self.lib_name.publisher:
+                return self.lib_name.name == libPackage.name \
+                        and self.versionSpec.contains(Version(libPackage.version)) \
+                        and libPackage.isGlobal
             return self.lib_name == libPackage.lib_name \
                     and self.versionSpec.contains(Version(libPackage.version))
 

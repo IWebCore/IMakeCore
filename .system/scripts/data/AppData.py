@@ -11,20 +11,21 @@ from scripts.data.RefPackage import RefPackage
 from scripts.data.LibPackage import LibPackage
 
 class AppData:
-    def __init__(self, project_path: str) -> None:
+    def __init__(self, project_path: str, env=None) -> None:
         self.path = project_path
         self.json: dict[str, Any] = {}
-        
+        self.env = env
+
         self.local_lib_store: str = ""
-        
+
         self.global_origin: str = "default"
-        
+
         self.packages: list[RefPackage] = []
         self.external_packages: list[RefPackage] = []
-        
+
         self.cache: dict[str, Any] = {}
         self.cache_path: str = ""
-        
+
         self._loadConfig()
         self._parseOrigin()
         self._parseLocalLibStore()
