@@ -8,8 +8,6 @@ from scripts.data.RefPackage import RefPackage
 from scripts.data.LibName import LibName
 from scripts.Utils import Utils
 from scripts.provider.ResolveLibProvider import Requirement, ResolveLibProvider
-from scripts.util.download.UrlPackageDownload import UrlPackageDownload
-from scripts.util.download.GitPackageDownload import GitPackageDownload
 
 
 class PackageResolver:
@@ -18,154 +16,64 @@ class PackageResolver:
         self.env = env
 
     def resolve_all(self):
-        for ref in self.app_data.packages:
-            self._resolve_with_cache(ref)
-        self._resolve_transitive()
-
-    def _resolve_with_cache(self, ref):
-        cached = self.app_data.get_cached(ref)
-        if cached is not None and os.path.exists(cached.path):
-            ref.real_package = cached
-            return
-        self.resolve_one(ref)
-
-    def resolve_one(self, ref):
-        if ref.path:
-            target = self._resolve_path(ref)
-            if target is None:
-                print(f"ERROR: Package '{ref.name}' path '{ref.path}' does not exist.")
-                exit(1)
-            lib = LibPackage.fromFolder(target)
-            if not lib.success:
-                print(f"ERROR: Failed to load package '{ref.name}' from '{target}'.")
-                exit(1)
-            if not lib.isMatch(ref):
-                print(f"ERROR: Package at '{target}' does not match '{ref.name}' version {ref.version}.")
-                exit(1)
-            ref.real_package = lib
-            return
-
-        if ref.origin == "local":
-            lib = self._find_in_project_libs(ref)
-            if lib is None:
-                print(f"ERROR: Package '{ref.name}' not found in project local library. Origin is 'local'.")
-                exit(1)
-            ref.real_package = lib
-            return
-
-        lib = self._find_in_project_libs(ref) or self._find_in_env_libs(ref)
-        if lib is not None:
-            ref.real_package = lib
-            return
-
-        if ref.url is not None:
-            self._download_url(ref)
-        elif ref.git is not None:
-            self._download_git(ref)
-        else:
-            print(f"ERROR: Package '{ref.name}' version '{ref.version}' not found and no download source.")
-            exit(1)
-
-    def _resolve_transitive(self):
+        """Resolve all packages via resolvelib in a single pass."""
         root_reqs: list[Requirement] = []
         mgr = self.env.getProviderManager()
-        for ref in self.app_data.packages:
-            if not ref.real_package or not ref.real_package.success:
+
+        for ref in self.app_data.all_packages():
+            if ref.skip:
                 continue
-            for dep in ref.real_package.getDependency(provider_mgr=mgr):
-                if not dep.lib_name.isValid():
-                    continue
-                root_reqs.append(Requirement(dep.lib_name, dep.versionSpec))
+
+            if ref.forceCandidate is not None:
+                ref.real_package = ref.forceCandidate.pkg
+                for dep in ref.forceCandidate.pkg.getDependency(provider_mgr=mgr):
+                    if dep.lib_name.isValid():
+                        root_reqs.append(Requirement(dep.lib_name, dep.versionSpec))
+                continue
+
+            root_reqs.append(Requirement(ref.lib_name, ref.version_range))
 
         if not root_reqs:
             return
 
-        provider = ResolveLibProvider(self.env.getProviderManager())
+        # Snapshot BEFORE external packages are added during resolution
+        root_refs = list(self.app_data.all_packages())
+
+        provider = ResolveLibProvider(mgr, app_packages=root_refs)
         reporter = BaseReporter()
         resolver = Resolver(provider, reporter)
 
         try:
             result = resolver.resolve(root_reqs)
-            
-            for lib_name_str, candidate in result.mapping.items():
-                lib_name = LibName(lib_name_str)
-                existing = self._find_existing(lib_name, candidate.version)
-                if existing is not None:
-                    continue
-                ext = RefPackage()
-                ext.lib_name = candidate.lib_name
-                ext.version = candidate.version
-                ext.version_range = Utils.parseVersionSpecifier(candidate.version)
-                ext.origin = "default"
-                ext._is_external = True
-                ext.real_package = candidate.pkg
-                self.app_data.external_packages.append(ext)
-
         except ResolutionImpossible as e:
-            print("ERROR: Dependency resolution failed — no compatible version combination found.")
+            print("ERROR: Dependency resolution failed — "
+                  "no compatible version combination found.")
             if hasattr(e, 'causes'):
                 for cause in e.causes:
                     print(f"  - {cause}")
             exit(1)
 
-    def _find_existing(self, lib_name, version):
-        for ref in self.app_data.all_packages():
-            lp = ref.real_package
-            if lp and lp.lib_name == lib_name and lp.version == version:
-                return ref
-        return None
+        # Build lookup
+        resolved: dict[str, Any] = {k: v for k, v in result.mapping.items()}
+        root_keys = {ref.lib_name.fullName() for ref in root_refs}
 
-    def _resolve_path(self, ref):
-        if not ref.path or not ref.path.strip():
-            return None
-        if os.path.isabs(ref.path):
-            resolved = os.path.normpath(ref.path)
-        else:
-            resolved = os.path.normpath(os.path.join(self.app_data.path, ref.path))
-        if not os.path.exists(resolved):
-            return None
-        if not os.path.isdir(resolved):
-            return None
-        return resolved
+        # Assign real_package to root refs from resolved results
+        for ref in root_refs:
+            if ref.real_package is not None:
+                continue
+            key = ref.lib_name.fullName()
+            if key in resolved:
+                ref.real_package = resolved[key].pkg
 
-    def _compute_target_dir(self, ref):
-        publisher = ref.publisher or "local"
-        ver = ref.version if ref.version not in ("*", "latest", "default", "") else "default"
-        dir_name = f"{publisher}@{ref.name}@{ver}"
-        base = self.env.sysLibStore if ref.origin == "system" else self.env.appLibStore
-        return os.path.join(base, dir_name)
-
-    def _download_url(self, ref):
-        target = self._compute_target_dir(ref)
-        downloader = UrlPackageDownload(ref, target, self.env)
-        if not downloader.execute():
-            print(f"ERROR: Failed to download '{ref.name}' from {ref.url}.")
-            exit(1)
-        if ref.real_package is None:
-            print(f"ERROR: Downloaded package '{ref.name}' is invalid.")
-            exit(1)
-
-    def _download_git(self, ref):
-        target = self._compute_target_dir(ref)
-        downloader = GitPackageDownload(ref, target, self.env)
-        if not downloader.execute():
-            print(f"ERROR: Failed to clone git repo for '{ref.name}'.")
-            exit(1)
-        if ref.real_package is None:
-            print(f"ERROR: Cloned package '{ref.name}' is invalid.")
-            exit(1)
-
-    def _find_in_project_libs(self, ref):
-        lib_name = ref.lib_name
-        pkgs = self.env.getProviderManager().getLocalProvider().findPackages(lib_name)
-        matching = [lib for lib in pkgs if lib.isMatch(ref)]
-        matching.sort(key=lambda x: Version(x.version), reverse=True)
-        return matching[0] if matching else None
-
-    def _find_in_env_libs(self, ref):
-        lib_name = ref.lib_name
-        pkgs = self.env.getProviderManager().getSystemProvider().findPackages(lib_name)
-        for lib in pkgs:
-            if ref.version_range.contains(Version(lib.version)):
-                return lib
-        return None
+        # Create external packages for transitive deps not in root refs
+        for lib_name_str, candidate in result.mapping.items():
+            if lib_name_str in root_keys:
+                continue
+            ext = RefPackage()
+            ext.lib_name = candidate.lib_name
+            ext.version = candidate.version
+            ext.version_range = Utils.parseVersionSpecifier(candidate.version)
+            ext.origin = "default"
+            ext._is_external = True
+            ext.real_package = candidate.pkg
+            self.app_data.external_packages.append(ext)

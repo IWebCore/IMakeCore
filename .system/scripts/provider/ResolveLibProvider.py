@@ -37,10 +37,16 @@ class Requirement:
 
 
 class ResolveLibProvider(AbstractProvider):
-    def __init__(self, provider_manager) -> None:
+    def __init__(self, provider_manager, app_packages=None) -> None:
         super().__init__()
         self._mgr = provider_manager
         self._candidate_cache: dict[str, list[Candidate]] = {}
+        # Build lookup: lib_name.fullName() → RefPackage
+        self._ref_map: dict[str, Any] = {}
+        if app_packages:
+            for ref in app_packages:
+                key = ref.lib_name.fullName()
+                self._ref_map[key] = ref
 
     def identify(self, requirement_or_candidate) -> str:
         if isinstance(requirement_or_candidate, Candidate):
@@ -50,6 +56,9 @@ class ResolveLibProvider(AbstractProvider):
         if isinstance(requirement_or_candidate, LibName):
             return requirement_or_candidate.fullName()
         return str(requirement_or_candidate)
+
+    def _get_ref_for_identifier(self, identifier: str) -> Any:
+        return self._ref_map.get(identifier)
 
     def _get_spec_from_requirement(self, requirement) -> SpecifierSet | None:
         if isinstance(requirement, Requirement):
@@ -68,7 +77,12 @@ class ResolveLibProvider(AbstractProvider):
         information: list[Any],
         backtrack_causes: list[Any],
     ) -> int:
-        """Prefer packages with fewer candidates (most constrained first)."""
+        """forceCandidate → highest priority (0). Otherwise fewer candidates first."""
+        ref = self._get_ref_for_identifier(identifier)
+        if ref is not None and ref.forceCandidate is not None:
+            return 0
+        if ref is not None and ref.suggestCandidate is not None:
+            return 1
         return len(candidates)
 
     def find_matches(
@@ -80,6 +94,15 @@ class ResolveLibProvider(AbstractProvider):
         bad: set[tuple[str, str]] = set()
         for cand in incompatibilities.get(identifier, frozenset()):
             bad.add((cand.lib_name.fullName(), cand.version))
+
+        # Check for forceCandidate — must use ONLY this candidate
+        ref = self._get_ref_for_identifier(identifier)
+        if ref is not None and ref.forceCandidate is not None:
+            fc = ref.forceCandidate
+            if (fc.lib_name.fullName(), fc.version) not in bad:
+                if all(self.is_satisfied_by(r, fc) for r in requirements):
+                    return [fc]
+            return []
 
         if identifier not in self._candidate_cache:
             lib_name = LibName(identifier)
@@ -95,7 +118,21 @@ class ResolveLibProvider(AbstractProvider):
             if all(self.is_satisfied_by(r, cand) for r in requirements):
                 result.append(cand)
 
-        result.sort(key=lambda c: Version(c.version), reverse=True)
+        # suggestCandidate → put it first (but allow others)
+        if ref is not None and ref.suggestCandidate is not None:
+            sc = ref.suggestCandidate
+            suggested = []
+            rest = []
+            for c in result:
+                if c.lib_name == sc.lib_name and c.version == sc.version:
+                    suggested.append(c)
+                else:
+                    rest.append(c)
+            rest.sort(key=lambda c: Version(c.version), reverse=True)
+            result = suggested + rest
+        else:
+            result.sort(key=lambda c: Version(c.version), reverse=True)
+
         return result
 
     def is_satisfied_by(self, requirement: Any, candidate: Candidate) -> bool:
@@ -105,6 +142,11 @@ class ResolveLibProvider(AbstractProvider):
         return spec.contains(Version(candidate.version))
 
     def get_dependencies(self, candidate: Candidate) -> list[Requirement]:
+        # Skip deps for dynamic packages
+        ref = self._get_ref_for_identifier(candidate.lib_name.fullName())
+        if ref is not None and getattr(ref, "mode", "default") == "dynamic":
+            return []
+
         deps: list[Requirement] = []
         for dep in candidate.pkg.getDependency(provider_mgr=self._mgr):
             if not dep.lib_name.isValid():
