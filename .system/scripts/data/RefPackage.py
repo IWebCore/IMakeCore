@@ -34,6 +34,9 @@ class RefPackage:
 
         self.config: dict[str, Any] | None = None
 
+        self.suggestCandidate: Any = None   # Candidate from cache
+        self.forceCandidate: Any = None     # Candidate from path/url/git
+
     # ── Read-only properties delegating to lib_name ──────────────────────
 
     @property
