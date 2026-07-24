@@ -37,7 +37,6 @@ class RefPackage:
         self.resolve: dict[str, Any] | None = None
         self.real_package: Any = None
         self.skip: bool = False
-        self._is_external: bool = False
 
         self.config: dict[str, Any] | None = None
 

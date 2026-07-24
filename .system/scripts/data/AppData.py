@@ -21,7 +21,6 @@ class AppData:
         self.global_origin: str = "default"
 
         self.packages: list[RefPackage] = []
-        self.external_packages: list[RefPackage] = []
 
         self.cache: dict[str, Any] = {}
         self.cache_path: str = ""
@@ -83,7 +82,7 @@ class AppData:
 
     def save_cache(self) -> None:
         data: dict[str, Any] = {"version": 1, "last_update": datetime.now().isoformat(), "resolved": {}}
-        for ref in self.all_packages():
+        for ref in self.packages:
             if ref.real_package and ref.real_package.success:
                 key = f"{ref.real_package.publisher}/{ref.real_package.name}"
                 data["resolved"][key] = {
@@ -121,13 +120,10 @@ class AppData:
                            "r": ref.resolve}, sort_keys=True)
         return hashlib.sha256(raw.encode()).hexdigest()[:16]
 
-    def all_packages(self) -> list[RefPackage]:
-        return self.packages + self.external_packages
-
     # ── Assemble: cache matching ─────────────────────────────────────────
 
     def _assembleRefPackages(self) -> None:
-        """Match resolve-cache to set suggestCandidate for each ref."""
+        """Match resolve-cache to set suggestCandidate for each root ref."""
         for ref in self.packages:
             cached = self.get_cached(ref)
             if cached is not None:

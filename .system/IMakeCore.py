@@ -24,7 +24,7 @@ if __name__ == '__main__':
     resolver = PackageResolver(app_data, env)
     resolver.resolve_all()
 
-    all_pkgs = app_data.all_packages()
+    all_pkgs = app_data.packages
 
     for ref in all_pkgs:
         user_mode = getattr(ref, "mode", "default")

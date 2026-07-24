@@ -154,7 +154,6 @@ class ResolveLibProvider(AbstractProvider):
             deps.append(Requirement(dep.lib_name, dep.versionSpec))
         return deps
 
-
 class Candidate:
     __slots__ = ("pkg", "lib_name", "name", "version")
 
