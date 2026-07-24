@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "last_update": "2026-07-25T02:39:19.027952",
+  "resolved": {
+    "test/world": {
+      "ref_hash": "82b0f98611ebb915",
+      "publisher": "test",
+      "name": "world",
+      "version": "1.0.0",
+      "path": "C:\\Users\\Yue\\IMakeCore\\test\\basic_resolve\\.lib\\test@world@1.0.0"
+    },
+    "test/hello": {
+      "ref_hash": "319004632bcda686",
+      "publisher": "test",
+      "name": "hello",
+      "version": "2.0.0",
+      "path": "C:\\Users\\Yue\\IMakeCore\\test\\basic_resolve\\.lib\\test@hello@2.0.0"
+    }
+  }
+}

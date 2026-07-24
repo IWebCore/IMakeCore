@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "last_update": "2026-07-25T02:39:24.088064",
+  "resolved": {
+    "test/dynamic_lib": {
+      "ref_hash": "ffd2278835a6f8f7",
+      "publisher": "test",
+      "name": "dynamic_lib",
+      "version": "1.0.0",
+      "path": "C:\\Users\\Yue\\IMakeCore\\test\\validation\\.lib\\test@dynamic_lib@1.0.0"
+    }
+  }
+}
