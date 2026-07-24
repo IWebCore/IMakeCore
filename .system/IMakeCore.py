@@ -1,6 +1,12 @@
 from __future__ import annotations
 
 import sys, os
+
+# Ensure vendored libraries in .system/ take precedence over system-installed copies.
+_sys_dir = os.path.dirname(os.path.abspath(__file__))
+if _sys_dir not in sys.path:
+    sys.path.insert(0, _sys_dir)
+
 from scripts.data import *
 from scripts.data.AppData import AppData
 from scripts.util.PackageResolver import PackageResolver
