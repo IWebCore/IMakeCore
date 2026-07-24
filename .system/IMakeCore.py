@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys, os
+from typing import Any
 
 # Ensure vendored libraries in .system/ take precedence over system-installed copies.
 _sys_dir = os.path.dirname(os.path.abspath(__file__))
@@ -14,30 +15,24 @@ from scripts.MakeUtils import *
 from scripts.util.support.SupportProjectFileGenerator import SupportProjectFileGenerator
 from scripts.util.support.SupportLibGenerator import SupportLibGenerator
 
-if __name__ == '__main__':
-    appPath = sys.argv[1]
-    packType = sys.argv[2]
-
-    env = EnvConfig(appPath, packType)
-    app_data = AppData(appPath, env)
-
-    resolver = PackageResolver(app_data, env)
-    resolver.resolve_all()
-
-    all_pkgs = app_data.packages
-
-    for ref in all_pkgs:
+def _validate_header_only_modes(packages: list) -> None:
+    """Header-only packages must use mode='source' (or default), never static/dynamic."""
+    for ref in packages:
         user_mode = getattr(ref, "mode", "default")
         lp = getattr(ref, "real_package", None)
-        if lp is not None and lp.is_header_only():
-            if user_mode in ("static", "dynamic"):
-                print(f"ERROR: Package '{lp.name}' is header-only (no sources/ui/resources)."
-                      f" Cannot use mode='{user_mode}'. Use mode='source' or omit the mode field.")
-                exit(1)
-            if user_mode == "default":
-                ref.mode = "source"
+        if lp is None or not lp.is_header_only():
+            continue
+        if user_mode in ("static", "dynamic"):
+            print(f"ERROR: Package '{lp.name}' is header-only (no sources/ui/resources)."
+                  f" Cannot use mode='{user_mode}'. Use mode='source' or omit the mode field.")
+            exit(1)
+        if user_mode == "default":
+            ref.mode = "source"
 
-    for ref in all_pkgs:
+
+def _validate_dynamic_definitions(packages: list) -> None:
+    """Dynamic-mode packages must declare dynamicDefinition in their resolve config."""
+    for ref in packages:
         if getattr(ref, "mode", "default") != "dynamic":
             continue
         lp = getattr(ref, "real_package", None)
@@ -49,15 +44,101 @@ if __name__ == '__main__':
                   f" is defined in its package.json resolve section.")
             exit(1)
 
-    MakeUtils.checkPackageDependencies(all_pkgs)
-    MakeUtils.createDumpJson(all_pkgs, env)
 
-    lib_pkgs = [r for r in all_pkgs if getattr(r, "mode", "default") in ("static", "dynamic")]
+def _validate_dependencies(packages: list) -> None:
+    """Every declared dependency must be present in the resolved package set."""
+    resolved = []
+    for ref in packages:
+        lp = getattr(ref, "real_package", None)
+        if lp is not None:
+            resolved.append(lp)
+
+    for ref in packages:
+        lp = getattr(ref, "real_package", None)
+        if lp is None:
+            continue
+        for dep in lp.getDependency():
+            if any(dep.matchLib(other) for other in resolved):
+                continue
+            print(f"ERROR: Package '{lp.name}' requires"
+                  f" {dep.lib_name.fullName()} {dep.version},"
+                  f" but it is not in the resolved package list.")
+            exit(1)
+
+
+def _validate_static_dependencies(packages: list) -> None:
+    """Static libraries cannot depend on non-header-only source libraries.
+
+    Dependencies of a static library may be static, dynamic, or
+    header-only.  A source-mode library that contains .cpp files is
+    forbidden because it would pull object files into the static
+    archive, breaking the build.
+    """
+    ref_by_name: dict[str, Any] = {}
+    for ref in packages:
+        lp = getattr(ref, "real_package", None)
+        if lp is not None and not ref.skip:
+            ref_by_name[ref.lib_name.fullName()] = ref
+
+    for ref in packages:
+        if getattr(ref, "mode", "default") != "static":
+            continue
+        lp = getattr(ref, "real_package", None)
+        if lp is None:
+            continue
+        for dep in lp.getDependency():
+            dep_ref = ref_by_name.get(dep.lib_name.fullName())
+            if dep_ref is None:
+                continue
+
+            dep_mode = getattr(dep_ref, "mode", "default")
+            if dep_mode not in ("source", "default"):
+                continue
+
+            dep_lp = getattr(dep_ref, "real_package", None)
+            if dep_lp is None:
+                continue
+            if dep_lp.is_header_only():
+                continue
+
+            print(f"ERROR: Static package '{lp.name}' depends on"
+                  f" '{dep_lp.name}' ({dep_mode} mode), which is a source"
+                  f" library containing .cpp files.  Static libraries"
+                  f" cannot depend on source libraries.  Use mode='static'"
+                  f" or mode='dynamic' for '{dep_lp.name}', or make it"
+                  f" header-only.")
+            exit(1)
+
+
+def _generate_outputs(packages: list, app_path: str, pack_type: str, env) -> None:
+    """Produce all build artefacts: lib files, include chain."""
+    lib_pkgs = [r for r in packages
+                if getattr(r, "mode", "default") in ("static", "dynamic")]
     if lib_pkgs:
-        SupportLibGenerator(lib_pkgs, packType, env).generate_all()
+        SupportLibGenerator(lib_pkgs, pack_type, env).generate_all()
 
-    project_name = os.path.basename(os.path.abspath(appPath))
-    SupportProjectFileGenerator(project_name, lib_pkgs, packType, env).generate()
+    project_name = os.path.basename(os.path.abspath(app_path))
+    SupportProjectFileGenerator(project_name, lib_pkgs, pack_type, env).generate()
 
-    MakeUtils.createIncludeFile(packType, all_pkgs, env)
+    MakeUtils.createIncludeFile(pack_type, packages, env)
+
+
+# ── Entry point ────────────────────────────────────────────────────────
+
+if __name__ == "__main__":
+    app_path = sys.argv[1]
+    pack_type = sys.argv[2]
+
+    env = EnvConfig(app_path, pack_type)
+    app_data = AppData(app_path, env)
+
+    PackageResolver(app_data, env).resolve_all()
+    all_pkgs = app_data.packages
+
+    _validate_header_only_modes(all_pkgs)
+    _validate_dynamic_definitions(all_pkgs)
+    _validate_dependencies(all_pkgs)
+    _validate_static_dependencies(all_pkgs)
+    _generate_outputs(all_pkgs, app_path, pack_type, env)
+
     app_data.save_cache()
