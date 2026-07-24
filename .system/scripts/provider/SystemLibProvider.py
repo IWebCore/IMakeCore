@@ -34,8 +34,6 @@ class SystemLibProvider(LibProvider):
             else:
                 return []
             result = list(query.all())
-            for p in result:
-                p.position = "system"
             result.sort(key=lambda x: Version(x.version), reverse=True)
             return result
         finally:

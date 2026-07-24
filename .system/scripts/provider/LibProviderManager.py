@@ -6,8 +6,6 @@ from scripts.provider.LocalLibProvider import LocalLibProvider
 from scripts.provider.SystemLibProvider import SystemLibProvider
 from scripts.provider.RemoteLibProvider import RemoteLibProvider
 
-_POSITION_PRIORITY = {"local": 0, "system": 1, "remote": 2}
-
 
 class LibProviderManager:
     def __init__(self, project_lib_store_path: str):
@@ -25,14 +23,30 @@ class LibProviderManager:
         return self._remote
 
     def findPackages(self, lib_name: LibName) -> list[Any]:
-        all_pkgs = (
-            self._locals.findPackages(lib_name)
-            + self._system.findPackages(lib_name)
-            + self._remote.findPackages(lib_name)
-        )
-        all_pkgs.sort(key=lambda p: _POSITION_PRIORITY.get(p.position, 99))
-        all_pkgs.sort(key=lambda p: Version(p.version), reverse=True)
-        return all_pkgs
+        local_pkgs = self._locals.findPackages(lib_name)
+        system_pkgs = self._system.findPackages(lib_name)
+        remote_pkgs = self._remote.findPackages(lib_name)
+
+        # Deduplicate by version: local beats system beats remote.
+        seen_versions: set[str] = set()
+        result: list[Any] = []
+
+        for pkg in local_pkgs:
+            seen_versions.add(pkg.version)
+            result.append(pkg)
+
+        for pkg in system_pkgs:
+            if pkg.version not in seen_versions:
+                seen_versions.add(pkg.version)
+                result.append(pkg)
+
+        for pkg in remote_pkgs:
+            if pkg.version not in seen_versions:
+                seen_versions.add(pkg.version)
+                result.append(pkg)
+
+        result.sort(key=lambda p: Version(p.version), reverse=True)
+        return result
 
     def containLib(self, lib_name: LibName) -> bool:
         return (
