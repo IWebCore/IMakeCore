@@ -4,7 +4,10 @@ from typing import Any
 from packaging.version import Version
 from packaging.specifiers import SpecifierSet
 from resolvelib import BaseReporter, Resolver
-from resolvelib.resolvers.exceptions import ResolutionImpossible
+from resolvelib.resolvers.exceptions import (
+    ResolutionImpossible,
+    ResolverException,
+)
 from scripts.data.LibPackage import LibPackage
 from scripts.data.RefPackage import RefPackage
 from scripts.data.LibName import LibName
@@ -61,15 +64,14 @@ class PackageResolver:
     # ── SAT solver ────────────────────────────────────────────────────
 
     def _solve(self, mgr, root_refs, requirements) -> Any:
-        """Run the SAT resolver. Exits on ResolutionImpossible."""
+        """Run the SAT resolver. Exits on any resolution failure."""
         provider = ResolveLibProvider(mgr, app_packages=root_refs)
         resolver = Resolver(provider, BaseReporter())
         try:
             return resolver.resolve(requirements)
-        except ResolutionImpossible as e:
-            print("ERROR: Dependency resolution failed — "
-                  "no compatible version combination found.")
-            if hasattr(e, 'causes'):
+        except ResolverException as e:
+            print(f"ERROR: Dependency resolution failed — {e}")
+            if hasattr(e, "causes"):
                 for cause in e.causes:
                     print(f"  - {cause}")
             exit(1)

@@ -1,0 +1,8 @@
+{
+    "packages": {
+        "test/world": {
+            "version": "1.0.0",
+            "mode": "static"
+        }
+    }
+}

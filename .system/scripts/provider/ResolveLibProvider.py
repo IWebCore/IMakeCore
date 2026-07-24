@@ -95,12 +95,17 @@ class ResolveLibProvider(AbstractProvider):
         for cand in incompatibilities.get(identifier, frozenset()):
             bad.add((cand.lib_name.fullName(), cand.version))
 
+        # Resolvelib passes requirements as an IteratorMapping;
+        # use __getitem__ to retrieve the actual requirement objects
+        # for this identifier (iterating yields keys, not values).
+        reqs = list(requirements[identifier]) if identifier in requirements else []
+
         # Check for forceCandidate — must use ONLY this candidate
         ref = self._get_ref_for_identifier(identifier)
         if ref is not None and ref.forceCandidate is not None:
             fc = ref.forceCandidate
             if (fc.lib_name.fullName(), fc.version) not in bad:
-                if all(self.is_satisfied_by(r, fc) for r in requirements):
+                if all(self.is_satisfied_by(r, fc) for r in reqs):
                     return [fc]
             return []
 
@@ -115,7 +120,7 @@ class ResolveLibProvider(AbstractProvider):
         for cand in candidates:
             if (cand.lib_name.fullName(), cand.version) in bad:
                 continue
-            if all(self.is_satisfied_by(r, cand) for r in requirements):
+            if all(self.is_satisfied_by(r, cand) for r in reqs):
                 result.append(cand)
 
         # suggestCandidate → put it first (but allow others)

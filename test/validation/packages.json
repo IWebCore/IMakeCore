@@ -1,0 +1,6 @@
+{
+    "packages": {
+        "test/hello": "1.0.0",
+        "test/nonexistent": "1.0.0"
+    }
+}
