@@ -4,11 +4,9 @@ set(CMAKE_CXX_STANDARD 17)
 
 add_executable(project_single main.cpp)
 
-# --- IMakeCore integration (env vars + include at bottom) ---
-get_filename_component(TEST_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../.." ABSOLUTE)
-get_filename_component(SYSTEM_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../.system" ABSOLUTE)
-set(ENV{IMAKECORE_ROOT} "${TEST_ROOT}")
-set(ENV{IMAKECORE_SYSTEM} "${SYSTEM_DIR}")
+# --- IMakeCore integration ---
+get_filename_component(TEST_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../" ABSOLUTE)
+set(IMAKECORE_ROOT "${TEST_ROOT}" CACHE STRING "root" FORCE)
+set(IMAKECORE_SYSTEM "$ENV{IMAKECORE_ROOT}/.system" CACHE STRING "system" FORCE)
 include($ENV{ICMakeCore})
 ICmakeCoreInit(project_single)
-include(${CMAKE_CURRENT_SOURCE_DIR}/.package.cmake)
