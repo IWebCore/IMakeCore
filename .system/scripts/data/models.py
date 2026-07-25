@@ -29,6 +29,7 @@ def get_engine() -> Any:
                 os.path.dirname(os.path.abspath(__file__)), "..", "..", "db"
             )
         db_path = os.path.normpath(os.path.join(db_dir, "package.db"))
+        print(db_path)
         os.makedirs(db_dir, exist_ok=True)
         _engine = create_engine(f"sqlite:///{db_path}", echo=False)
     return _engine

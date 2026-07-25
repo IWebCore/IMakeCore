@@ -1,10 +1,3 @@
-# IMAKECORE_ROOT / IMAKECORE_SYSTEM: prefer qmake variable (set in .pro),
-# fall back to environment variable, then system default.
-# $$absolute_path() strips trailing whitespace that can break $$system().
-isEmpty(IMAKECORE_ROOT): IMAKECORE_ROOT = $$absolute_path($$(IMAKECORE_ROOT))
-isEmpty(IMAKECORE_SYSTEM): IMAKECORE_SYSTEM = $$absolute_path($$(IMAKECORE_SYSTEM))
-isEmpty(IMAKECORE_SYSTEM): IMAKECORE_SYSTEM = $$absolute_path($$IMAKECORE_ROOT/.system)
-
 QMAKE_SOURCE_DIR =
 
 defineTest(IQMakeCoreInit){
@@ -12,16 +5,32 @@ defineTest(IQMakeCoreInit){
     export(QMAKE_SOURCE_DIR)
     findPythonInterpreter()
 
-    # If the .pro file did not set these (real project), fall back to env.
-    # Test .pro files set them explicitly — keep those values.
-    isEmpty(IMAKECORE_ROOT): IMAKECORE_ROOT = $$absolute_path($$(IMAKECORE_ROOT))
-    isEmpty(IMAKECORE_SYSTEM): IMAKECORE_SYSTEM = $$absolute_path($$(IMAKECORE_SYSTEM))
-    isEmpty(IMAKECORE_SYSTEM): IMAKECORE_SYSTEM = $$absolute_path($$IMAKECORE_ROOT/.system)
+    # Compute IMAKECORE_ROOT / IMAKECORE_SYSTEM from $$PWD.
+    # .pro file can override by setting these before IQMakeCoreInit().
+    # For test projects: $$PWD = test/<suite>/project_xxx/
+    #   → suite root = $$PWD/../.., system dir = $$PWD/../../../.system
+    # For real projects: $$PWD = project root (no ../.., use env var).
+
+    # IMAKECORE_ROOT = $$(IMAKECORE_ROOT)
+
+    isEmpty(IMAKECORE_ROOT) {
+        IMAKECORE_ROOT = $$absolute_path($$PWD/../..)
+        !exists($$IMAKECORE_ROOT/.data): IMAKECORE_ROOT = $$absolute_path($$(IMAKECORE_ROOT))
+    }
+    message($$(IMAKECORE_ROOT))
+
+    isEmpty(IMAKECORE_SYSTEM) {
+        IMAKECORE_SYSTEM = $$IMAKECORE_ROOT/.system
+        # IMAKECORE_SYSTEM = $$absolute_path($$PWD/../../../.system)
+        # !exists($$IMAKECORE_SYSTEM): IMAKECORE_SYSTEM = $$absolute_path($$(IMAKECORE_SYSTEM))
+        # !exists($$IMAKECORE_SYSTEM): IMAKECORE_SYSTEM = $$IMAKECORE_ROOT/.system
+    }
+
+    message(status $$IMAKECORE_SYSTEM)
 
     script_path = $$getPythonFilePath("IMakeCore.py")
     win32: cmd = set IMAKECORE_ROOT=$$IMAKECORE_ROOT && set IMAKECORE_SYSTEM=$$IMAKECORE_SYSTEM && $$python -B $$script_path $$PWD qmake
     unix:  cmd = IMAKECORE_ROOT="$$IMAKECORE_ROOT" IMAKECORE_SYSTEM="$$IMAKECORE_SYSTEM" $$python -B $$script_path $$PWD qmake
-#    message($$cmd)
 
     !exists($$PWD/packages.json){
 #        error("$$PWD/package.json configure file not exist, please create one")
@@ -57,7 +66,6 @@ defineTest(findPythonInterpreter) {
 
 defineReplace(getPythonFilePath){
     script_path = $$IMAKECORE_SYSTEM/$$1
-
     !exists($$script_path) {
         error("script not found at $$script_path")
     }

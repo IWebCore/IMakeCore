@@ -5,6 +5,7 @@ Shared between updateDb.py and EnvConfig.py.
 """
 from __future__ import annotations
 
+import json
 import os
 import sys
 from typing import Any
@@ -30,10 +31,13 @@ class GlobalData:
     def _load(self) -> None:
         config_path = os.path.join(self.sys_data_path, "config.json")
         if not os.path.exists(config_path):
-            print(f"ERROR: System config not found at {config_path}")
-            sys.exit(1)
-
-        self.config = Utils.loadJson(config_path)
+            os.makedirs(self.sys_data_path, exist_ok=True)
+            default = {"globalLibStore": ".lib", "libstores": [], "servers": [], "user": "local"}
+            with open(config_path, "w", encoding="utf-8") as f:
+                json.dump(default, f, indent=2)
+            self.config = default
+        else:
+            self.config = Utils.loadJson(config_path)
 
         self.sys_lib_store = self._resolve_store_path(
             self.config.get("globalLibStore", ".lib")

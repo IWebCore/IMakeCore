@@ -4,7 +4,7 @@ CONFIG -= app_bundle
 
 SOURCES += main.cpp
 
-# --- IMakeCore integration (env vars override, include at bottom) ---
+# --- IMakeCore integration ---
 IMAKECORE_ROOT = $$absolute_path($$PWD/../..)
 IMAKECORE_SYSTEM = $$absolute_path($$PWD/../../../.system)
 include($$(IQMakeCore))
