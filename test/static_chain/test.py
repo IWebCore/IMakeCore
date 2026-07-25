@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 IMAKECORE_PY = ROOT / ".system" / "IMakeCore.py"
-UPDATE_DB_PY = ROOT / ".system" / "scripts" / "updateDb.py"
+UPDATE_DB_PY = ROOT / ".system" / "updateDb.py"
 _PASSED = _FAILED = 0
 
 
@@ -93,6 +93,18 @@ def test_source_mode_explicit():
     _vfy_pri(proj, "hello")
 
 
+def test_static_chain_rejects_source_dep():
+    """world (static) → hello (source) — source dep in static chain is error."""
+    proj = _prepare(ROOT / "project_static_source_dep", {
+        "test/world": {"version": "1.0.0", "mode": "static"},
+        "test/hello": {"version": "2.0.0", "mode": "source"}
+    })
+    r = _run(proj)
+    _check(r.returncode == 1, f"expected exit(1) for source in static chain, got {r.returncode}")
+    out = (r.stdout + r.stderr).lower()
+    _check("source" in out, f"error should mention 'source': {out[:200]}")
+
+
 # ── Main ───────────────────────────────────────────────────────────────
 def run():
     global _PASSED, _FAILED
@@ -102,6 +114,7 @@ def run():
     test_source_marked_static()
     test_static_skips_dynamic_dep()
     test_source_mode_explicit()
+    test_static_chain_rejects_source_dep()
     print(f"\n  {_PASSED} passed, {_FAILED} failed")
     return _FAILED == 0
 

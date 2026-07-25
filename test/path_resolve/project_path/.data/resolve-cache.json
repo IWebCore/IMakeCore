@@ -1,6 +1,5 @@
 {
   "version": 1,
-  "last_update": "2026-07-25T03:21:16.091481",
   "resolved": {
     "test/hello": {
       "ref_hash": "96daabb004dbb547",

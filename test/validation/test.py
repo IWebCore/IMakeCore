@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 IMAKECORE_PY = ROOT / ".system" / "IMakeCore.py"
-UPDATE_DB_PY = ROOT / ".system" / "scripts" / "updateDb.py"
+UPDATE_DB_PY = ROOT / ".system" / "updateDb.py"
 _PASSED = _FAILED = 0
 
 

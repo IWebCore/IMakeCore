@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys, os
+import subprocess
 from typing import Any
 
 # Ensure vendored libraries in .system/ take precedence over system-installed copies.
@@ -123,11 +124,36 @@ def _generate_outputs(packages: list, app_path: str, pack_type: str, env) -> Non
     MakeUtils.createIncludeFile(pack_type, packages, env)
 
 
+def _ensure_db() -> None:
+    """Create the package database if it does not exist."""
+    root = os.getenv("IMAKECORE_ROOT", "")
+    db_path = os.path.join(root, ".db", "package.db") if root else ""
+    if db_path and os.path.exists(db_path):
+        return
+
+    update_py = os.path.join(_sys_dir, "updateDb.py")
+    if not os.path.exists(update_py):
+        print("WARNING: updateDb.py not found, skipping DB initialization.")
+        return
+
+    print("Database not found, initializing...")
+    result = subprocess.run(
+        [sys.executable, "-B", update_py],
+        env={**os.environ, "IMAKECORE_ROOT": root},
+        capture_output=True, text=True,
+    )
+    if result.returncode != 0:
+        print(f"ERROR: Failed to initialize database:\n{result.stderr}")
+        exit(1)
+
+
 # ── Entry point ────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     app_path = sys.argv[1]
     pack_type = sys.argv[2]
+
+    _ensure_db()
 
     env = EnvConfig(app_path, pack_type)
     app_data = AppData(app_path, env)

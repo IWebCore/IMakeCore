@@ -702,7 +702,7 @@ def test_http_download():
 # 手动运行 update_db.py 查看完整错误
 cd test/basic_resolve
 set IMAKECORE_ROOT=%CD%
-python -B .system/scripts/updateDb.py
+python -B .system/updateDb.py
 ```
 
 常见原因：

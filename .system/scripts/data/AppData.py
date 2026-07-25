@@ -5,7 +5,6 @@ import json
 import shutil
 import hashlib
 from typing import Any
-from datetime import datetime
 from scripts.Utils import Utils
 from scripts.data.RefPackage import RefPackage
 from scripts.data.LibPackage import LibPackage
@@ -81,7 +80,7 @@ class AppData:
             self.cache = {}
 
     def save_cache(self) -> None:
-        data: dict[str, Any] = {"version": 1, "last_update": datetime.now().isoformat(), "resolved": {}}
+        data: dict[str, Any] = {"version": 1, "resolved": {}}
         for ref in self.packages:
             if ref.real_package and ref.real_package.success:
                 key = f"{ref.real_package.publisher}/{ref.real_package.name}"
