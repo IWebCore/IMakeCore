@@ -10,7 +10,12 @@
         return()
     endif()
 
-    file(TO_CMAKE_PATH "$ENV{IMAKECORE_ROOT}/.system/IMakeCore.py" script_path)
+    if(DEFINED ENV{IMAKECORE_SYSTEM})
+        set(IMAKECORE_SYSTEM_PATH "$ENV{IMAKECORE_SYSTEM}")
+    else()
+        set(IMAKECORE_SYSTEM_PATH "$ENV{IMAKECORE_ROOT}/.system")
+    endif()
+    file(TO_CMAKE_PATH "${IMAKECORE_SYSTEM_PATH}/IMakeCore.py" script_path)
     execute_process(
         COMMAND  ${Python_EXECUTABLE} -B ${script_path} ${CMAKE_CURRENT_LIST_DIR} cmake
         OUTPUT_VARIABLE infoVal

@@ -21,7 +21,7 @@ def get_engine() -> Any:
     """
     global _engine
     if _engine is None:
-        imakecore_root = os.getenv("IMAKECORE_ROOT")
+        imakecore_root = os.getenv("IMAKECORE_ROOT", "").strip()
         if imakecore_root:
             db_dir = os.path.normpath(os.path.join(imakecore_root, ".db"))
         else:

@@ -253,7 +253,7 @@ class RefPackage:
             ver = ref.version if ref.version not in ("*", "latest", "default", "") else "default"
             dir_name = f"{publisher}@{ref.name}@{ver}"
             sys_lib = env.sysLibStore if env else os.path.join(
-                os.getenv("IMAKECORE_ROOT", ""), ".lib")
+                os.getenv("IMAKECORE_ROOT", "").strip(), ".lib")
             target_dir = os.path.join(sys_lib, dir_name)
 
             # Insert tracking records
@@ -267,7 +267,7 @@ class RefPackage:
 
             # Download
             cache_dir = env.sysCachePath if env else os.path.join(
-                os.getenv("IMAKECORE_ROOT", ""), ".cache")
+                os.getenv("IMAKECORE_ROOT", "").strip(), ".cache")
             os.makedirs(cache_dir, exist_ok=True)
 
             downloaded = False
@@ -374,7 +374,7 @@ class RefPackage:
 
         dir_name = f"{publisher}@{name}@{version}"
         sys_lib = env.sysLibStore if env else os.path.join(
-            os.getenv("IMAKECORE_ROOT", ""), ".lib")
+            os.getenv("IMAKECORE_ROOT", "").strip(), ".lib")
         final_target = os.path.join(sys_lib, dir_name)
         if os.path.exists(final_target):
             shutil.rmtree(final_target)

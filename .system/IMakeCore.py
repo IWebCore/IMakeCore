@@ -127,7 +127,7 @@ def _generate_outputs(packages: list, app_path: str, pack_type: str, env) -> Non
 
 def _ensure_db() -> None:
     """Create the package database if it does not exist or is empty."""
-    root = os.getenv("IMAKECORE_ROOT", "")
+    root = os.getenv("IMAKECORE_ROOT", "").strip()
     db_path = os.path.join(root, ".db", "package.db") if root else ""
     lock_path = os.path.join(root, ".db", ".lock") if root else ""
 

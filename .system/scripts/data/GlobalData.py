@@ -13,7 +13,7 @@ from scripts.Utils import Utils
 
 class GlobalData:
     def __init__(self) -> None:
-        self.imakecore_root = os.getenv("IMAKECORE_ROOT")
+        self.imakecore_root = os.getenv("IMAKECORE_ROOT", "").strip().strip()
         if not self.imakecore_root:
             print("ERROR: IMAKECORE_ROOT environment variable is not set.")
             sys.exit(1)

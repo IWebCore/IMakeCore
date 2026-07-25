@@ -15,7 +15,7 @@ class EnvConfig:
         self.appConfig: dict[str, Any] = {}
         self.appDataPath = os.path.normpath(os.path.join(self.appPath, ".data"))
         self.appLibStore: str = os.path.normpath(os.path.join(self.appPath, ".lib"))
-        self.sysPath = os.getenv("IMAKECORE_ROOT")
+        self.sysPath = os.getenv("IMAKECORE_ROOT", "").strip()
         self.sysCachePath = os.path.normpath(os.path.join(self.sysPath, ".cache"))
         self.userName: str = "local"
 

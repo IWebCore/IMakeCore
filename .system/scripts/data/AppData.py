@@ -35,7 +35,7 @@ class AppData:
     def _loadConfig(self):
         json_path = os.path.join(self.path, "packages.json")
         if not os.path.exists(json_path):
-            src = os.path.join(os.getenv("IMAKECORE_ROOT"), ".data", "packages.json")
+            src = os.path.join(os.getenv("IMAKECORE_ROOT", "").strip(), ".data", "packages.json")
             shutil.copyfile(src, json_path)
 
         self.json = Utils.loadJson(json_path)
