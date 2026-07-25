@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "resolved": {
+    "test/dual_mode": {
+      "ref_hash": "26dc72ae60569f11",
+      "publisher": "test",
+      "name": "dual_mode",
+      "version": "1.0.0",
+      "path": "C:\\Users\\Yue\\IMakeCore\\test\\package_json\\.lib\\test@dual_mode@1.0.0"
+    }
+  }
+}

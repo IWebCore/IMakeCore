@@ -92,7 +92,6 @@
 ---
 
 ## static_chain — 深层 Static 链 (5 tests)
-
 | 测试 | 说明 |
 |------|------|
 | `test_static_propagates_to_dep` | world (static) → hello，两者都正确解析 |
@@ -100,3 +99,24 @@
 | `test_static_skips_dynamic_dep` | static world + dynamic_lib 共存 |
 | `test_source_mode_explicit` | 显式 `mode=source` → 正常解析 |
 | `test_static_chain_rejects_source_dep` | world (static) → hello (source) → 报错：source 不应在 static 链中 |
+
+---
+
+## package_json — package.json 字段测试 (14 tests)
+
+| 测试 | 说明 |
+|------|------|
+| `test_required_fields_present` | 最小有效包（name+version+publisher）→ 解析成功 |
+| `test_summary_field` | summary 字段不影响解析 |
+| `test_dependencies_field` | 依赖字段正确传递 → 传递解析 |
+| `test_mode_sources` | `mode="sources"` → 等同 `"source"` |
+| `test_mode_static_only` | `mode=["static"]` → 仅静态库模式 |
+| `test_mode_dual_source_static` | `mode=["source","static"]` → 双模式 |
+| `test_mode_dynamic` | `mode=["dynamic"]` → 动态库模式 |
+| `test_resolve_explicit_files` | resolve 显式 headers+sources+definitions+includePaths |
+| `test_resolve_root_field` | resolve root + ignore → 限制扫描范围 |
+| `test_resolve_precompile_headers` | resolve precompileHeaders → 预编译头配置 |
+| `test_resolve_dynamic_definition` | resolve dynamicDefinition → 动态库定义 |
+| `test_invalid_missing_version` | fixture 缺 version → updateDb 跳过不崩溃 |
+| `test_invalid_origin` | packages.json 中 `origin="invalid"` → 报错 |
+| `test_invalid_mode_in_config` | packages.json 中 `mode="nonexistent"` → 报错 |

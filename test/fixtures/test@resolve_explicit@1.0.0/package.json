@@ -1,0 +1,16 @@
+{
+    "name": "resolve_explicit",
+    "version": "1.0.0",
+    "publisher": "test",
+    "isGlobal": true,
+    "mode": "sources",
+    "summary": "Package with explicit resolve fields",
+    "dependencies": {},
+    "resolve": {
+        "headers": ["inc/header.h"],
+        "sources": ["src/impl.cpp"],
+        "definitions": ["USE_FEATURE_X", "VERSION=1"],
+        "includePaths": ["inc"],
+        "ignore": [".git", "*.tmp"]
+    }
+}

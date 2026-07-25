@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "resolved": {
+    "test/resolve_explicit": {
+      "ref_hash": "8b07f86d4bf1557f",
+      "publisher": "test",
+      "name": "resolve_explicit",
+      "version": "1.0.0",
+      "path": "C:\\Users\\Yue\\IMakeCore\\test\\package_json\\.lib\\test@resolve_explicit@1.0.0"
+    }
+  }
+}

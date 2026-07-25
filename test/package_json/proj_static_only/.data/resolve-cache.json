@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "resolved": {
+    "test/static_lib": {
+      "ref_hash": "33f7ade39a05bd90",
+      "publisher": "test",
+      "name": "static_lib",
+      "version": "1.0.0",
+      "path": "C:\\Users\\Yue\\IMakeCore\\test\\package_json\\.lib\\test@static_lib@1.0.0"
+    }
+  }
+}

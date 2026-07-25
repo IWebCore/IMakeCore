@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "resolved": {
+    "test/resolve_root": {
+      "ref_hash": "cab23258f44fe495",
+      "publisher": "test",
+      "name": "resolve_root",
+      "version": "1.0.0",
+      "path": "C:\\Users\\Yue\\IMakeCore\\test\\package_json\\.lib\\test@resolve_root@1.0.0"
+    }
+  }
+}

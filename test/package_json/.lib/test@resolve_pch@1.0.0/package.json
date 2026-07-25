@@ -1,0 +1,12 @@
+{
+    "name": "resolve_pch",
+    "version": "1.0.0",
+    "publisher": "test",
+    "isGlobal": true,
+    "mode": "sources",
+    "summary": "Package with precompileHeaders",
+    "dependencies": {},
+    "resolve": {
+        "precompileHeaders": ["pch.h"]
+    }
+}

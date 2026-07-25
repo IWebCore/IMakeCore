@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "resolved": {
+    "test/resolve_pch": {
+      "ref_hash": "66e2abc2fe05c91a",
+      "publisher": "test",
+      "name": "resolve_pch",
+      "version": "1.0.0",
+      "path": "C:\\Users\\Yue\\IMakeCore\\test\\package_json\\.lib\\test@resolve_pch@1.0.0"
+    }
+  }
+}

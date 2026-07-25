@@ -1,0 +1,9 @@
+{
+    "name": "dual_mode",
+    "version": "1.0.0",
+    "publisher": "test",
+    "isGlobal": true,
+    "mode": ["source", "static"],
+    "summary": "Dual-mode library (source+static)",
+    "dependencies": {}
+}

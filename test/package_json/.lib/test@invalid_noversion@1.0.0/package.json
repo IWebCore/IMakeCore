@@ -1,0 +1,7 @@
+{
+    "name": "invalid_noversion",
+    "publisher": "test",
+    "isGlobal": true,
+    "mode": "sources",
+    "dependencies": {}
+}

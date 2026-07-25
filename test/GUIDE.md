@@ -19,6 +19,7 @@
 9. [故障排查](#9-故障排查)
 10. [测试文档同步规则](#10-测试文档同步规则)
 11. [项目文件模板 (.pro / CMakeLists.txt)](#11-项目文件模板-pro--cmakeliststxt)
+12. [package.json 字段参考](#12-packagejson-字段参考)
 
 ---
 
@@ -892,4 +893,194 @@ CMakeLists.txt                     .cmake 函数 resolvePackageInfo()
 - IDE 批量加载时不会因失败项目中断
 - 需要单独调试时取消注释即可
 - 当前已注释的预期失败项目列表参见 `tests.pro` 或 `CMakeLists.txt`
+
+### 11.7 生成规则：排除 build 目录
+
+`tests.pro` 和 `CMakeLists.txt` 通过 glob `project_*` 自动生成。**必须排除 `build` 目录**内的匹配项——`build/` 下的 `CMakeFiles/project_*.dir` 等目录会被误匹配。
+
+生成脚本示例（PowerShell）：
+```powershell
+$projects = Get-ChildItem -Recurse -Directory | Where-Object {
+    $_.Name -like 'project_*' -and $_.FullName -notmatch '\\build'
+}
+```
+
+手动添加新项目时也需注意此规则。
+
+
+## 12. package.json 字段参考
+
+每个包目录下必须有一个 `package.json`，描述包的元数据和构建配置。
+
+### 12.1 基础字段
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `name` | string | ✅ | 包名（不含 publisher 前缀） |
+| `version` | string | ✅ | 语义化版本，如 `"1.0.0"` |
+| `publisher` | string | 条件 | 发布者名。`isGlobal=false` 时必须填写 |
+| `isGlobal` | bool | 否 | 是否为全局包，默认 `true` |
+| `mode` | string/array | 否 | 构建模式，默认 `"sources"` |
+| `summary` | string | 否 | 一句话描述 |
+| `dependencies` | object | 否 | 依赖声明，key=`publisher/name`，value=版本约束 |
+| `autoScan` | bool | 否 | 是否自动扫描源文件，默认 `true` |
+| `links` | array | 否 | 相关链接（如 GitHub） |
+| `changelog` | array | 否 | 变更日志 |
+
+**示例：**
+```json
+{
+    "name": "mylib",
+    "version": "1.0.0",
+    "publisher": "example",
+    "isGlobal": true,
+    "mode": "sources",
+    "summary": "My C++ library",
+    "dependencies": {
+        "test/hello": ">=1.0"
+    }
+}
+```
+
+### 12.2 mode 字段
+
+| 值 | 说明 |
+|----|------|
+| `"sources"` / `"source"` | 源码模式（默认），直接编译进项目 |
+| `"static"` | 静态库模式 |
+| `"dynamic"` | 动态库模式 |
+| `["source", "static"]` | 同时支持源码和静态库 |
+| `["dynamic"]` | 仅动态库 |
+
+- `"sources"` 是 `"source"` 的同义词，内部统一为 `"source"`
+- 无效 mode 值会导致 `fromFolderWithJson()` 抛出 `ValueError`
+
+### 12.3 resolve 字段
+
+`resolve` 字段控制包的**文件扫描行为**和**编译配置**。它是一个顶层 JSON 对象，包含以下子字段：
+
+#### 12.3.1 root — 扫描根目录
+
+指定从哪些目录扫描源文件。默认扫描包根目录。
+
+```json
+"resolve": {
+    "root": ["src", "include"]
+}
+```
+
+- 字符串数组，每个元素是相对于包目录的子目录路径
+- 未指定时默认使用包根目录 `["."]`
+- 影响 `headers`、`sources`、`uis`、`resources` 的自动扫描范围
+
+#### 12.3.2 headers — 显式头文件列表
+
+手动指定头文件，覆盖自动扫描。
+
+```json
+"resolve": {
+    "headers": ["inc/header1.h", "inc/header2.h"]
+}
+```
+
+- 字符串数组，相对于包根目录的路径
+- 若指定则**跳过**自动扫描头文件
+- 支持绝对路径
+
+#### 12.3.3 sources — 显式源文件列表
+
+手动指定源文件，覆盖自动扫描。
+
+```json
+"resolve": {
+    "sources": ["src/impl1.cpp", "src/impl2.cpp"]
+}
+```
+
+- 字符串数组，相对于包根目录的路径
+- 若指定则**跳过**自动扫描源文件
+
+#### 12.3.4 includePaths — 包含路径
+
+指定编译器的 include 搜索路径。影响 `.pri`/`.cmake` 中生成的 `INCLUDEPATH`。
+
+```json
+"resolve": {
+    "includePaths": ["inc", "thirdparty/inc"]
+}
+```
+
+- 若指定了 `root`，默认使用 root 目录作为 include 路径
+- 若未指定 `root` 且未指定 `includePaths`，默认使用包根目录
+
+#### 12.3.5 definitions — 预处理器定义
+
+指定编译时的预处理器宏定义。
+
+```json
+"resolve": {
+    "definitions": ["USE_FEATURE_X", "VERSION=1"]
+}
+```
+
+- 字符串数组，格式为 `"NAME"` 或 `"NAME=VALUE"`
+- 写入 `.pri` 的 `DEFINES` 和 `.cmake` 的 `target_compile_definitions`
+
+#### 12.3.6 precompileHeaders — 预编译头
+
+指定预编译头文件列表。
+
+```json
+"resolve": {
+    "precompileHeaders": ["pch.h", "stable.h"]
+}
+```
+
+- 字符串数组，相对于包根目录的路径
+- 写入 `.pri` 的 `PRECOMPILED_HEADER` 配置
+
+#### 12.3.7 dynamicDefinition — 动态库定义
+
+当 `mode` 包含 `"dynamic"` 时，必须声明动态库的源文件和头文件。
+
+```json
+{
+    "mode": ["dynamic"],
+    "resolve": {
+        "dynamicDefinition": {
+            "sources": ["lib.cpp", "impl.cpp"],
+            "headers": ["lib.h", "export.h"]
+        }
+    }
+}
+```
+
+- `sources`：动态库包含的源文件
+- `headers`：动态库导出的头文件
+- 若 `mode=dynamic` 但未定义 `dynamicDefinition`，运行时会报错
+
+#### 12.3.8 ignore — 文件忽略模式
+
+指定扫描时要忽略的文件/目录。
+
+```json
+"resolve": {
+    "ignore": [".git", "*.tmp", "test/"]
+}
+```
+
+- 字符串数组，支持 gitignore 风格的 glob 模式
+- 应用于自动扫描的文件过滤
+
+### 12.4 验证规则
+
+| 规则 | 触发条件 |
+|------|---------|
+| `name` 和 `version` 必填 | `fromFolderWithJson()` |
+| `isGlobal=false` 时 `publisher` 必填 | `fromFolderWithJson()` |
+| `mode` 必须是有效值 | `fromFolderWithJson()` → `ValueError` |
+| `origin` 必须是 `"local"` 或 `"default"` | `RefPackage.from_package_json()` |
+| `path`/`url`/`git` 互斥 | `RefPackage._from_dict_entry()` |
+| `dynamicDefinition` 必须有 `sources` 和 `headers` | 运行时校验 |
+| `updateDb.py` 遇到无效 `package.json` 时跳过并 `[WARN]` | `_index_package()` |
 
