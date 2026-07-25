@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "last_update": "2026-07-25T03:21:07.971025",
+  "resolved": {
+    "test/hello": {
+      "ref_hash": "738142c66e8d3e6c",
+      "publisher": "test",
+      "name": "hello",
+      "version": "1.0.0",
+      "path": "C:\\Users\\Yue\\IMakeCore\\test\\version_specifiers\\.lib\\test@hello@1.0.0"
+    }
+  }
+}

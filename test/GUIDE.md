@@ -59,19 +59,14 @@ test/
 │
 ├── basic_resolve/               ← 子测试：基本包解析
 │   ├── test.py                  ← 测试脚本（自包含）
-│   ├── packages.json            ← 此场景的默认包声明（可选，test.py 动态写入）
-│   ├── .system/  → junction → ../../.system/    ← 【符号链接】指向真实代码
-│   ├── .lib/                    ← 从此测试专属的系统包（从 fixtures/ 复制）
-│   ├── .data/                   ← 系统配置（自动生成）
-│   │   ├── config.json
-│   │   └── packages.json
-│   ├── .db/                     ← 数据库（update_db.py 生成）
-│   │   └── package.db
-│   ├── project_single/          ← 测试用例的项目目录（持久保留）
-│   │   ├── packages.json
-│   │   ├── .package.pri         ← IMakeCore 生成的产物
-│   │   └── .lib/                ← 项目本地包
-│   └── ...
+│   └── ...                      ← (.system junction, .lib, .data, .db, project_*/)
+│
+├── static_propagation/          ← 子测试：static 模式传播
+├── validation/                  ← 子测试：错误路径校验
+├── version_specifiers/          ← 子测试：版本约束（*, >=1.0,<2.0, 精确匹配）
+├── cmake_output/                ← 子测试：CMake 输出 (.package.cmake)
+├── local_origin/                ← 子测试：origin=local 包复制
+├── advanced_resolve/            ← 子测试：多依赖、publisher 作用域、default mode
 │
 └── my_new_test/                 ← 你即将创建的子测试
     └── （结构同上）

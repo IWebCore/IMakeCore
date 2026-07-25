@@ -1,0 +1,15 @@
+{
+    "name": "dynamic_lib",
+    "version": "1.0.0",
+    "publisher": "test",
+    "isGlobal": true,
+    "mode": ["dynamic"],
+    "summary": "Test dynamic library",
+    "dependencies": {},
+    "resolve": {
+        "dynamicDefinition": {
+            "sources": ["lib.cpp"],
+            "headers": ["lib.h"]
+        }
+    }
+}

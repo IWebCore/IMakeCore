@@ -11,7 +11,9 @@ import sys
 from pathlib import Path
 
 TEST_DIR = Path(__file__).resolve().parent
-SUITES = ["basic_resolve", "static_propagation", "validation"]
+SUITES = ["basic_resolve", "static_propagation", "validation",
+          "version_specifiers", "cmake_output", "local_origin", "advanced_resolve",
+          "path_resolve", "static_chain"]
 
 
 def main():

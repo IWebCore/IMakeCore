@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "last_update": "2026-07-25T03:21:19.257583",
+  "resolved": {
+    "test/hello": {
+      "ref_hash": "319004632bcda686",
+      "publisher": "test",
+      "name": "hello",
+      "version": "2.0.0",
+      "path": "C:\\Users\\Yue\\IMakeCore\\test\\static_chain\\.lib\\test@hello@2.0.0"
+    }
+  }
+}
