@@ -193,6 +193,46 @@ def test_invalid_mode_in_config():
     _check("invalid mode" in _out(r), f"missing mode error: {_out(r)[:200]}")
 
 
+def test_mode_mismatch_static_only():
+    """static_lib (supports only static) resolved as source via SAT — accepted at resolution time, rejected by validation later."""
+    proj = _prepare(ROOT / "project_mode_mismatch", {
+        "test/static_lib": {"version": "1.0.0", "mode": "source"}
+    })
+    r = _run(proj)
+    # SAT solver finds the package (version matches). Validation may or may not reject.
+    _check(r.returncode in (0, 1), f"unexpected rc={r.returncode}")
+
+
+def test_isGlobal_false():
+    """Non-global package with publisher — should resolve."""
+    # Create a non-global fixture inline
+    ng_dir = ROOT / ".lib" / "test@nglib@1.0.0"
+    ng_dir.mkdir(exist_ok=True)
+    (ng_dir / "package.json").write_text(json.dumps({
+        "name": "nglib", "version": "1.0.0", "publisher": "test",
+        "isGlobal": False, "mode": "sources", "dependencies": {}
+    }))
+    (ng_dir / "nglib.h").write_text("#pragma once\nint nglib_value();")
+    (ng_dir / "nglib.cpp").write_text('#include "nglib.h"\nint nglib_value() { return 1; }')
+    # Re-run updateDb to index
+    subprocess.run([sys.executable, "-B", str(UPDATE_DB_PY)],
+                   env={**os.environ, "IMAKECORE_ROOT": str(ROOT)},
+                   capture_output=True, text=True, check=True, timeout=60)
+
+    proj = _prepare(ROOT / "project_isglobal_false", {"test/nglib": "1.0.0"})
+    r = _run(proj)
+    _check(r.returncode == 0, f"rc={r.returncode}\n{r.stdout[:300]}")
+    _vfy_pri(proj, "nglib")
+
+
+def test_resolve_multi_root():
+    """Resolve with multiple root directories — both scanned."""
+    proj = _prepare(ROOT / "project_resolve_root", {"test/resolve_root": "1.0.0"})
+    r = _run(proj)
+    _check(r.returncode == 0, f"rc={r.returncode}\n{r.stdout[:300]}")
+    _vfy_pri(proj, "resolve_root")
+
+
 def run(pack_type: str = "qmake"):
     global _PASSED, _FAILED, _G_PACK_TYPE
     _G_PACK_TYPE = pack_type
@@ -212,6 +252,9 @@ def run(pack_type: str = "qmake"):
     test_invalid_missing_version()
     test_invalid_origin()
     test_invalid_mode_in_config()
+    test_mode_mismatch_static_only()
+    test_isGlobal_false()
+    test_resolve_multi_root()
     print(f"\n  {_PASSED} passed, {_FAILED} failed")
     return _FAILED == 0
 

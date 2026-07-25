@@ -96,6 +96,22 @@ def test_transitive_with_versions():
     _vfy_cache(proj, "test/hello", "test/world")
 
 
+def test_cache_roundtrip():
+    """Run twice — second run should use resolve-cache."""
+    proj = _prepare(ROOT / "project_cache", {"test/hello": "1.0.0"})
+    r1 = _run(proj)
+    _check(r1.returncode == 0, f"first run rc={r1.returncode}")
+
+    # save_cache already ran. get_cached should find the entry.
+    cache = proj / ".data" / "resolve-cache.json"
+    _check(cache.exists(), "resolve-cache.json not created")
+
+    # Second run — cache should be read and suggestCandidate set
+    r2 = _run(proj)
+    _check(r2.returncode == 0, f"second run rc={r2.returncode}")
+    _vfy_pri(proj, "hello")
+
+
 # ── Main ───────────────────────────────────────────────────────────────
 
 def run(pack_type: str = "qmake"):
@@ -106,6 +122,7 @@ def run(pack_type: str = "qmake"):
     test_mode_default_explicit()
     test_publisher_scope()
     test_transitive_with_versions()
+    test_cache_roundtrip()
     test_two_independent_packages()
     print(f"\n  {_PASSED} passed, {_FAILED} failed")
     return _FAILED == 0

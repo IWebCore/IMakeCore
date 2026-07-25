@@ -103,6 +103,23 @@ def test_version_skip_x():
         _check("hello" not in (proj / (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri")).read_text(), "x should skip")
 
 
+def test_version_latest():
+    """>=0 (no constraint) should pick latest 2.0.0."""
+    proj = _prepare(ROOT / "project_latest", {"test/hello": ">=0"})
+    r = _run(proj)
+    _check(r.returncode == 0, f"rc={r.returncode}")
+    pri_txt = (proj / (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri")).read_text() if ((proj / (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))).exists() else ""
+    _check("2.0.0" in pri_txt, "should pick latest 2.0.0")
+
+
+def test_version_empty_defaults():
+    """Empty string version should default to >=0."""
+    proj = _prepare(ROOT / "project_empty", {"test/hello": ""})
+    r = _run(proj)
+    _check(r.returncode == 0, f"rc={r.returncode}")
+
+
+
 # ── Main ───────────────────────────────────────────────────────────────
 
 def run(pack_type: str = "qmake"):
@@ -115,6 +132,8 @@ def run(pack_type: str = "qmake"):
     test_version_range_restricted()
     test_version_skip_x()
     test_wildcard_latest()
+    test_version_latest()
+    test_version_empty_defaults()
     print(f"\n  {_PASSED} passed, {_FAILED} failed")
     return _FAILED == 0
 

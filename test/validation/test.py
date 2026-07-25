@@ -97,9 +97,18 @@ def test_missing_packages_json():
     proj.mkdir(parents=True, exist_ok=True)
     r = _run(proj)
     _check(r.returncode in (0, 1), f"unexpected rc={r.returncode}")
-    # No .package.pri expected (either empty or error)
     _check(not (proj / ".package.pri").exists() or r.returncode != 0,
            ".package.pri should not be generated when packages.json is missing")
+
+
+def test_bare_name_publisher_not_found():
+    """Package name without publisher that doesn't exist in DB — should fail."""
+    proj = _prepare(ROOT / "project_bare_name", {"unknown_pkg": "1.0.0"})
+    r = _run(proj)
+    _check(r.returncode == 1, f"expected error, got {r.returncode}")
+    out = _out(r)
+    _check(any(w in out for w in ("cannot", "not found", "not in the resolved", "cannot resolve")),
+           f"missing error: {out[:200]}")
 
 def test_dynamic_without_definition():
     """dynamic mode without dynamicDefinition in resolve."""
@@ -123,6 +132,7 @@ def run(pack_type: str = "qmake"):
     test_header_only_rejects_static()
     test_missing_dependency()
     test_missing_packages_json()
+    test_bare_name_publisher_not_found()
     print(f"\n  {_PASSED} passed, {_FAILED} failed")
     return _FAILED == 0
 
