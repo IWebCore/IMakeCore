@@ -13,9 +13,15 @@ Usage:
 
 import subprocess
 import sys
+import os
 from pathlib import Path
 
 TEST_DIR = Path(__file__).resolve().parent
+
+# Point to the real .system/ directory so test subdirectories don't need
+# their own .system junctions.  The test.py subprocesses inherit this
+# and forward it to IMakeCore.py via env.
+os.environ.setdefault("IMAKECORE_SYSTEM", str(TEST_DIR.parent / ".system"))
 SUITES = [
     "basic_resolve", "static_propagation", "validation",
     "version_specifiers", "cmake_output", "local_origin",

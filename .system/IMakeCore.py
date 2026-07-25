@@ -4,8 +4,9 @@ import sys, os
 import subprocess
 from typing import Any
 
-# Ensure vendored libraries in .system/ take precedence over system-installed copies.
-_sys_dir = os.path.dirname(os.path.abspath(__file__))
+# IMAKECORE_SYSTEM overrides the .system/ directory location (for testing).
+# Falls back to the directory containing this file.
+_sys_dir = os.getenv("IMAKECORE_SYSTEM") or os.path.dirname(os.path.abspath(__file__))
 if _sys_dir not in sys.path:
     sys.path.insert(0, _sys_dir)
 

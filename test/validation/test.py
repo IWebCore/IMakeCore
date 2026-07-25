@@ -3,8 +3,8 @@ import json, os, re, shutil, subprocess, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-IMAKECORE_PY = ROOT / ".system" / "IMakeCore.py"
-UPDATE_DB_PY = ROOT / ".system" / "updateDb.py"
+IMAKECORE_PY = Path(os.getenv("IMAKECORE_SYSTEM", "")) / "IMakeCore.py"
+UPDATE_DB_PY = Path(os.getenv("IMAKECORE_SYSTEM", "")) / "updateDb.py"
 _PASSED = _FAILED = 0
 _G_PACK_TYPE = "qmake"
 

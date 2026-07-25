@@ -44,6 +44,10 @@ $IMAKECORE_ROOT/
 
 **测试的核心思路**：为每个测试场景创建一个完整的、独立的 `IMAKECORE_ROOT`。
 
+> **注意**：`IMAKECORE_ROOT` 只需包含 `.lib/`、`.data/`、`.db/`。`.system/` 代码目录通过独立的
+> `IMAKECORE_SYSTEM` 环境变量指向项目根的真实 `.system/`，无需在每个测试目录中复制或 junction。
+> `run_all.py` 启动时自动设置此变量。
+
 ---
 
 ## 2. 测试目录结构
@@ -90,25 +94,7 @@ test/
 mkdir test/my_new_test
 ```
 
-### 步骤 2：创建 `.system/` 符号链接
-
-**Windows (PowerShell，需管理员权限)**：
-```powershell
-cd test\my_new_test
-New-Item -ItemType Junction -Path .system -Target "..\..\..system"
-```
-或使用 `cmd`：
-```cmd
-mklink /J .system ..\..\..system
-```
-
-**Linux / macOS**：
-```bash
-cd test/my_new_test
-ln -s ../../.system .system
-```
-
-### 步骤 3：复制虚拟包到 `.lib/`
+### 步骤 2：复制虚拟包到 `.lib/`
 
 ```bash
 mkdir .lib
@@ -122,7 +108,7 @@ cp -r ../fixtures/test@hello@1.0.0 .lib/
 cp -r ../fixtures/test@world@1.0.0 .lib/
 ```
 
-### 步骤 4：创建 `.data/config.json`
+### 步骤 3：创建 `.data/config.json`
 
 ```json
 {
@@ -137,7 +123,7 @@ cp -r ../fixtures/test@world@1.0.0 .lib/
 - `servers: []` — 不配置远程服务器（普通测试不需要下载）
 - `libstores: []` — 不使用额外包存储路径
 
-### 步骤 5：创建 `.data/packages.json`（兜底模板）
+### 步骤 4：创建 `.data/packages.json`（兜底模板）
 
 ```json
 {"packages": {}}
@@ -145,11 +131,11 @@ cp -r ../fixtures/test@world@1.0.0 .lib/
 
 这是当项目目录下没有 `packages.json` 时，`AppData._loadConfig()` 会复制到项目中的模板文件。
 
-### 步骤 6：创建 `test.py`
+### 步骤 5：创建 `test.py`
 
 参见 [第 5 节](#5-编写-testpy)。
 
-### 步骤 7：注册到 `run_all.py`
+### 步骤 6：注册到 `run_all.py`
 
 编辑 `test/run_all.py`，在 `SUITES` 列表中添加你的子测试目录名：
 
@@ -157,11 +143,11 @@ cp -r ../fixtures/test@world@1.0.0 .lib/
 SUITES = ["basic_resolve", "static_propagation", "validation", "my_new_test"]
 ```
 
-### 步骤 8：更新 `TEST_SPEC.md`
+### 步骤 7：更新 `TEST_SPEC.md`
 
 **【强制】** 在 `test/TEST_SPEC.md` 中添加新测试目录的条目，列出所有测试函数及其说明。
 
-### 步骤 9：创建初始 `packages.json`（可选）
+### 步骤 8：创建初始 `packages.json`（可选）
 
 如果你希望子测试有一个默认的 `packages.json`（在未通过 test.py 动态写入时使用），在子测试根目录创建：
 
