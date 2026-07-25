@@ -1,9 +1,0 @@
-{
-    "name": "hello",
-    "version": "1.0.0",
-    "publisher": "test",
-    "isGlobal": true,
-    "mode": "sources",
-    "summary": "Test header-only library v1",
-    "dependencies": {}
-}
