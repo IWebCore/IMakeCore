@@ -54,8 +54,11 @@ $IMAKECORE_ROOT/
 
 ```
 test/
-├── run_all.py                   ← 主运行器：依次执行所有子测试的 test.py
+├── run_all.py                   ← 主运行器
+├── tests.pro                    ← Qt Creator 入口：TEMPLATE=subdirs 包含所有 project_*
+├── CMakeLists.txt               ← CMake 入口：add_subdirectory 包含所有 project_*
 ├── GUIDE.md                     ← 本文档
+├── TEST_SPEC.md                 ← 所有测试用例的清单
 ├── fixtures/                    ← 【共享】虚拟包模板
 │   ├── test@hello@1.0.0/        ← 目录名 = 包的唯一标识
 │   │   ├── package.json
@@ -63,17 +66,21 @@ test/
 │   └── ...
 │
 ├── basic_resolve/               ← 子测试：基本包解析
-│   ├── test.py                  ← 测试脚本（自包含）
-│   └── ...                      ← (.system junction, .lib, .data, .db, project_*/)
+│   ├── test.py                  ← 测试脚本
+│   ├── project_single/          ← 测试项目（持久保留，可 IDE 打开）
+│   │   ├── packages.json
+│   │   ├── project_single.pro   ← Qt .pro 文件
+│   │   ├── CMakeLists.txt       ← CMake 文件
+│   │   ├── main.cpp             ← 入口（引用解析到的头文件）
+│   │   ├── .package.pri         ← IMakeCore 生成
+│   │   └── .lib/                ← 项目本地包
+│   └── ...
 │
-├── static_propagation/          ← 子测试：static 模式传播
-├── validation/                  ← 子测试：错误路径校验
-├── version_specifiers/          ← 子测试：版本约束（*, >=1.0,<2.0, 精确匹配）
-├── cmake_output/                ← 子测试：CMake 输出 (.package.cmake)
-├── local_origin/                ← 子测试：origin=local 包复制
-├── advanced_resolve/            ← 子测试：多依赖、publisher 作用域、default mode
-│
-└── my_new_test/                 ← 你即将创建的子测试
+└── static_chain/
+    └── ...
+```
+
+**IDE 使用**：用 Qt Creator 打开 `test/tests.pro` 或 `test/CMakeLists.txt`，即可将所有 35 个测试项目导入 IDE。
     └── （结构同上）
 ```
 

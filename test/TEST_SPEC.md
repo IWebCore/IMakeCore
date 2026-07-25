@@ -1,6 +1,7 @@
 # IMakeCore 测试套件说明
 
 > 运行方式：`python run_all.py [qmake] [cmake]`，默认两种都测。
+> IDE 入口：用 Qt Creator 打开 `tests.pro` 或 `CMakeLists.txt` 即可导入全部 35 个测试项目。
 
 ---
 
