@@ -17,6 +17,7 @@
 7. [运行测试](#7-运行测试)
 8. [添加 HTTP 下载测试](#8-添加-http-下载测试)
 9. [故障排查](#9-故障排查)
+10. [测试文档同步规则](#10-测试文档同步规则)
 
 ---
 
@@ -156,7 +157,11 @@ cp -r ../fixtures/test@world@1.0.0 .lib/
 SUITES = ["basic_resolve", "static_propagation", "validation", "my_new_test"]
 ```
 
-### 步骤 8：创建初始 `packages.json`（可选）
+### 步骤 8：更新 `TEST_SPEC.md`
+
+**【强制】** 在 `test/TEST_SPEC.md` 中添加新测试目录的条目，列出所有测试函数及其说明。
+
+### 步骤 9：创建初始 `packages.json`（可选）
 
 如果你希望子测试有一个默认的 `packages.json`（在未通过 test.py 动态写入时使用），在子测试根目录创建：
 
@@ -752,3 +757,27 @@ New-Item -ItemType Junction -Path .system -Target "..\..\..system"
 - `.db/package.db` 独立（各自的 update_db.py 在各自环境中生成）
 - `.data/config.json` 独立
 - 测试中的项目目录 (`project_xxx/`) 在每次执行前被 `_prepare()` 清理
+
+
+## 10. 测试文档同步规则（强制）
+
+### 10.1 TEST_SPEC.md
+
+`test/TEST_SPEC.md` 是**测试套件的唯一权威描述文件**，记录了每个子测试目录及其包含的全部测试用例。
+
+### 10.2 修改测试时的强制规则
+
+| 操作 | 必须同步更新的内容 |
+|------|-------------------|
+| 新增子测试目录 | 在 `TEST_SPEC.md` 中添加新条目，描述该目录的测试目标 |
+| 在已有目录中新增测试函数 | 在 `TEST_SPEC.md` 对应条目下添加测试名称和说明 |
+| 删除测试函数 | 在 `TEST_SPEC.md` 中移除对应行 |
+| 修改测试函数的测试目标 | 更新 `TEST_SPEC.md` 中的描述 |
+| 修改 `GUIDE.md` | 无需同步 `TEST_SPEC.md`（GUIDE 是操作指南，TEST_SPEC 是测试清单） |
+
+### 10.3 审查流程
+
+任何涉及测试文件的 PR 或修改，审查者必须检查：
+1. `TEST_SPEC.md` 是否同步更新
+2. 新增/修改的测试是否在文档中有准确描述
+3. 删除的测试是否已从文档中移除
