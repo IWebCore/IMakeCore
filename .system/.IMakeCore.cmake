@@ -32,12 +32,12 @@
     endif()
     
     message(STATUS "packages configured successfully")
-    if(NOT DEFINED IMAKECORE_ROOT_DIR)
-        set(IMAKECORE_ROOT_DIR "${CMAKE_SOURCE_DIR}")
-    endif()
+    # if(NOT DEFINED IMAKECORE_ROOT_DIR)
+    #     set(IMAKECORE_ROOT_DIR "${CMAKE_SOURCE_DIR}")
+    # endif()
     foreach(target $CACHE{TARGET_CACHE})
         set(IMAKECORE_TARGET ${target})
-        include(${IMAKECORE_ROOT_DIR}/.package.cmake)
+        include(${CMAKE_CURRENT_LIST_DIR}/.package.cmake)
     endforeach()
 
 endfunction()
