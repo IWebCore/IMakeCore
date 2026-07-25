@@ -9,3 +9,4 @@
 /.system/scripts/util/make/__pycache__
 /.system/db
 *.pyc
+/test/build

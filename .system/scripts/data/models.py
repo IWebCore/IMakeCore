@@ -1,7 +1,7 @@
 """
 SQLAlchemy engine, session factory, and ORM models for IMakeCore package database.
 
-Database location: .system/db/package.db
+Database location: ``$IMAKECORE_ROOT/.db/package.db``
 """
 from __future__ import annotations
 
@@ -16,8 +16,8 @@ _engine: Any = None
 def get_engine() -> Any:
     """Lazily create and return the SQLAlchemy engine.
 
-    Database is stored at ``$IMAKECORE_ROOT/.db/package.db``.
-    Falls back to ``.system/db/`` for backwards compatibility.
+    Database path: ``$IMAKECORE_ROOT/.db/package.db``.
+    Falls back to ``.system/db/`` if the env var is not set.
     """
     global _engine
     if _engine is None:

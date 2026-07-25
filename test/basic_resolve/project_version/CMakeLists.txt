@@ -2,9 +2,11 @@ cmake_minimum_required(VERSION 3.16)
 project(project_version LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 
-# Test environment
-set(ENV{IMAKECORE_ROOT} "C:/Users/Yue/IMakeCore/test/basic_resolve")
-set(ENV{IMAKECORE_SYSTEM} "C:/Users/Yue/IMakeCore/.system")
+# Test environment (relative paths — portable across machines)
+get_filename_component(TEST_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../.." ABSOLUTE)
+get_filename_component(SYSTEM_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../.system" ABSOLUTE)
+set(ENV{IMAKECORE_ROOT} "${TEST_ROOT}")
+set(ENV{IMAKECORE_SYSTEM} "${SYSTEM_DIR}")
 
 include($ENV{ICMakeCore})
 ICmakeCoreInit(project_version)

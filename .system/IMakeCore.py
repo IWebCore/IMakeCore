@@ -126,26 +126,44 @@ def _generate_outputs(packages: list, app_path: str, pack_type: str, env) -> Non
 
 
 def _ensure_db() -> None:
-    """Create the package database if it does not exist."""
+    """Create the package database if it does not exist or is empty."""
     root = os.getenv("IMAKECORE_ROOT", "")
     db_path = os.path.join(root, ".db", "package.db") if root else ""
-    if db_path and os.path.exists(db_path):
-        return
+    lock_path = os.path.join(root, ".db", ".lock") if root else ""
+
+    if db_path and os.path.exists(db_path) and os.path.getsize(db_path) > 0:
+        return  # DB exists and has content
 
     update_py = os.path.join(_sys_dir, "updateDb.py")
     if not os.path.exists(update_py):
-        print("WARNING: updateDb.py not found, skipping DB initialization.")
-        return
+        return  # can't init — let resolution fail naturally
 
-    print("Database not found, initializing...")
-    result = subprocess.run(
-        [sys.executable, "-B", update_py],
-        env={**os.environ, "IMAKECORE_ROOT": root},
-        capture_output=True, text=True,
-    )
-    if result.returncode != 0:
-        print(f"ERROR: Failed to initialize database:\n{result.stderr}")
-        exit(1)
+    # File lock to prevent concurrent updateDb.py runs (e.g. IDE loads 35 projects)
+    try:
+        fd = os.open(lock_path, os.O_CREAT | os.O_EXCL | os.O_RDWR)
+        os.close(fd)
+    except FileExistsError:
+        # Another process is already initializing — wait for it
+        import time
+        for _ in range(30):  # wait up to 30 seconds
+            time.sleep(1)
+            if os.path.exists(db_path) and os.path.getsize(db_path) > 0:
+                return
+        return  # timeout — let resolution try anyway
+
+    try:
+        print("Initializing package database...")
+        result = subprocess.run(
+            [sys.executable, "-B", update_py],
+            env={**os.environ, "IMAKECORE_ROOT": root},
+            capture_output=True, text=True,
+        )
+        if result.returncode != 0:
+            print(f"ERROR: Failed to initialize database:\n{result.stderr}")
+            exit(1)
+    finally:
+        if os.path.exists(lock_path):
+            os.remove(lock_path)
 
 
 # ── Entry point ────────────────────────────────────────────────────────
