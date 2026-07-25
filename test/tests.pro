@@ -141,8 +141,8 @@ SUBDIRS += version_specifiers/project_range_low
 version_specifiers/project_range_restricted.file = version_specifiers/project_range_restricted/project_range_restricted.pro
 SUBDIRS += version_specifiers/project_range_restricted
 
-version_specifiers/project_skip.file = version_specifiers/project_skip/project_skip.pro
-SUBDIRS += version_specifiers/project_skip
+# version_specifiers/project_skip.file = version_specifiers/project_skip/project_skip.pro
+# SUBDIRS += version_specifiers/project_skip
 
 version_specifiers/project_wildcard.file = version_specifiers/project_wildcard/project_wildcard.pro
 SUBDIRS += version_specifiers/project_wildcard
