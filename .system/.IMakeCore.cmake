@@ -10,14 +10,22 @@
         return()
     endif()
 
-    if(DEFINED ENV{IMAKECORE_SYSTEM})
-        set(IMAKECORE_SYSTEM_PATH "$ENV{IMAKECORE_SYSTEM}")
-    else()
-        set(IMAKECORE_SYSTEM_PATH "$ENV{IMAKECORE_ROOT}/.system")
+    if(NOT DEFINED CACHE{IMAKECORE_ROOT})
+        set(IMAKECORE_ROOT "$ENV{IMAKECORE_ROOT}" CACHE STRING "root" FORCE)
     endif()
-    file(TO_CMAKE_PATH "${IMAKECORE_SYSTEM_PATH}/IMakeCore.py" script_path)
+
+    if(NOT DEFINED CACHE{IMAKECORE_SYSTEM})
+        set(IMAKECORE_SYSTEM "$ENV{IMAKECORE_ROOT}/.system" CACHE STRING "system" FORCE)
+    endif()
+
+    # message(STATUS ------ $ENV{IMAKECORE_ROOT})
+
+    file(TO_CMAKE_PATH "$CACHE{IMAKECORE_SYSTEM}/IMakeCore.py" script_path)
     execute_process(
-        COMMAND  ${Python_EXECUTABLE} -B ${script_path} ${CMAKE_CURRENT_LIST_DIR} cmake
+        COMMAND ${CMAKE_COMMAND} -E env
+            "IMAKECORE_ROOT=$CACHE{IMAKECORE_ROOT}"
+            "IMAKECORE_SYSTEM=$CACHE{IMAKECORE_SYSTEM}"
+            ${Python_EXECUTABLE} -B ${script_path} ${CMAKE_CURRENT_LIST_DIR} cmake
         OUTPUT_VARIABLE infoVal
         RESULT_VARIABLE result
     )
@@ -32,28 +40,20 @@
     endif()
     
     message(STATUS "packages configured successfully")
-    # if(NOT DEFINED IMAKECORE_ROOT_DIR)
-    #     set(IMAKECORE_ROOT_DIR "${CMAKE_SOURCE_DIR}")
-    # endif()
-    foreach(target $CACHE{TARGET_CACHE})
+    foreach(target ${TARGET_CACHE})
         set(IMAKECORE_TARGET ${target})
         include(${CMAKE_CURRENT_LIST_DIR}/.package.cmake)
     endforeach()
-
 endfunction()
 
 function(initializeTarget)
-    list(LENGTH ARGN argc)
-    if(argc EQUAL 0)
-        message(FATAL_ERROR "initializeTarget function must contains at least one target name")
+    if(${ARGC} EQUAL 0)
+        message(FATAL_ERROR "initializeTarget must have at least one target name")
     endif()
-    set(TARGET_CACHE ${ARGN} CACHE INTERNAL "" FORCE)
-
+    set(TARGET_CACHE ${ARGV} CACHE INTERNAL "" FORCE)
     resolvePackageInfo()
 endfunction()
 
 function(ICmakeCoreInit)
     initializeTarget(${ARGV})
 endfunction()
-
-
