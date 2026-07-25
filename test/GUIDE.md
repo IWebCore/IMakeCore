@@ -18,6 +18,7 @@
 8. [添加 HTTP 下载测试](#8-添加-http-下载测试)
 9. [故障排查](#9-故障排查)
 10. [测试文档同步规则](#10-测试文档同步规则)
+11. [项目文件模板 (.pro / CMakeLists.txt)](#11-项目文件模板-pro--cmakeliststxt)
 
 ---
 
@@ -774,3 +775,121 @@ New-Item -ItemType Junction -Path .system -Target "..\..\..system"
 1. `TEST_SPEC.md` 是否同步更新
 2. 新增/修改的测试是否在文档中有准确描述
 3. 删除的测试是否已从文档中移除
+
+
+## 11. 项目文件模板 (.pro / CMakeLists.txt)
+
+每个 `project_*/` 目录需要两个 IDE 入口文件。`.prf` / `.cmake` 通过 `isEmpty()` 判断：
+- 若 `.pro` 设置了 `IMAKECORE_ROOT` → 测试项目，使用 `.pro` 的值
+- 若未设置 → 真实项目，回退到系统环境变量
+
+### 11.1 .pro 模板
+
+```qmake
+QT -= gui widgets
+CONFIG += c++17 console
+CONFIG -= app_bundle
+
+SOURCES += main.cpp
+
+# --- IMakeCore integration ---
+IMAKECORE_ROOT = $$absolute_path($$PWD/../)
+IMAKECORE_SYSTEM = $$(IMAKECORE_ROOT)/.system
+include($$(IQMakeCore))
+IQMakeCoreInit()
+include($$PWD/.package.pri)
+```
+
+**变量说明：**
+
+| 变量 | 值 | 用途 |
+|------|-----|------|
+| `IMAKECORE_ROOT` | `$$absolute_path($$PWD/../)` → 测试套件目录 | 测试环境（`.lib` `.data` `.db`） |
+| `IMAKECORE_SYSTEM` | `$$(IMAKECORE_ROOT)/.system` → 系统环境变量的值 | 代码本体（`.system/`），所有测试项目共享 |
+| `include($$(IQMakeCore))` | 系统环境变量 `IQMakeCore` | 加载 `.IMakeCore.prf` |
+| `IQMakeCoreInit()` | `.prf` 中的函数 | 调用 `IMakeCore.py` 解析包 |
+| `include($$PWD/.package.pri)` | 同级目录的 `.package.pri` | 包含 IMakeCore 生成的 include 链 |
+
+**路径推导：** `project_*/` 位于 `test/<suite>/project_xxx/`，`../` 回到 `<suite>/`。
+
+### 11.2 CMakeLists.txt 模板
+
+```cmake
+cmake_minimum_required(VERSION 3.16)
+project(<name> LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
+
+add_executable(<name> main.cpp)
+
+# --- IMakeCore integration ---
+get_filename_component(TEST_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../" ABSOLUTE)
+set(IMAKECORE_ROOT "${TEST_ROOT}" CACHE STRING "root" FORCE)
+set(IMAKECORE_SYSTEM "$ENV{IMAKECORE_ROOT}/.system" CACHE STRING "system" FORCE)
+include($ENV{ICMakeCore})
+ICmakeCoreInit(<name>)
+```
+
+**变量说明：**
+
+| 变量 | 值 | 用途 |
+|------|-----|------|
+| `TEST_ROOT` | `get_filename_component(.../../ ABSOLUTE)` | 测试套件绝对路径 |
+| `IMAKECORE_ROOT` | `"${TEST_ROOT}" CACHE STRING "root" FORCE` | CMake cache 变量，`.prf` 读取 |
+| `IMAKECORE_SYSTEM` | `"$ENV{IMAKECORE_ROOT}/.system" CACHE STRING "system" FORCE` | 系统 `.system/` 路径，所有测试共享 |
+| `include($ENV{ICMakeCore})` | 系统环境变量 `ICMakeCore` | 加载 `.IMakeCore.cmake` |
+| `ICmakeCoreInit(<name>)` | `.cmake` 中的函数 | 调用 `IMakeCore.py` 解析包 |
+
+**注意：** `ICmakeCoreInit()` 内部已自动 `include(.package.cmake)`，**无需**在 CMakeLists.txt 中重复。
+
+### 11.3 main.cpp 模板
+
+```cpp
+#include "<resolved_header>.h"
+
+int main() {
+    return 0;
+}
+```
+
+根据解析的包选择 include 头文件。例如 hello 包用 `"hello.h"`，world 包依赖 hello 也用 `"hello.h"`。compile 通过即可验证 IDE 环境正确。`_prepare()` 不会删除 `.pro`、`CMakeLists.txt`、`main.cpp`。
+
+### 11.4 变量流向
+
+```
+.pro 文件                          .prf 函数 IQMakeCoreInit()
+  IMAKECORE_ROOT = $$PWD/../  ─→   isEmpty(IMAKECORE_ROOT)? → FALSE → 保留 .pro 值
+  IMAKECORE_SYSTEM = $$(...)/.system  →  isEmpty(IMAKECORE_SYSTEM)? → FALSE → 保留 .pro 值
+                                    ↓
+                                   cmd = set IMAKECORE_ROOT=... && ... python IMakeCore.py
+
+CMakeLists.txt                     .cmake 函数 resolvePackageInfo()
+  set(IMAKECORE_ROOT ... CACHE) ─→ $CACHE{IMAKECORE_ROOT} → execute_process ENV
+  set(IMAKECORE_SYSTEM ... CACHE) → $CACHE{IMAKECORE_SYSTEM} → execute_process ENV
+```
+
+### 11.5 真实项目 vs 测试项目
+
+| | 真实项目 (IPubCore) | 测试项目 (project_*) |
+|--|---------------------|---------------------|
+| `.pro` 是否设置 `IMAKECORE_ROOT` | ❌ | ✅ `$$absolute_path($$PWD/../)` |
+| `.prf` 中 `isEmpty(IMAKECORE_ROOT)` | TRUE → 读 `$$(IMAKECORE_ROOT)` | FALSE → 保留 `.pro` 值 |
+| `IMAKECORE_SYSTEM` 来源 | `$$(IMAKECORE_ROOT)/.system` | `$$(IMAKECORE_ROOT)/.system`（系统 env） |
+
+### 11.6 预期失败项目的处理
+
+如果一个测试项目预期会失败（如错误校验测试），应将其在 `tests.pro` 和 `CMakeLists.txt` 中**注释掉但保留**：
+
+```qmake
+# SUBDIRS += validation/project_err_static     ← 注释掉，不参与批量构建
+```
+
+```cmake
+# add_subdirectory(validation/project_err_static)   ← 同上
+```
+
+**规则：**
+- 写入文件，但用 `# ` 前缀注释
+- IDE 批量加载时不会因失败项目中断
+- 需要单独调试时取消注释即可
+- 当前已注释的预期失败项目列表参见 `tests.pro` 或 `CMakeLists.txt`
+

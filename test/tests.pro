@@ -3,6 +3,9 @@ TEMPLATE = subdirs
 advanced_resolve/project_default.file = advanced_resolve/project_default/project_default.pro
 SUBDIRS += advanced_resolve/project_default
 
+advanced_resolve/project_default/build/Replacement_for_Desktop_Qt_5_14_2_MSVC2017_32bit-Debug/CMakeFiles/project_default.dir.file = advanced_resolve/project_default/build/Replacement_for_Desktop_Qt_5_14_2_MSVC2017_32bit-Debug/CMakeFiles/project_default.dir/project_default.dir.pro
+SUBDIRS += advanced_resolve/project_default/build/Replacement_for_Desktop_Qt_5_14_2_MSVC2017_32bit-Debug/CMakeFiles/project_default.dir
+
 advanced_resolve/project_publisher.file = advanced_resolve/project_publisher/project_publisher.pro
 SUBDIRS += advanced_resolve/project_publisher
 
@@ -27,6 +30,258 @@ SUBDIRS += basic_resolve/project_transitive
 basic_resolve/project_version.file = basic_resolve/project_version/project_version.pro
 SUBDIRS += basic_resolve/project_version
 
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/advanced_resolve/project_default.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/advanced_resolve/project_default/project_default.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/advanced_resolve/project_default
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/advanced_resolve/project_default/CMakeFiles/project_default.dir.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/advanced_resolve/project_default/CMakeFiles/project_default.dir/project_default.dir.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/advanced_resolve/project_default/CMakeFiles/project_default.dir
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/advanced_resolve/project_publisher.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/advanced_resolve/project_publisher/project_publisher.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/advanced_resolve/project_publisher
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/advanced_resolve/project_publisher/CMakeFiles/project_publisher.dir.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/advanced_resolve/project_publisher/CMakeFiles/project_publisher.dir/project_publisher.dir.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/advanced_resolve/project_publisher/CMakeFiles/project_publisher.dir
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/advanced_resolve/project_trans_ver.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/advanced_resolve/project_trans_ver/project_trans_ver.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/advanced_resolve/project_trans_ver
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/advanced_resolve/project_trans_ver/CMakeFiles/project_trans_ver.dir.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/advanced_resolve/project_trans_ver/CMakeFiles/project_trans_ver.dir/project_trans_ver.dir.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/advanced_resolve/project_trans_ver/CMakeFiles/project_trans_ver.dir
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/advanced_resolve/project_two.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/advanced_resolve/project_two/project_two.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/advanced_resolve/project_two
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/advanced_resolve/project_two/CMakeFiles/project_two.dir.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/advanced_resolve/project_two/CMakeFiles/project_two.dir/project_two.dir.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/advanced_resolve/project_two/CMakeFiles/project_two.dir
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_single.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_single/project_single.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_single
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_single/CMakeFiles/project_single.dir.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_single/CMakeFiles/project_single.dir/project_single.dir.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_single/CMakeFiles/project_single.dir
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_skip.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_skip/project_skip.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_skip
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_skip/CMakeFiles/project_skip.dir.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_skip/CMakeFiles/project_skip.dir/project_skip.dir.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_skip/CMakeFiles/project_skip.dir
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_source.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_source/project_source.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_source
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_source/CMakeFiles/project_source.dir.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_source/CMakeFiles/project_source.dir/project_source.dir.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_source/CMakeFiles/project_source.dir
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_transitive.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_transitive/project_transitive.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_transitive
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_transitive/CMakeFiles/project_transitive.dir.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_transitive/CMakeFiles/project_transitive.dir/project_transitive.dir.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_transitive/CMakeFiles/project_transitive.dir
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_version.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_version/project_version.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_version
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_version/CMakeFiles/project_version.dir.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_version/CMakeFiles/project_version.dir/project_version.dir.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/basic_resolve/project_version/CMakeFiles/project_version.dir
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/cmake_output/project_cmake_single.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/cmake_output/project_cmake_single/project_cmake_single.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/cmake_output/project_cmake_single
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/cmake_output/project_cmake_single/CMakeFiles/project_cmake_single.dir.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/cmake_output/project_cmake_single/CMakeFiles/project_cmake_single.dir/project_cmake_single.dir.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/cmake_output/project_cmake_single/CMakeFiles/project_cmake_single.dir
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/cmake_output/project_cmake_trans.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/cmake_output/project_cmake_trans/project_cmake_trans.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/cmake_output/project_cmake_trans
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/cmake_output/project_cmake_trans/CMakeFiles/project_cmake_trans.dir.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/cmake_output/project_cmake_trans/CMakeFiles/project_cmake_trans.dir/project_cmake_trans.dir.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/cmake_output/project_cmake_trans/CMakeFiles/project_cmake_trans.dir
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/cmake_output/project_cmake_ver.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/cmake_output/project_cmake_ver/project_cmake_ver.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/cmake_output/project_cmake_ver
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/cmake_output/project_cmake_ver/CMakeFiles/project_cmake_ver.dir.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/cmake_output/project_cmake_ver/CMakeFiles/project_cmake_ver.dir/project_cmake_ver.dir.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/cmake_output/project_cmake_ver/CMakeFiles/project_cmake_ver.dir
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/local_origin/project_local.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/local_origin/project_local/project_local.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/local_origin/project_local
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/local_origin/project_local_first.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/local_origin/project_local_first/project_local_first.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/local_origin/project_local_first
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/local_origin/project_local_first/CMakeFiles/project_local_first.dir.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/local_origin/project_local_first/CMakeFiles/project_local_first.dir/project_local_first.dir.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/local_origin/project_local_first/CMakeFiles/project_local_first.dir
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/local_origin/project_local_missing.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/local_origin/project_local_missing/project_local_missing.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/local_origin/project_local_missing
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/local_origin/project_local_second.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/local_origin/project_local_second/project_local_second.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/local_origin/project_local_second
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/local_origin/project_local_second/CMakeFiles/project_local_second.dir.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/local_origin/project_local_second/CMakeFiles/project_local_second.dir/project_local_second.dir.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/local_origin/project_local_second/CMakeFiles/project_local_second.dir
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/local_origin/project_local/CMakeFiles/project_local.dir.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/local_origin/project_local/CMakeFiles/project_local.dir/project_local.dir.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/local_origin/project_local/CMakeFiles/project_local.dir
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/path_resolve/project_path.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/path_resolve/project_path/project_path.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/path_resolve/project_path
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/path_resolve/project_path_bad.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/path_resolve/project_path_bad/project_path_bad.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/path_resolve/project_path_bad
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/path_resolve/project_path_src.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/path_resolve/project_path_src/project_path_src.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/path_resolve/project_path_src
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/path_resolve/project_path_src/CMakeFiles/project_path_src.dir.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/path_resolve/project_path_src/CMakeFiles/project_path_src.dir/project_path_src.dir.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/path_resolve/project_path_src/CMakeFiles/project_path_src.dir
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/path_resolve/project_path/CMakeFiles/project_path.dir.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/path_resolve/project_path/CMakeFiles/project_path.dir/project_path.dir.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/path_resolve/project_path/CMakeFiles/project_path.dir
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/static_chain/project_source_explicit.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/static_chain/project_source_explicit/project_source_explicit.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/static_chain/project_source_explicit
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/static_chain/project_source_explicit/CMakeFiles/project_source_explicit.dir.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/static_chain/project_source_explicit/CMakeFiles/project_source_explicit.dir/project_source_explicit.dir.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/static_chain/project_source_explicit/CMakeFiles/project_source_explicit.dir
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/static_chain/project_source_static.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/static_chain/project_source_static/project_source_static.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/static_chain/project_source_static
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/static_chain/project_source_static/CMakeFiles/project_source_static.dir.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/static_chain/project_source_static/CMakeFiles/project_source_static.dir/project_source_static.dir.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/static_chain/project_source_static/CMakeFiles/project_source_static.dir
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/static_chain/project_static_chain.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/static_chain/project_static_chain/project_static_chain.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/static_chain/project_static_chain
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/static_chain/project_static_dynamic.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/static_chain/project_static_dynamic/project_static_dynamic.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/static_chain/project_static_dynamic
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/static_chain/project_static_source_dep.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/static_chain/project_static_source_dep/project_static_source_dep.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/static_chain/project_static_source_dep
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/validation/project_err_dynamic.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/validation/project_err_dynamic/project_err_dynamic.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/validation/project_err_dynamic
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/validation/project_no_pkg.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/validation/project_no_pkg/project_no_pkg.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/validation/project_no_pkg
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_exact.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_exact/project_exact.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_exact
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_exact/CMakeFiles/project_exact.dir.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_exact/CMakeFiles/project_exact.dir/project_exact.dir.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_exact/CMakeFiles/project_exact.dir
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_range_low.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_range_low/project_range_low.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_range_low
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_range_low/CMakeFiles/project_range_low.dir.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_range_low/CMakeFiles/project_range_low.dir/project_range_low.dir.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_range_low/CMakeFiles/project_range_low.dir
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_range_restricted.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_range_restricted/project_range_restricted.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_range_restricted
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_range_restricted/CMakeFiles/project_range_restricted.dir.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_range_restricted/CMakeFiles/project_range_restricted.dir/project_range_restricted.dir.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_range_restricted/CMakeFiles/project_range_restricted.dir
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_skip.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_skip/project_skip.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_skip
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_skip/CMakeFiles/project_skip2.dir.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_skip/CMakeFiles/project_skip2.dir/project_skip2.dir.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_skip/CMakeFiles/project_skip2.dir
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_wildcard.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_wildcard/project_wildcard.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_wildcard
+
+build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_wildcard/CMakeFiles/project_wildcard.dir.file = build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_wildcard/CMakeFiles/project_wildcard.dir/project_wildcard.dir.pro
+SUBDIRS += build/Desktop_Qt_5_15_2_MinGW_32_bit-Debug/version_specifiers/project_wildcard/CMakeFiles/project_wildcard.dir
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/advanced_resolve/project_default.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/advanced_resolve/project_default/project_default.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/advanced_resolve/project_default
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/advanced_resolve/project_publisher.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/advanced_resolve/project_publisher/project_publisher.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/advanced_resolve/project_publisher
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/advanced_resolve/project_trans_ver.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/advanced_resolve/project_trans_ver/project_trans_ver.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/advanced_resolve/project_trans_ver
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/advanced_resolve/project_two.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/advanced_resolve/project_two/project_two.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/advanced_resolve/project_two
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/basic_resolve/project_single.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/basic_resolve/project_single/project_single.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/basic_resolve/project_single
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/basic_resolve/project_skip.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/basic_resolve/project_skip/project_skip.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/basic_resolve/project_skip
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/basic_resolve/project_source.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/basic_resolve/project_source/project_source.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/basic_resolve/project_source
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/basic_resolve/project_transitive.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/basic_resolve/project_transitive/project_transitive.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/basic_resolve/project_transitive
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/basic_resolve/project_version.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/basic_resolve/project_version/project_version.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/basic_resolve/project_version
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/cmake_output/project_cmake_single.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/cmake_output/project_cmake_single/project_cmake_single.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/cmake_output/project_cmake_single
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/cmake_output/project_cmake_trans.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/cmake_output/project_cmake_trans/project_cmake_trans.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/cmake_output/project_cmake_trans
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/cmake_output/project_cmake_ver.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/cmake_output/project_cmake_ver/project_cmake_ver.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/cmake_output/project_cmake_ver
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/local_origin/project_local.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/local_origin/project_local/project_local.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/local_origin/project_local
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/local_origin/project_local_first.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/local_origin/project_local_first/project_local_first.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/local_origin/project_local_first
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/local_origin/project_local_missing.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/local_origin/project_local_missing/project_local_missing.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/local_origin/project_local_missing
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/local_origin/project_local_second.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/local_origin/project_local_second/project_local_second.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/local_origin/project_local_second
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/path_resolve/project_path.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/path_resolve/project_path/project_path.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/path_resolve/project_path
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/path_resolve/project_path_bad.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/path_resolve/project_path_bad/project_path_bad.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/path_resolve/project_path_bad
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/path_resolve/project_path_src.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/path_resolve/project_path_src/project_path_src.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/path_resolve/project_path_src
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/static_chain/project_source_explicit.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/static_chain/project_source_explicit/project_source_explicit.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/static_chain/project_source_explicit
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/static_chain/project_source_static.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/static_chain/project_source_static/project_source_static.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/static_chain/project_source_static
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/static_chain/project_static_chain.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/static_chain/project_static_chain/project_static_chain.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/static_chain/project_static_chain
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/static_chain/project_static_dynamic.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/static_chain/project_static_dynamic/project_static_dynamic.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/static_chain/project_static_dynamic
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/static_chain/project_static_source_dep.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/static_chain/project_static_source_dep/project_static_source_dep.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/static_chain/project_static_source_dep
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/version_specifiers/project_exact.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/version_specifiers/project_exact/project_exact.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/version_specifiers/project_exact
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/version_specifiers/project_range_low.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/version_specifiers/project_range_low/project_range_low.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/version_specifiers/project_range_low
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/version_specifiers/project_range_restricted.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/version_specifiers/project_range_restricted/project_range_restricted.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/version_specifiers/project_range_restricted
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/version_specifiers/project_skip.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/version_specifiers/project_skip/project_skip.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/version_specifiers/project_skip
+
+build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/version_specifiers/project_wildcard.file = build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/version_specifiers/project_wildcard/project_wildcard.pro
+SUBDIRS += build/Desktop_Qt_6_10_0_MSVC2022_64bit-Debug/version_specifiers/project_wildcard
+
 cmake_output/project_cmake_single.file = cmake_output/project_cmake_single/project_cmake_single.pro
 SUBDIRS += cmake_output/project_cmake_single
 
@@ -42,17 +297,23 @@ SUBDIRS += local_origin/project_local
 local_origin/project_local_first.file = local_origin/project_local_first/project_local_first.pro
 SUBDIRS += local_origin/project_local_first
 
-local_origin/project_local_missing.file = local_origin/project_local_missing/project_local_missing.pro
-SUBDIRS += local_origin/project_local_missing
+# local_origin/project_local_missing.file = local_origin/project_local_missing/project_local_missing.pro
+# SUBDIRS += local_origin/project_local_missing
 
 local_origin/project_local_second.file = local_origin/project_local_second/project_local_second.pro
 SUBDIRS += local_origin/project_local_second
 
+local_origin/project_local/build/Desktop_Qt_6_10_0_MinGW_64_bit-Debug/CMakeFiles/project_local.dir.file = local_origin/project_local/build/Desktop_Qt_6_10_0_MinGW_64_bit-Debug/CMakeFiles/project_local.dir/project_local.dir.pro
+SUBDIRS += local_origin/project_local/build/Desktop_Qt_6_10_0_MinGW_64_bit-Debug/CMakeFiles/project_local.dir
+
+local_origin/project_local/build/Replacement_for_Desktop_Qt_5_14_2_MSVC2017_32bit-Debug/CMakeFiles/project_local.dir.file = local_origin/project_local/build/Replacement_for_Desktop_Qt_5_14_2_MSVC2017_32bit-Debug/CMakeFiles/project_local.dir/project_local.dir.pro
+SUBDIRS += local_origin/project_local/build/Replacement_for_Desktop_Qt_5_14_2_MSVC2017_32bit-Debug/CMakeFiles/project_local.dir
+
 path_resolve/project_path.file = path_resolve/project_path/project_path.pro
 SUBDIRS += path_resolve/project_path
 
-path_resolve/project_path_bad.file = path_resolve/project_path_bad/project_path_bad.pro
-SUBDIRS += path_resolve/project_path_bad
+# path_resolve/project_path_bad.file = path_resolve/project_path_bad/project_path_bad.pro
+# SUBDIRS += path_resolve/project_path_bad
 
 path_resolve/project_path_src.file = path_resolve/project_path_src/project_path_src.pro
 SUBDIRS += path_resolve/project_path_src
@@ -69,8 +330,8 @@ SUBDIRS += static_chain/project_static_chain
 static_chain/project_static_dynamic.file = static_chain/project_static_dynamic/project_static_dynamic.pro
 SUBDIRS += static_chain/project_static_dynamic
 
-static_chain/project_static_source_dep.file = static_chain/project_static_source_dep/project_static_source_dep.pro
-SUBDIRS += static_chain/project_static_source_dep
+# static_chain/project_static_source_dep.file = static_chain/project_static_source_dep/project_static_source_dep.pro
+# SUBDIRS += static_chain/project_static_source_dep
 
 static_propagation/project_static.file = static_propagation/project_static/project_static.pro
 SUBDIRS += static_propagation/project_static
@@ -78,17 +339,17 @@ SUBDIRS += static_propagation/project_static
 static_propagation/project_static_cpp.file = static_propagation/project_static_cpp/project_static_cpp.pro
 SUBDIRS += static_propagation/project_static_cpp
 
-validation/project_err_dynamic.file = validation/project_err_dynamic/project_err_dynamic.pro
-SUBDIRS += validation/project_err_dynamic
+# validation/project_err_dynamic.file = validation/project_err_dynamic/project_err_dynamic.pro
+# SUBDIRS += validation/project_err_dynamic
 
-validation/project_err_missing.file = validation/project_err_missing/project_err_missing.pro
-SUBDIRS += validation/project_err_missing
+# validation/project_err_missing.file = validation/project_err_missing/project_err_missing.pro
+# SUBDIRS += validation/project_err_missing
 
-validation/project_err_static.file = validation/project_err_static/project_err_static.pro
-SUBDIRS += validation/project_err_static
+# validation/project_err_static.file = validation/project_err_static/project_err_static.pro
+# SUBDIRS += validation/project_err_static
 
-validation/project_no_pkg.file = validation/project_no_pkg/project_no_pkg.pro
-SUBDIRS += validation/project_no_pkg
+# validation/project_no_pkg.file = validation/project_no_pkg/project_no_pkg.pro
+# SUBDIRS += validation/project_no_pkg
 
 version_specifiers/project_exact.file = version_specifiers/project_exact/project_exact.pro
 SUBDIRS += version_specifiers/project_exact
@@ -104,5 +365,4 @@ SUBDIRS += version_specifiers/project_skip
 
 version_specifiers/project_wildcard.file = version_specifiers/project_wildcard/project_wildcard.pro
 SUBDIRS += version_specifiers/project_wildcard
-
 
