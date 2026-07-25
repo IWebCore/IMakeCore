@@ -1,9 +1,14 @@
 """
 run_all.py — Master test runner.
 
-Runs each sub-test directory's test.py in sequence and reports results.
+Accepts optional pack type arguments: qmake, cmake, or both.
+Defaults to both if none specified.
 
-Usage:  python run_all.py       (from test/ directory)
+Usage:
+    python run_all.py              # runs qmake + cmake
+    python run_all.py qmake        # runs qmake only
+    python run_all.py cmake        # runs cmake only
+    python run_all.py qmake cmake  # runs both
 """
 
 import subprocess
@@ -11,37 +16,56 @@ import sys
 from pathlib import Path
 
 TEST_DIR = Path(__file__).resolve().parent
-SUITES = ["basic_resolve", "static_propagation", "validation",
-          "version_specifiers", "cmake_output", "local_origin", "advanced_resolve",
-          "path_resolve", "static_chain"]
+SUITES = [
+    "basic_resolve", "static_propagation", "validation",
+    "version_specifiers", "cmake_output", "local_origin",
+    "advanced_resolve", "path_resolve", "static_chain",
+]
+
+VALID = {"qmake", "cmake"}
 
 
 def main():
+    args = sys.argv[1:]
+    if not args:
+        pack_types = ["qmake", "cmake"]
+    else:
+        for a in args:
+            if a not in VALID:
+                print(f"ERROR: Invalid pack type '{a}'. Use: qmake cmake")
+                return False
+        seen = set()
+        pack_types = []
+        for a in args:
+            if a not in seen:
+                seen.add(a)
+                pack_types.append(a)
+
     passed = 0
     failed = 0
 
     for suite in SUITES:
         test_py = TEST_DIR / suite / "test.py"
         if not test_py.exists():
-            print(f"[SKIP] {suite} — test.py not found")
+            print(f"[SKIP] {suite}")
             continue
 
-        result = subprocess.run(
-            [sys.executable, str(test_py)],
-            cwd=str(test_py.parent),
-            timeout=300,
-        )
-        if result.returncode == 0:
-            passed += 1
-        else:
-            failed += 1
+        for pt in pack_types:
+            r = subprocess.run(
+                [sys.executable, str(test_py), pt],
+                cwd=str(test_py.parent), timeout=300,
+            )
+            if r.returncode == 0:
+                passed += 1
+            else:
+                failed += 1
 
-    print("\n" + "=" * 60)
-    print(f"TOTAL: {passed} passed, {failed} failed out of {len(SUITES)} suites")
-    print("=" * 60)
+    print(f"\n{'='*60}")
+    print(f"TOTAL: {passed} passed, {failed} failed"
+          f"  (types: {', '.join(pack_types)})")
+    print(f"{'='*60}")
     return failed == 0
 
 
 if __name__ == "__main__":
-    ok = main()
-    sys.exit(0 if ok else 1)
+    sys.exit(0 if main() else 1)

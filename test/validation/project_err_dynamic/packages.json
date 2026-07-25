@@ -1,1 +1,1 @@
-{"packages": {"test/dynamic_lib": {"version": "1.0.0", "mode": "dynamic"}}}
+{"packages": {"test/hello": {"version": "1.0.0", "mode": "dynamic"}}}
