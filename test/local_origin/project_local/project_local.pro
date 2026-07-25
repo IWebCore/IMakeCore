@@ -4,9 +4,18 @@ CONFIG -= app_bundle
 
 SOURCES += main.cpp
 
-# --- IMakeCore integration ---
-IMAKECORE_ROOT = $$absolute_path($$PWD/../..)
-IMAKECORE_SYSTEM = $$absolute_path($$PWD/../../../.system)
+
+message(root $$(IMAKECORE_ROOT))
+
+message(abc $$IMAKECORE_ROOT)
+
+IMAKECORE_ROOT = $$absolute_path($$PWD/../)
+IMAKECORE_SYSTEM = $$(IMAKECORE_ROOT)/.system
+
+message(root1 $$(IMAKECORE_ROOT))
+message(abc1 $$IMAKECORE_ROOT)
+
+
 include($$(IQMakeCore))
 IQMakeCoreInit()
 include($$PWD/.package.pri)

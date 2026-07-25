@@ -10,3 +10,5 @@
 /.system/db
 *.pyc
 /test/build
+/test/local_origin/project_local/build
+/test/local_origin/project_local/build

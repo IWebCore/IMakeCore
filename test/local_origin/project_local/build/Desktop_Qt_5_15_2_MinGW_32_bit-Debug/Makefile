@@ -228,6 +228,7 @@ Makefile: ../../project_local.pro D:/Qt/5.15.2/mingw81_32/mkspecs/win32-g++/qmak
 		D:/Qt/5.15.2/mingw81_32/mkspecs/features/default_pre.prf \
 		D:/Qt/5.15.2/mingw81_32/mkspecs/features/win32/default_pre.prf \
 		C:/Users/Yue/IMakeCore/.system/.IMakeCore.prf \
+		../../.lib/test@hello@1.0.0.pri \
 		../../.package.pri \
 		D:/Qt/5.15.2/mingw81_32/mkspecs/features/resolve_config.prf \
 		D:/Qt/5.15.2/mingw81_32/mkspecs/features/exclusive_builds_post.prf \
@@ -408,6 +409,7 @@ D:/Qt/5.15.2/mingw81_32/mkspecs/features/toolchain.prf:
 D:/Qt/5.15.2/mingw81_32/mkspecs/features/default_pre.prf:
 D:/Qt/5.15.2/mingw81_32/mkspecs/features/win32/default_pre.prf:
 C:/Users/Yue/IMakeCore/.system/.IMakeCore.prf:
+../../.lib/test@hello@1.0.0.pri:
 ../../.package.pri:
 D:/Qt/5.15.2/mingw81_32/mkspecs/features/resolve_config.prf:
 D:/Qt/5.15.2/mingw81_32/mkspecs/features/exclusive_builds_post.prf:
