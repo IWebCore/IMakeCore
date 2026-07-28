@@ -1,0 +1,11 @@
+{
+  "packages": {
+    "test/hello": {
+      "version": ">=1.0",
+      "override": "1.0.0"
+    }
+  },
+  "override": {
+    "test/hello": "2.0.0"
+  }
+}

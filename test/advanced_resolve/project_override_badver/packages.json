@@ -1,0 +1,8 @@
+{
+  "packages": {
+    "test/hello": ">=1.0"
+  },
+  "override": {
+    "test/hello": "9.9.9"
+  }
+}

@@ -112,6 +112,99 @@ def test_cache_roundtrip():
     _vfy_pri(proj, "hello")
 
 
+def test_override_global():
+    """Global override pins hello to 1.0.0 even though >=1.0 would pick 2.0.0."""
+    proj = _prepare(ROOT / "project_override_global", {"test/hello": ">=1.0"})
+    data = json.loads((proj / "packages.json").read_text(encoding="utf-8"))
+    data["override"] = {"test/hello": "1.0.0"}
+    (proj / "packages.json").write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+    r = _run(proj)
+    _check(r.returncode == 0, f"rc={r.returncode}\n{r.stdout[:300]}")
+
+    pri_txt = (proj / (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri")).read_text()
+    _check("1.0.0" in pri_txt, "override should force 1.0.0")
+    _check("2.0.0" not in pri_txt, "2.0.0 should not appear when overridden to 1.0.0")
+
+
+def test_override_per_package():
+    """Per-package override beats global override."""
+    proj = _prepare(ROOT / "project_override_perpkg", {
+        "test/hello": {"version": ">=1.0", "override": "1.0.0"}
+    })
+    data = json.loads((proj / "packages.json").read_text(encoding="utf-8"))
+    data["override"] = {"test/hello": "2.0.0"}
+    (proj / "packages.json").write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+    r = _run(proj)
+    _check(r.returncode == 0, f"rc={r.returncode}\n{r.stdout[:300]}")
+
+    pri_txt = (proj / (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri")).read_text()
+    _check("1.0.0" in pri_txt, "per-package override (1.0.0) should beat global (2.0.0)")
+    _check("2.0.0" not in pri_txt, "2.0.0 should be overridden")
+
+
+def test_override_string_entry():
+    """Override works with simple string version entries."""
+    proj = _prepare(ROOT / "project_override_string", {"test/hello": ">=1.0"})
+    data = json.loads((proj / "packages.json").read_text(encoding="utf-8"))
+    data["override"] = {"test/hello": "1.0.0"}
+    (proj / "packages.json").write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+    r = _run(proj)
+    _check(r.returncode == 0, f"rc={r.returncode}")
+    pri_txt = (proj / (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri")).read_text()
+    _check("1.0.0" in pri_txt, "string entry override should force 1.0.0")
+
+
+def test_override_nonexistent_version():
+    """Override to a version that doesn't exist — falls through to normal resolution."""
+    proj = _prepare(ROOT / "project_override_badver", {"test/hello": ">=1.0"})
+    data = json.loads((proj / "packages.json").read_text(encoding="utf-8"))
+    data["override"] = {"test/hello": "9.9.9"}
+    (proj / "packages.json").write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+    r = _run(proj)
+    # Nonexistent override → forceCandidate stays None → normal resolution picks 2.0.0
+    _check(r.returncode == 0, f"nonexistent override should fall through, got {r.returncode}")
+    pri_txt = (proj / (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri")).read_text()
+    _check("2.0.0" in pri_txt, "should fall through to normal resolution (2.0.0)")
+
+
+def test_override_transitive():
+    """Override applies only to root packages, not transitive deps.
+    world depends on hello>=1.0 → hello@2.0.0 is picked by SAT solver.
+    Override for hello doesn't apply because hello is not a root package."""
+    proj = _prepare(ROOT / "project_override_trans", {"test/world": "1.0.0"})
+    data = json.loads((proj / "packages.json").read_text(encoding="utf-8"))
+    data["override"] = {"test/hello": "1.0.0"}
+    (proj / "packages.json").write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+    r = _run(proj)
+    _check(r.returncode == 0, f"rc={r.returncode}")
+    # hello is transitive, override doesn't apply → SAT picks 2.0.0
+    _vfy_pri(proj, "hello", "world")
+
+
+def test_override_both_root_packages():
+    """Override two root packages to specific versions."""
+    proj = _prepare(ROOT / "project_override_both", {
+        "test/hello": ">=1.0",
+        "test/world": ">=1.0"
+    })
+    data = json.loads((proj / "packages.json").read_text(encoding="utf-8"))
+    data["override"] = {"test/hello": "1.0.0", "test/world": "1.0.0"}
+    (proj / "packages.json").write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+    r = _run(proj)
+    _check(r.returncode == 0, f"rc={r.returncode}")
+    pri_txt = (proj / (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri")).read_text()
+    _check("test@hello@1.0.0" in pri_txt or ('1.0.0' in pri_txt and 'hello' in pri_txt),
+           "hello should be overridden to 1.0.0")
+    _check("test@world@1.0.0" in pri_txt or ('world' in pri_txt),
+           "world should be overridden to 1.0.0")
+
+
 # ── Main ───────────────────────────────────────────────────────────────
 
 def run(pack_type: str = "qmake"):
@@ -124,6 +217,12 @@ def run(pack_type: str = "qmake"):
     test_transitive_with_versions()
     test_cache_roundtrip()
     test_two_independent_packages()
+    test_override_global()
+    test_override_per_package()
+    test_override_string_entry()
+    test_override_nonexistent_version()
+    test_override_transitive()
+    test_override_both_root_packages()
     print(f"\n  {_PASSED} passed, {_FAILED} failed")
     return _FAILED == 0
 

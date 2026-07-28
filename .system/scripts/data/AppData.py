@@ -30,6 +30,7 @@ class AppData:
         self._loadCache()
 
         self._parseRefPackages()
+        self._parseOverride()
         self._assembleRefPackages()
 
     def _loadConfig(self):
@@ -119,11 +120,38 @@ class AppData:
                            "r": ref.resolve}, sort_keys=True)
         return hashlib.sha256(raw.encode()).hexdigest()[:16]
 
-    # ── Assemble: cache matching ─────────────────────────────────────────
+    def _parseOverride(self) -> None:
+        """Parse global and per-package override versions.
+
+        Global override: { "override": { "pkg/name": "1.0.0" } }
+        Per-package override: { "packages": { "pkg/name": { "override": "1.0.0" } } }
+
+        Per-package override takes precedence over global.
+        """
+        global_override: dict[str, str] = self.json.get("override", {})
+
+        for ref in self.packages:
+            key = ref.lib_name.fullName()
+            # Per-package override takes priority
+            if ref.config and "override" in ref.config:
+                ref.overrideVersion = ref.config["override"]
+            elif key in global_override:
+                ref.overrideVersion = global_override[key]
 
     def _assembleRefPackages(self) -> None:
-        """Match resolve-cache to set suggestCandidate for each root ref."""
+        """Match resolve-cache to set suggestCandidate, and handle overrideVersion."""
         for ref in self.packages:
+            # Check overrideVersion — pin to specific version
+            if ref.overrideVersion and self.env:
+                from scripts.provider.ResolveLibProvider import Candidate
+                mgr = self.env.getProviderManager()
+                pkgs = mgr.findPackages(ref.lib_name)
+                for p in pkgs:
+                    if p.version == ref.overrideVersion:
+                        ref.forceCandidate = Candidate(p)
+                        break
+                continue
+
             cached = self.get_cached(ref)
             if cached is not None:
                 from scripts.provider.ResolveLibProvider import Candidate

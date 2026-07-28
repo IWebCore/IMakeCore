@@ -1,0 +1,10 @@
+{
+  "packages": {
+    "test/hello": ">=1.0",
+    "test/world": ">=1.0"
+  },
+  "override": {
+    "test/hello": "1.0.0",
+    "test/world": "1.0.0"
+  }
+}

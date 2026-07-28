@@ -42,6 +42,7 @@ class RefPackage:
 
         self.suggestCandidate: Any = None
         self.forceCandidate: Any = None
+        self.overrideVersion: str | None = None
 
     # ── Properties ───────────────────────────────────────────────────────
 
