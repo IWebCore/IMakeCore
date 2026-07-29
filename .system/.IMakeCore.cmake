@@ -8,8 +8,8 @@ function(getExecutablePath OUT_VAR)
 endfunction()
 
 # ── Helper: get target type ────────────────────────────────────────
-function(getTargetType OUT_VAR)
-    get_property(target_type TARGET ${IMAKECORE_TARGET} PROPERTY TYPE)
+function(getTargetType TARGET_NAME OUT_VAR)
+    get_property(target_type TARGET ${TARGET_NAME} PROPERTY TYPE)
     if(target_type STREQUAL "STATIC_LIBRARY")
         set(${OUT_VAR} "static" PARENT_SCOPE)
     elseif(target_type STREQUAL "SHARED_LIBRARY" OR target_type STREQUAL "MODULE_LIBRARY")
@@ -115,9 +115,10 @@ function(resolvePackageInfo)
         set(IMAKECORE_SYSTEM "$ENV{IMAKECORE_ROOT}/.system" CACHE STRING "system" FORCE)
     endif()
 
-    # Gather compile info
+    # Gather compile info (use first target)
+    list(GET TARGET_CACHE 0 FIRST_TARGET)
     getExecutablePath(EXE_PATH)
-    getTargetType(TARGET_TYPE)
+    getTargetType(${FIRST_TARGET} TARGET_TYPE)
     getCompileArguments()
 
     set(ENV{IMAKECORE_EXECUTABLE_PATH} "${EXE_PATH}")
