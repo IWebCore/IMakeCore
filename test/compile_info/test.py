@@ -41,6 +41,10 @@ def _check(c, msg):
     else: _FAILED += 1; print(f"  FAIL: {msg}")
 
 
+def _output(project: Path) -> Path:
+    return project / (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri")
+
+
 # ── Tests ──────────────────────────────────────────────────────────
 
 def test_compile_info_present():
@@ -60,8 +64,8 @@ def test_compile_info_present():
              IMAKECORE_RTTI_ENABLED="1")
     _check(r.returncode == 0, f"IMakeCore failed: rc={r.returncode}\n{r.stdout[:300]}")
     # Verify CompileInfo was captured in AppData by checking output or .package.pri
-    pri = proj / ".package.pri"
-    _check(pri.exists(), ".package.pri should exist")
+    out = _output(proj)
+    _check(out.exists(), ".package.pri should exist")
 
 
 def test_compile_info_static_lib():
@@ -128,7 +132,44 @@ def test_compile_info_all_fields():
              IMAKECORE_EXCEPTION_ENABLED="1",
              IMAKECORE_RTTI_ENABLED="0")
     _check(r.returncode == 0, f"rc={r.returncode}")
-    _check((proj / ".package.pri").exists(), "output should exist")
+    _check(_output(proj).exists(), "output should exist")
+
+
+def test_compile_info_gcc_release():
+    """GCC + release + C++23."""
+    proj = _prepare(ROOT / "project_ci_gcc", {"test/hello": "1.0.0"})
+    r = _run(proj,
+             IMAKECORE_PLATFORM="linux", IMAKECORE_ARCH="x86_64",
+             IMAKECORE_COMPILER="gcc", IMAKECORE_COMPILER_VERSION="14.1",
+             IMAKECORE_BUILD_MODE="release", IMAKECORE_CPP_STD="23")
+    _check(r.returncode == 0, f"rc={r.returncode}")
+
+
+def test_compile_info_clang_arm64():
+    """Clang + arm64 + macOS."""
+    proj = _prepare(ROOT / "project_ci_clang", {"test/hello": "1.0.0"})
+    r = _run(proj,
+             IMAKECORE_PLATFORM="macos", IMAKECORE_ARCH="arm64",
+             IMAKECORE_COMPILER="clang", IMAKECORE_COMPILER_VERSION="17.0",
+             IMAKECORE_BUILD_MODE="debug", IMAKECORE_CPP_STD="20")
+    _check(r.returncode == 0, f"rc={r.returncode}")
+
+
+def test_compile_info_msvc_x86():
+    """MSVC + x86 + static runtime."""
+    proj = _prepare(ROOT / "project_ci_msvc86", {"test/hello": "1.0.0"})
+    r = _run(proj,
+             IMAKECORE_PLATFORM="windows", IMAKECORE_ARCH="x86",
+             IMAKECORE_COMPILER="msvc", IMAKECORE_COMPILER_VERSION="19.38",
+             IMAKECORE_RUNTIMES="static", IMAKECORE_CPP_STD="17")
+    _check(r.returncode == 0, f"rc={r.returncode}")
+
+
+def test_compile_info_no_env_vars():
+    """Missing all optional env vars — should use defaults."""
+    proj = _prepare(ROOT / "project_ci_nodef", {"test/hello": "1.0.0"})
+    r = _run(proj)
+    _check(r.returncode == 0, f"rc={r.returncode}")
 
 
 def run(pack_type: str = "qmake"):
@@ -142,6 +183,10 @@ def run(pack_type: str = "qmake"):
     test_compile_info_no_exceptions()
     test_compile_info_no_rtti()
     test_compile_info_all_fields()
+    test_compile_info_gcc_release()
+    test_compile_info_clang_arm64()
+    test_compile_info_msvc_x86()
+    test_compile_info_no_env_vars()
     print(f"\n  {_PASSED} passed, {_FAILED} failed")
     return _FAILED == 0
 
