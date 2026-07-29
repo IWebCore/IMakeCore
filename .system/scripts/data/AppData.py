@@ -26,6 +26,8 @@ class AppData:
         self.cache_path: str = ""
 
         self.compile_info: CompileInfo = CompileInfo.from_env()
+        
+        print(self.compile_info.to_dict())
 
         self._loadConfig()
         self._parseOrigin()
