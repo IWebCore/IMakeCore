@@ -30,17 +30,17 @@ class CompileInfo:
     def from_env(cls) -> CompileInfo:
         """Read compile info from environment variables."""
         info = cls()
-        info.executable_path = os.getenv("IMAKECORE_EXECUTABLE_PATH", "")
-        info.target_type = os.getenv("IMAKECORE_TARGET_TYPE", "executable")
-        info.platform = os.getenv("IMAKECORE_PLATFORM", "")
-        info.arch = os.getenv("IMAKECORE_ARCH", "")
-        info.compiler = os.getenv("IMAKECORE_COMPILER", "")
-        info.compiler_version = os.getenv("IMAKECORE_COMPILER_VERSION", "")
-        info.build_mode = os.getenv("IMAKECORE_BUILD_MODE", "debug")
-        info.runtimes = os.getenv("IMAKECORE_RUNTIMES", "")
-        info.cpp_std = os.getenv("IMAKECORE_CPP_STD", "")
-        info.exception_enabled = os.getenv("IMAKECORE_EXCEPTION_ENABLED", "1") == "1"
-        info.rtti_enabled = os.getenv("IMAKECORE_RTTI_ENABLED", "1") == "1"
+        info.executable_path = os.getenv("IMAKECORE_EXECUTABLE_PATH", "").strip()
+        info.target_type = os.getenv("IMAKECORE_TARGET_TYPE", "executable").strip()
+        info.platform = os.getenv("IMAKECORE_PLATFORM", "").strip()
+        info.arch = os.getenv("IMAKECORE_ARCH", "").strip()
+        info.compiler = os.getenv("IMAKECORE_COMPILER", "").strip()
+        info.compiler_version = os.getenv("IMAKECORE_COMPILER_VERSION", "").strip()
+        info.build_mode = os.getenv("IMAKECORE_BUILD_MODE", "debug").strip()
+        info.runtimes = os.getenv("IMAKECORE_RUNTIMES", "").strip()
+        info.cpp_std = os.getenv("IMAKECORE_CPP_STD", "").strip()
+        info.exception_enabled = os.getenv("IMAKECORE_EXCEPTION_ENABLED", "1").strip() == "1"
+        info.rtti_enabled = os.getenv("IMAKECORE_RTTI_ENABLED", "1").strip() == "1"
         return info
 
     def to_dict(self) -> dict[str, Any]:

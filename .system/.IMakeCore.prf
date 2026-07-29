@@ -10,77 +10,10 @@ defineReplace(getExecutablePath) {
 defineReplace(getTargetType) {
     contains(TEMPLATE, lib) {
         contains(CONFIG, staticlib): return(static)
-        contains(CONFIG, dll): return(dynamic)
         return(dynamic)
     }
     return(executable)
 }
-
-# ── Helper: get compile arguments as a single semicolon-separated string ─
-defineReplace(getCompileArguments) {
-    # platform
-    win32: PLATFORM = windows
-    linux: PLATFORM = linux
-    macx: PLATFORM = macos
-    else: PLATFORM = unknown
-
-    # arch
-    contains(QT_ARCH, x86_64)|contains(QT_ARCH, amd64): ARCH = x86_64
-    else: contains(QT_ARCH, i386)|contains(QT_ARCH, x86): ARCH = x86
-    else: contains(QT_ARCH, arm64)|contains(QT_ARCH, aarch64): ARCH = arm64
-    else: ARCH = $$QT_ARCH
-
-    # compiler
-    msvc: COMPILER = msvc
-    else: win32-g++: COMPILER = gcc
-    else: linux-g++: COMPILER = gcc
-    else: clang: COMPILER = clang
-    else: COMPILER = unknown
-
-    # compiler version
-    win32-msvc {
-        COMPILER_VERSION = $$(VCToolsVersion)
-        isEmpty(COMPILER_VERSION): COMPILER_VERSION = $$MSVC_VER
-    } else: gcc|clang {
-        COMPILER_VERSION = $$system($$QMAKE_CXX -dumpversion 2>nul || echo 0)
-    } else {
-        COMPILER_VERSION = unknown
-    }
-
-    # build mode
-    CONFIG(debug, debug|release): MODE = debug
-    else: CONFIG(release, debug|release): MODE = release
-    else: MODE = debug
-
-    # runtimes
-    win32-msvc {
-        contains(QMAKE_CXXFLAGS, /MD): RUNTIMES = dynamic
-        else: contains(QMAKE_CXXFLAGS, /MT): RUNTIMES = static
-        else: RUNTIMES = dynamic
-    } else {
-        RUNTIMES = system
-    }
-
-    # c++ standard
-    contains(CONFIG, c++20)|contains(CONFIG, c++2a): STD = 20
-    else: contains(CONFIG, c++17)|contains(CONFIG, c++1z): STD = 17
-    else: contains(CONFIG, c++14)|contains(CONFIG, c++1y): STD = 14
-    else: contains(CONFIG, c++11)|contains(CONFIG, c++0x): STD = 11
-    else: STD = unknown
-
-    # exceptions
-    contains(CONFIG, exceptions): EXC = 1
-    else: contains(DEFINES, QT_NO_EXCEPTIONS): EXC = 0
-    else: EXC = 1
-
-    # rtti
-    contains(CONFIG, rtti): RTTI = 1
-    else: contains(CONFIG, rtti_off): RTTI = 0
-    else: RTTI = 1
-
-    return($$PLATFORM;$$ARCH;$$COMPILER;$$COMPILER_VERSION;$$MODE;$$RUNTIMES;$$STD;$$EXC;$$RTTI)
-}
-
 
 # ── Main init function ────────────────────────────────────────────
 defineTest(IQMakeCoreInit){
@@ -91,56 +24,93 @@ defineTest(IQMakeCoreInit){
     isEmpty(IMAKECORE_ROOT){
         IMAKECORE_ROOT = $$(IMAKECORE_ROOT)
     }
-
     isEmpty(IMAKECORE_SYSTEM) {
         IMAKECORE_SYSTEM = $$IMAKECORE_ROOT/.system
     }
 
-    # Gather compile info
-    EXE_PATH = $$getExecutablePath()
-    TARGET_TYPE = $$getTargetType()
-    COMPILE_ARGS = $$getCompileArguments()
-    PLATFORM = $$member(COMPILE_ARGS, 0)
-    ARCH     = $$member(COMPILE_ARGS, 1)
-    COMPILER = $$member(COMPILE_ARGS, 2)
-    COMPVER  = $$member(COMPILE_ARGS, 3)
-    MODE     = $$member(COMPILE_ARGS, 4)
-    RUNTIMES = $$member(COMPILE_ARGS, 5)
-    CPPSTD   = $$member(COMPILE_ARGS, 6)
-    EXC_EN   = $$member(COMPILE_ARGS, 7)
-    RTTI_EN  = $$member(COMPILE_ARGS, 8)
+    # ── Compile info: computed inline (no $$member parsing) ────────
+
+    # platform
+    win32:   _CI_PLATFORM = windows
+    else: linux:  _CI_PLATFORM = linux
+    else: macx:   _CI_PLATFORM = macos
+    else: _CI_PLATFORM = unknown
+
+    # arch
+    contains(QT_ARCH, x86_64)|contains(QT_ARCH, amd64): _CI_ARCH = x86_64
+    else: contains(QT_ARCH, i386)|contains(QT_ARCH, x86): _CI_ARCH = x86
+    else: contains(QT_ARCH, arm64)|contains(QT_ARCH, aarch64): _CI_ARCH = arm64
+    else: _CI_ARCH = $$QT_ARCH
+    isEmpty(_CI_ARCH): _CI_ARCH = unknown
+
+    # compiler
+    msvc: _CI_COMPILER = msvc
+    else: win32-g++: _CI_COMPILER = gcc
+    else: linux-g++|linux-g++-64: _CI_COMPILER = gcc
+    else: clang|linux-clang: _CI_COMPILER = clang
+    else: _CI_COMPILER = unknown
+
+    # compiler version (run once, trim)
+    _CI_COMPILER_VERSION = $$system($$QMAKE_CXX -dumpversion 2>nul || echo 0)
+    isEmpty(_CI_COMPILER_VERSION): _CI_COMPILER_VERSION = unknown
+
+    # build mode
+    CONFIG(debug, debug|release): _CI_BUILD_MODE = debug
+    else: _CI_BUILD_MODE = release
+
+    # runtimes
+    win32-msvc {
+        contains(QMAKE_CXXFLAGS, /MD): _CI_RUNTIMES = dynamic
+        else: _CI_RUNTIMES = static
+    } else: _CI_RUNTIMES = system
+
+    # c++ standard
+    contains(CONFIG, c++23)|contains(CONFIG, c++2c): _CI_CPP_STD = 23
+    else: contains(CONFIG, c++20)|contains(CONFIG, c++2a): _CI_CPP_STD = 20
+    else: contains(CONFIG, c++17)|contains(CONFIG, c++1z): _CI_CPP_STD = 17
+    else: contains(CONFIG, c++14)|contains(CONFIG, c++1y): _CI_CPP_STD = 14
+    else: contains(CONFIG, c++11)|contains(CONFIG, c++0x): _CI_CPP_STD = 11
+    else: _CI_CPP_STD = 17
+
+    # exceptions
+    contains(CONFIG, exceptions)|!contains(DEFINES, QT_NO_EXCEPTIONS): _CI_EXCEPTIONS = 1
+    else: _CI_EXCEPTIONS = 0
+
+    # rtti
+    contains(CONFIG, rtti)|!contains(CONFIG, rtti_off): _CI_RTTI = 1
+    else: _CI_RTTI = 0
 
     script_path = $$getPythonFilePath("IMakeCore.py")
     win32 {
         cmd = set IMAKECORE_ROOT=$$IMAKECORE_ROOT && \
               set IMAKECORE_SYSTEM=$$IMAKECORE_SYSTEM && \
-              set IMAKECORE_EXECUTABLE_PATH=$$EXE_PATH && \
-              set IMAKECORE_TARGET_TYPE=$$TARGET_TYPE && \
-              set IMAKECORE_PLATFORM=$$PLATFORM && \
-              set IMAKECORE_ARCH=$$ARCH && \
-              set IMAKECORE_COMPILER=$$COMPILER && \
-              set IMAKECORE_COMPILER_VERSION=$$COMPVER && \
-              set IMAKECORE_BUILD_MODE=$$MODE && \
-              set IMAKECORE_RUNTIMES=$$RUNTIMES && \
-              set IMAKECORE_CPP_STD=$$CPPSTD && \
-              set IMAKECORE_EXCEPTION_ENABLED=$$EXC_EN && \
-              set IMAKECORE_RTTI_ENABLED=$$RTTI_EN && \
+              set IMAKECORE_EXECUTABLE_PATH=$$getExecutablePath() && \
+              set IMAKECORE_TARGET_TYPE=$$getTargetType() && \
+              set IMAKECORE_PLATFORM=$$_CI_PLATFORM && \
+              set IMAKECORE_ARCH=$$_CI_ARCH && \
+              set IMAKECORE_COMPILER=$$_CI_COMPILER && \
+              set IMAKECORE_COMPILER_VERSION=$$_CI_COMPILER_VERSION && \
+              set IMAKECORE_BUILD_MODE=$$_CI_BUILD_MODE && \
+              set IMAKECORE_RUNTIMES=$$_CI_RUNTIMES && \
+              set IMAKECORE_CPP_STD=$$_CI_CPP_STD && \
+              set IMAKECORE_EXCEPTION_ENABLED=$$_CI_EXCEPTIONS && \
+              set IMAKECORE_RTTI_ENABLED=$$_CI_RTTI && \
               $$python -B $$script_path $$PWD qmake
     }
     unix {
         cmd = IMAKECORE_ROOT="$$IMAKECORE_ROOT" \
               IMAKECORE_SYSTEM="$$IMAKECORE_SYSTEM" \
-              IMAKECORE_EXECUTABLE_PATH="$$EXE_PATH" \
-              IMAKECORE_TARGET_TYPE="$$TARGET_TYPE" \
-              IMAKECORE_PLATFORM="$$PLATFORM" \
-              IMAKECORE_ARCH="$$ARCH" \
-              IMAKECORE_COMPILER="$$COMPILER" \
-              IMAKECORE_COMPILER_VERSION="$$COMPVER" \
-              IMAKECORE_BUILD_MODE="$$MODE" \
-              IMAKECORE_RUNTIMES="$$RUNTIMES" \
-              IMAKECORE_CPP_STD="$$CPPSTD" \
-              IMAKECORE_EXCEPTION_ENABLED="$$EXC_EN" \
-              IMAKECORE_RTTI_ENABLED="$$RTTI_EN" \
+              IMAKECORE_EXECUTABLE_PATH="$$getExecutablePath()" \
+              IMAKECORE_TARGET_TYPE="$$getTargetType()" \
+              IMAKECORE_PLATFORM="$$_CI_PLATFORM" \
+              IMAKECORE_ARCH="$$_CI_ARCH" \
+              IMAKECORE_COMPILER="$$_CI_COMPILER" \
+              IMAKECORE_COMPILER_VERSION="$$_CI_COMPILER_VERSION" \
+              IMAKECORE_BUILD_MODE="$$_CI_BUILD_MODE" \
+              IMAKECORE_RUNTIMES="$$_CI_RUNTIMES" \
+              IMAKECORE_CPP_STD="$$_CI_CPP_STD" \
+              IMAKECORE_EXCEPTION_ENABLED="$$_CI_EXCEPTIONS" \
+              IMAKECORE_RTTI_ENABLED="$$_CI_RTTI" \
               $$python -B $$script_path $$PWD qmake
     }
 
