@@ -1,0 +1,7 @@
+{
+    "name": "invalid_nopublisher",
+    "version": "1.0.0",
+    "isGlobal": false,
+    "mode": "sources",
+    "dependencies": {}
+}

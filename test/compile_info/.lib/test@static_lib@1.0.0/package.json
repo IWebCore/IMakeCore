@@ -1,0 +1,9 @@
+{
+    "name": "static_lib",
+    "version": "1.0.0",
+    "publisher": "test",
+    "isGlobal": true,
+    "mode": ["static"],
+    "summary": "Static-only library",
+    "dependencies": {}
+}
