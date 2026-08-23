@@ -39,6 +39,7 @@ echo "Registering environment variables..."
 IMAKECORE_ROOT="$TARGET"
 IQMakeCore="$TARGET/.system/.IMakeCore.prf"
 ICMakeCore="$TARGET/.system/.IMakeCore.cmake"
+IXMakeCore="$TARGET/.system/.IMakeCore.xmake"
 IMAKECORE_BIN="$TARGET/.programs/linux"
 
 # 1) /etc/profile.d/ — 新交互式 shell (login shells)
@@ -47,6 +48,7 @@ cat > "$ENV_FILE" << PROFILEEOF
 export IMAKECORE_ROOT="$IMAKECORE_ROOT"
 export IQMakeCore="$IQMakeCore"
 export ICMakeCore="$ICMakeCore"
+export IXMakeCore="$IXMakeCore"
 if [ -d "$IMAKECORE_BIN" ]; then
     export PATH="$IMAKECORE_BIN:\$PATH"
 fi
@@ -59,7 +61,7 @@ ENV_SYS="/etc/environment"
 if [ -f "$ENV_SYS" ]; then
     cp "$ENV_SYS" "${ENV_SYS}.bak.imakecore"
     # 移除旧 IMakeCore 行
-    grep -vE "^(IMAKECORE_ROOT|IQMakeCore|ICMakeCore)=" "$ENV_SYS" > "${ENV_SYS}.tmp" 2>/dev/null || true
+    grep -vE "^(IMAKECORE_ROOT|IQMakeCore|ICMakeCore|IXMakeCore)=" "$ENV_SYS" > "${ENV_SYS}.tmp" 2>/dev/null || true
 else
     touch "${ENV_SYS}.tmp"
 fi
@@ -68,6 +70,7 @@ fi
     echo "IMAKECORE_ROOT=\"$IMAKECORE_ROOT\""
     echo "IQMakeCore=\"$IQMakeCore\""
     echo "ICMakeCore=\"$ICMakeCore\""
+    echo "IXMakeCore=\"$IXMakeCore\""
 } > "$ENV_SYS"
 rm -f "${ENV_SYS}.tmp"
 chmod 644 "$ENV_SYS"
@@ -77,6 +80,7 @@ echo "  OK: $ENV_SYS"
 export IMAKECORE_ROOT="$IMAKECORE_ROOT"
 export IQMakeCore="$IQMakeCore"
 export ICMakeCore="$ICMakeCore"
+export IXMakeCore="$IXMakeCore"
 echo "  OK: current shell"
 
 # ── 验证持久化 ────────────────────────────────
@@ -100,6 +104,7 @@ FAILED=0
 verify_var IMAKECORE_ROOT "$IMAKECORE_ROOT" "$ENV_FILE" || FAILED=1
 verify_var IQMakeCore "$IQMakeCore" "$ENV_FILE" || FAILED=1
 verify_var ICMakeCore "$ICMakeCore" "$ENV_FILE" || FAILED=1
+verify_var IXMakeCore "$IXMakeCore" "$ENV_FILE" || FAILED=1
 
 if [ $FAILED -ne 0 ]; then
     echo "ERROR: Environment persistence verification failed."
@@ -113,6 +118,7 @@ echo "Verifying current shell..."
 [ -n "${IMAKECORE_ROOT-}" ] && echo "  OK: IMAKECORE_ROOT = $IMAKECORE_ROOT" || { echo "  FAIL: IMAKECORE_ROOT not set"; exit 1; }
 [ -n "${IQMakeCore-}" ]     && echo "  OK: IQMakeCore     = $IQMakeCore"     || { echo "  FAIL: IQMakeCore not set";     exit 1; }
 [ -n "${ICMakeCore-}" ]     && echo "  OK: ICMakeCore     = $ICMakeCore"     || { echo "  FAIL: ICMakeCore not set";     exit 1; }
+[ -n "${IXMakeCore-}" ]     && echo "  OK: IXMakeCore     = $IXMakeCore"     || { echo "  FAIL: IXMakeCore not set";     exit 1; }
 
 # ── 符号链接 (程序到 PATH) ─────────────────────
 if [ -d "$IMAKECORE_BIN" ]; then

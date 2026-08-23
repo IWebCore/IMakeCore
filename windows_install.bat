@@ -50,12 +50,14 @@ echo Setting environment variables...
 set "IMAKECORE_ROOT=%TARGET%"
 set "IQMakeCore=%TARGET%\.system\.IMakeCore.prf"
 set "ICMakeCore=%TARGET%\.system\.IMakeCore.cmake"
+set "IXMakeCore=%TARGET%\.system\.IMakeCore.xmake"
 set "IMAKECORE_BIN=%TARGET%\.programs\windows"
 
 :: setx = 持久化 (新窗口), set = 当前窗口
 powershell -command "[Environment]::SetEnvironmentVariable('IMAKECORE_ROOT', '%IMAKECORE_ROOT%', 'Machine')" >nul || (echo ERROR: setx IMAKECORE_ROOT failed & pause & exit /b 1)
 powershell -command "[Environment]::SetEnvironmentVariable('IQMakeCore', '%IQMakeCore%', 'Machine')" >nul || (echo ERROR: setx IQMakeCore failed & pause & exit /b 1)
 powershell -command "[Environment]::SetEnvironmentVariable('ICMakeCore', '%ICMakeCore%', 'Machine')" >nul || (echo ERROR: setx ICMakeCore failed & pause & exit /b 1)
+powershell -command "[Environment]::SetEnvironmentVariable('IXMakeCore', '%IXMakeCore%', 'Machine')" >nul || (echo ERROR: setx IXMakeCore failed & pause & exit /b 1)
 
 :: ── 验证环境变量已持久化 ────────────────────────
 echo Verifying...
@@ -70,6 +72,10 @@ echo   OK: IQMakeCore = %REG_IQM%
 for /f "usebackq tokens=2*" %%a in (`reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v ICMakeCore 2^>nul ^| find "ICMakeCore"`) do set "REG_ICM=%%b"
 if not defined REG_ICM (echo ERROR: ICMakeCore not persisted & pause & exit /b 1)
 echo   OK: ICMakeCore = %REG_ICM%
+
+for /f "usebackq tokens=2*" %%a in (`reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v IXMakeCore 2^>nul ^| find "IXMakeCore"`) do set "REG_IXM=%%b"
+if not defined REG_IXM (echo ERROR: IXMakeCore not persisted & pause & exit /b 1)
+echo   OK: IXMakeCore = %REG_IXM%
 
 :: ── PATH 追加 ──────────────────────────────────
 echo.
@@ -96,6 +102,7 @@ echo Applying to current session...
 for /f "usebackq tokens=2*" %%a in (`reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v IMAKECORE_ROOT 2^>nul ^| find "IMAKECORE_ROOT"`) do set "IMAKECORE_ROOT=%%b"
 for /f "usebackq tokens=2*" %%a in (`reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v IQMakeCore 2^>nul ^| find "IQMakeCore"`) do set "IQMakeCore=%%b"
 for /f "usebackq tokens=2*" %%a in (`reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v ICMakeCore 2^>nul ^| find "ICMakeCore"`) do set "ICMakeCore=%%b"
+for /f "usebackq tokens=2*" %%a in (`reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v IXMakeCore 2^>nul ^| find "IXMakeCore"`) do set "IXMakeCore=%%b"
 for /f "usebackq tokens=2*" %%a in (`reg query "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" /v Path 2^>nul ^| find "Path"`) do set "PATH=%%b"
 
 :: 广播 WM_SETTINGCHANGE (通知所有窗口环境变量已变更)
@@ -107,6 +114,7 @@ echo Final verification:
 set IMAKECORE_ROOT >nul 2>&1 && echo   IMAKECORE_ROOT = %IMAKECORE_ROOT% || echo   ERROR: IMAKECORE_ROOT not set in current session
 set IQMakeCore >nul 2>&1     && echo   IQMakeCore     = %IQMakeCore% || echo   ERROR: IQMakeCore not set in current session
 set ICMakeCore >nul 2>&1     && echo   ICMakeCore     = %ICMakeCore% || echo   ERROR: ICMakeCore not set in current session
+set IXMakeCore >nul 2>&1     && echo   IXMakeCore     = %IXMakeCore% || echo   ERROR: IXMakeCore not set in current session
 
 echo.
 echo =========================================
