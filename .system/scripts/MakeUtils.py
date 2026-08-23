@@ -4,6 +4,7 @@ import os
 from typing import Any
 from scripts.util.make.QmakePackageGenerator import QmakePackageGenerator
 from scripts.util.make.CmakePackageGenerator import CmakePackageGenerator
+from scripts.util.make.XmakePackageGenerator import XmakePackageGenerator
 
 
 class MakeUtils:
@@ -12,6 +13,7 @@ class MakeUtils:
     _GENERATORS = {
         "qmake": (QmakePackageGenerator(), ".package.pri"),
         "cmake": (CmakePackageGenerator(), ".package.cmake"),
+        "xmake": (XmakePackageGenerator(), ".package.xmake"),
     }
 
     @staticmethod
