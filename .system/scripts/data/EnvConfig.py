@@ -80,4 +80,4 @@ class EnvConfig:
         self.libstores = [ls for ls in self.libstores if os.path.exists(ls)]
 
     def getProviderManager(self) -> LibProviderManager:
-        return self._provider_manager
+        return LibProviderManager.instance()
