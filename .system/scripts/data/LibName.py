@@ -10,15 +10,6 @@ class LibName:
             self.publisher = publisher
             self.is_global = is_global
 
-    @staticmethod
-    def fromRaw(name : str):
-        if "/" in name:
-            args = name.split("/")
-            return LibName(args[1], args[0])
-        else:
-            return LibName(name)
-        
-
     def isValid(self) -> bool:
         if not self.name:
             return False

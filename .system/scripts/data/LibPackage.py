@@ -74,7 +74,7 @@ class LibPackage(Base):
             self.version: str = version
             self.versionSpec: SpecifierSet = Utils.parseVersionSpecifier(version)
 
-            lib_name = LibName.fromRaw(self._fullName)
+            lib_name = LibName(self._fullName)
             if not lib_name.publisher and provider_mgr is not None:
                 real = provider_mgr.findRealLibName(lib_name)
                 if real is None:

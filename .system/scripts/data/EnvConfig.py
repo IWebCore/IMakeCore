@@ -26,7 +26,7 @@ class EnvConfig:
         self.servers: list[str] = self._collectServers()
         self.libstores: list[str] = self._collectLibStores()
         self.checkDirectoryExists()
-        self._provider_manager = LibProviderManager(self.appLibStore)
+        LibProviderManager.init(self.appLibStore)
 
     def _loadAppConfig(self) -> tuple[dict[str, Any], str]:
         """Load the project's .data/config.json.

@@ -8,10 +8,26 @@ from scripts.provider.RemoteLibProvider import RemoteLibProvider
 
 
 class LibProviderManager:
+    _instance: LibProviderManager | None = None
+
     def __init__(self, project_lib_store_path: str):
         self._locals = LocalLibProvider(project_lib_store_path)
         self._system = SystemLibProvider()
         self._remote = RemoteLibProvider()
+
+    @classmethod
+    def init(cls, project_lib_store_path: str) -> LibProviderManager:
+        if cls._instance is None:
+            cls._instance = cls(project_lib_store_path)
+        return cls._instance
+
+    @classmethod
+    def instance(cls) -> LibProviderManager:
+        if cls._instance is None:
+            raise RuntimeError(
+                "LibProviderManager is not initialized. Call LibProviderManager.init() first."
+            )
+        return cls._instance
 
     def getLocalProvider(self) -> LocalLibProvider:
         return self._locals

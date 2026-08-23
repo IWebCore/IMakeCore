@@ -23,8 +23,9 @@ class AppData:
 
         self.packages: list[RefPackage] = self._loadPackage()
 
-        self.compile_info: CompileInfo = CompileInfo.from_env()
-        print(self.compile_info.to_dict())
+        # CompileInfo.init()
+        # self.compile_info: CompileInfo = CompileInfo.instance()
+        # print(self.compile_info.to_dict())
 
 
     def _loadConfig(self):
