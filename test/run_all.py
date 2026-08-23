@@ -27,7 +27,7 @@ SUITES = [
     "basic_resolve", "static_propagation", "validation",
     "version_specifiers", "cmake_output", "local_origin",
     "advanced_resolve", "path_resolve", "static_chain",
-    "package_json", "compile_info",
+    "package_json", "compile_info", "xmake_output",
 ]
 
 VALID = {"qmake", "cmake", "xmake"}
