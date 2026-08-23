@@ -23,7 +23,7 @@ def _run(project: Path):
 
 
 def _prepare(project: Path, packages: dict) -> Path:
-    for name in (".package.pri", ".package.cmake", ".data", ".lib", ".support", ".bin"):
+    for name in (".package.pri", ".package.cmake", ".package.xmake", ".data", ".lib", ".support", ".bin"):
         p = project / name
         if p.exists():
             (shutil.rmtree if p.is_dir() else os.remove)(str(p))
@@ -42,12 +42,13 @@ def _out(r): return (r.stdout + r.stderr).lower()
 
 
 def _vfy_pri(project: Path, *expected: str):
-    pri = project / (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri")
+    pri = project / (".package.xmake" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))
     _check(pri.exists(), f"{project.name}: output missing")
     if pri.exists():
         txt = pri.read_text()
         for pkg in expected: _check(pkg in txt, f"{project.name}: missing '{pkg}'")
-        for m in re.finditer(r'include\((.+?)\)', txt):
+        pattern = r'includes\(["\'](.+?)["\']\)' if _G_PACK_TYPE == "xmake" else r'include\((.+?)\)'
+        for m in re.finditer(pattern, txt):
             _check(Path(m.group(1)).exists(), f"{project.name}: broken include: {m.group(1)}")
 
 

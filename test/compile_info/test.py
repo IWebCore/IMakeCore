@@ -26,7 +26,7 @@ def _run(project: Path, **extra_env) -> subprocess.CompletedProcess:
 
 
 def _prepare(project: Path, packages: dict) -> Path:
-    for name in (".package.pri", ".package.cmake", ".data", ".lib", ".support", ".bin"):
+    for name in (".package.pri", ".package.cmake", ".package.xmake", ".data", ".lib", ".support", ".bin"):
         p = project / name
         if p.exists():
             (shutil.rmtree if p.is_dir() else os.remove)(str(p))
@@ -42,7 +42,7 @@ def _check(c, msg):
 
 
 def _output(project: Path) -> Path:
-    return project / (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri")
+    return project / (".package.xmake" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))
 
 
 # ── Tests ──────────────────────────────────────────────────────────
