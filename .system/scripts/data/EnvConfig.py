@@ -12,50 +12,54 @@ class EnvConfig:
         self.appPath = appPath
         self.makeType = makeType
 
-        self.appConfig: dict[str, Any] = {}
         self.appDataPath = os.path.normpath(os.path.join(self.appPath, ".data"))
         self.appLibStore: str = os.path.normpath(os.path.join(self.appPath, ".lib"))
         self.sysPath = os.getenv("IMAKECORE_ROOT", "").strip()
         self.sysCachePath = os.path.normpath(os.path.join(self.sysPath, ".cache"))
-        self.userName: str = "local"
-
-        self.servers: list[str] = []
-        self.libstores: list[str] = []
 
         self._global = GlobalData()
         self.global_data = self._global
-        self.sysLibStore = self._global.get_sys_lib_store()
-        self.servers = self._global.get_servers()
-        self.libstores = self._global.get_libstores()
-        self.userName = self._global.get_user_name()
+        self.sysLibStore: str = self._global.get_sys_lib_store()
+        self.userName: str = self._global.get_user_name()
 
-        self.loadAppConfig()
+        self.appConfig, self.appLibStore = self._loadAppConfig()
+        self.servers: list[str] = self._collectServers()
+        self.libstores: list[str] = self._collectLibStores()
         self.checkDirectoryExists()
         self._provider_manager = LibProviderManager(self.appLibStore)
 
-    def loadAppConfig(self) -> None:
+    def _loadAppConfig(self) -> tuple[dict[str, Any], str]:
+        """Load the project's .data/config.json.
+
+        Returns (config, resolved appLibStore).  When the project has no
+        config.json the default appLibStore (project/.lib) is used.
+        """
         appConfigJson = os.path.join(self.appDataPath, "config.json")
-        if os.path.exists(appConfigJson):
-            self.appConfig = Utils.loadJson(appConfigJson)
-            self.appLibStore = self.appConfig.get("localLibStore", self.appLibStore)
-            if os.path.isabs(self.appLibStore):
-                self.appLibStore = os.path.normpath(self.appLibStore)
-            else:
-                self.appLibStore = os.path.normpath(os.path.join(self.appPath, self.appLibStore))
+        if not os.path.exists(appConfigJson):
+            return {}, self.appLibStore
 
-            self.libstores.append(self.appLibStore)
-
-            libStores = self.appConfig.get("libstores", [])
-            for libStore in libStores:
-                if os.path.isabs(libStore):
-                    libStore = os.path.normpath(libStore)
-                else:
-                    libStore = os.path.normpath(os.path.join(self.appPath, libStore))
-                self.libstores.append(libStore)
-
-            self.servers.extend(self.appConfig.get("servers", []))
+        config = Utils.loadJson(appConfigJson)
+        lib_store = config.get("localLibStore", self.appLibStore)
+        if os.path.isabs(lib_store):
+            app_lib_store = os.path.normpath(lib_store)
         else:
-            self.libstores.append(self.appLibStore)
+            app_lib_store = os.path.normpath(os.path.join(self.appPath, lib_store))
+        return config, app_lib_store
+
+    def _collectServers(self) -> list[str]:
+        servers = list(self._global.get_servers())
+        servers.extend(self.appConfig.get("servers", []))
+        return servers
+
+    def _collectLibStores(self) -> list[str]:
+        stores = list(self._global.get_libstores())
+        stores.append(self.appLibStore)
+        for libStore in self.appConfig.get("libstores", []):
+            if os.path.isabs(libStore):
+                stores.append(os.path.normpath(libStore))
+            else:
+                stores.append(os.path.normpath(os.path.join(self.appPath, libStore)))
+        return stores
 
     def checkDirectoryExists(self) -> None:
         if not os.path.exists(self.appLibStore):
@@ -73,8 +77,7 @@ class EnvConfig:
         if not os.path.exists(os.path.join(self.appPath, ".bin")):
             os.makedirs(os.path.join(self.appPath, ".bin"), exist_ok=True)
 
-        libStores = [ls for ls in self.libstores if os.path.exists(ls)]
-        self.libstores = libStores
+        self.libstores = [ls for ls in self.libstores if os.path.exists(ls)]
 
     def getProviderManager(self) -> LibProviderManager:
         return self._provider_manager

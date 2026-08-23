@@ -13,30 +13,19 @@ from scripts.data.CompileInfo import CompileInfo
 class AppData:
     def __init__(self, project_path: str, env=None) -> None:
         self.path = project_path
-        self.json: dict[str, Any] = {}
         self.env = env
+        self.json: dict[str, Any] = self._loadConfig()
+        self.global_origin: str = self._parseOrigin()
+        self.local_lib_store: str = self._parseLocalLibStore()
 
-        self.local_lib_store: str = ""
+        self.cache_path: str = os.path.join(self.path, ".data", "resolve-cache.json")
+        self.cache: dict[str, Any] = self._loadCache()
 
-        self.global_origin: str = "default"
-
-        self.packages: list[RefPackage] = []
-
-        self.cache: dict[str, Any] = {}
-        self.cache_path: str = ""
+        self.packages: list[RefPackage] = self._loadPackage()
 
         self.compile_info: CompileInfo = CompileInfo.from_env()
-        
         print(self.compile_info.to_dict())
 
-        self._loadConfig()
-        self._parseOrigin()
-        self._parseLocalLibStore()
-        self._loadCache()
-
-        self._parseRefPackages()
-        self._parseOverride()
-        self._assembleRefPackages()
 
     def _loadConfig(self):
         json_path = os.path.join(self.path, "packages.json")
@@ -44,27 +33,32 @@ class AppData:
             src = os.path.join(os.getenv("IMAKECORE_ROOT", "").strip(), ".data", "packages.json")
             shutil.copyfile(src, json_path)
 
-        self.json = Utils.loadJson(json_path)
+        return Utils.loadJson(json_path)
 
-    def _parseOrigin(self): 
-        if "origin" in self.json:
-            self.global_origin = self.json["origin"]
-        elif self.json.get("forceLocal", False):
-            print("WARNING: 'forceLocal' is deprecated, use 'origin: local'")
-            self.global_origin = "local"
-
-        if self.global_origin not in ("local", "default"):
-            print(f"ERROR: Invalid global origin '{self.global_origin}'. Must be local or default.")
-            exit(1)
 
     def _parseLocalLibStore(self):
-        
-        self.local_lib_store = self.json.get("localLibStore")
-        if self.local_lib_store is None:
-            self.local_lib_store = os.path.join(self.path, ".lib")
-        elif not os.path.isabs(self.local_lib_store):
-            self.local_lib_store = os.path.join(self.path, self.local_lib_store)
-        self.local_lib_store = os.path.normpath(self.local_lib_store)
+        local_lib_store = self.json.get("localLibStore")
+        if local_lib_store is None:
+            local_lib_store = os.path.join(self.path, ".lib")
+        elif not os.path.isabs(local_lib_store):
+            local_lib_store = os.path.join(self.path, local_lib_store)
+        local_lib_store = os.path.normpath(local_lib_store)
+        return local_lib_store
+
+
+    def _parseOrigin(self): 
+        global_origin = "default"
+        if "origin" in self.json:
+            global_origin = self.json["origin"]
+        elif self.json.get("forceLocal", False):
+            print("WARNING: 'forceLocal' is deprecated, use 'origin: local'")
+            global_origin = "local"
+
+        if global_origin not in ("local", "default"):
+            print(f"ERROR: Invalid global origin '{global_origin}'. Must be local or default.")
+            exit(1)
+
+        return global_origin
 
     def _parseRefPackages(self) -> None:
         raw = self.json.get("packages", {})
@@ -77,13 +71,19 @@ class AppData:
                 self.packages.append(ref)
         
     def _loadCache(self) -> None:
-        self.cache_path = os.path.join(self.path, ".data", "resolve-cache.json")
         if not os.path.exists(self.cache_path):
-            return
+            return {}
         try:
-            self.cache = Utils.loadJson(self.cache_path)
+            return Utils.loadJson(self.cache_path)
         except Exception:
-            self.cache = {}
+            return {}
+
+    def _loadPackage(self):
+        self.packages = []
+        self._parseRefPackages()
+        self._parseOverride()
+        self._assembleRefPackages()
+        return self.packages
 
     def save_cache(self) -> None:
         data: dict[str, Any] = {"version": 1, "resolved": {}}
