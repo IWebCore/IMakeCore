@@ -1,7 +1,7 @@
 # IMakeCore 测试套件说明
 
-> 运行方式：`python run_all.py [qmake] [cmake]`，默认两种都测。
-> IDE 入口：用 Qt Creator 打开 `tests.pro` 或 `CMakeLists.txt` 即可导入全部 35 个测试项目。
+> 运行方式：`python run_all.py [qmake] [cmake] [xmake]`，默认三种都测。
+> IDE 入口：用 Qt Creator 打开 `tests.pro` 或 `CMakeLists.txt` 即可导入全部 75 个测试项目。
 
 ---
 
@@ -57,6 +57,17 @@
 | `test_cmake_single_package` | CMake 模式下解析 hello@1.0.0 → 生成 `.package.cmake` |
 | `test_cmake_transitive` | CMake 模式下 world→hello 传递依赖 |
 | `test_cmake_version_select` | CMake 模式下版本选择 `>=2.0` → 2.0.0 |
+
+---
+
+## xmake_output — XMake 输出 (4 tests)
+
+| 测试 | 说明 |
+|------|------|
+| `test_xmake_single_package` | xmake 模式下解析 hello@1.0.0 → 生成 `.package.xmake` + includes 链 + add_includedirs/add_headerfiles |
+| `test_xmake_transitive` | xmake 模式下 world→hello 传递依赖 |
+| `test_xmake_version_select` | xmake 模式下版本选择 `>=2.0` → 2.0.0 |
+| `test_xmake_static_link_contract` | static 库：add_linkdirs 与 set_targetdir 解析到同一目录，add_links/set_basename safe_name 一致 |
 
 ---
 

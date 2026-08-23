@@ -82,7 +82,7 @@ test/
     └── ...
 ```
 
-**IDE 使用**：用 Qt Creator 打开 `test/tests.pro` 或 `test/CMakeLists.txt`，即可将所有 35 个测试项目导入 IDE。
+**IDE 使用**：用 Qt Creator 打开 `test/tests.pro` 或 `test/CMakeLists.txt`，即可将所有 75 个测试项目导入 IDE。
     └── （结构同上）
 ```
 
@@ -303,12 +303,12 @@ def _run(project: Path):
 
 def _prepare(project: Path, packages: dict) -> Path:
     """
-    清理旧产物（.package.pri, .data/, .lib/ 等），写入新的 packages.json。
+    清理旧产物（.package.pri/.package.cmake/.package.xmake, .data/, .lib/ 等），写入新的 packages.json。
 
     清理在【每次执行前】进行，确保每次测试从干净状态开始。
     执行完毕后文件【保留】，不删除。
     """
-    for name in (".package.pri", ".package.cmake", ".data", ".lib", ".support", ".bin"):
+    for name in (".package.pri", ".package.cmake", ".package.xmake", ".data", ".lib", ".support", ".bin"):
         p = project / name
         if p.exists():
             (shutil.rmtree if p.is_dir() else os.remove)(str(p))
@@ -563,6 +563,8 @@ def _vfy_version_absent(project: Path, version: str):
 cd test
 python run_all.py
 ```
+
+默认运行三种构建系统（qmake、cmake、xmake）；可用参数过滤，例如 `python run_all.py xmake` 只测 xmake。
 
 输出示例：
 ```
@@ -842,7 +844,33 @@ ICmakeCoreInit(<name>)
 
 **注意：** `ICmakeCoreInit()` 内部已自动 `include(.package.cmake)`，**无需**在 CMakeLists.txt 中重复。
 
-### 11.3 main.cpp 模板
+### 11.3 xmake.lua 模板
+
+```lua
+-- xmake.lua
+target("<name>")
+    set_kind("binary")
+    add_files("main.cpp")
+
+-- --- IMakeCore integration ---
+local imake = os.getenv("IXMakeCore")
+if imake then includes(imake) end
+imakecore_init(os.scriptdir())
+```
+
+**说明：**
+
+| 行 | 用途 |
+|----|------|
+| `target("<name>")` | 声明可执行目标，`<name>` 换成项目名 |
+| `set_kind("binary")` | 目标类型为可执行程序 |
+| `add_files("main.cpp")` | 编译入口源文件 |
+| `includes(os.getenv("IXMakeCore"))` | 加载 `.IMakeCore.xmake` 集成文件 |
+| `imakecore_init(os.scriptdir())` | 调用 `IMakeCore.py` 解析包并 `includes(.package.xmake)` |
+
+**注意：** `imakecore_init()` 内部已自动 `includes(.package.xmake)`，**无需**在 xmake.lua 中重复。
+
+### 11.4 main.cpp 模板
 
 ```cpp
 #include "<resolved_header>.h"
@@ -854,7 +882,7 @@ int main() {
 
 根据解析的包选择 include 头文件。例如 hello 包用 `"hello.h"`，world 包依赖 hello 也用 `"hello.h"`。compile 通过即可验证 IDE 环境正确。`_prepare()` 不会删除 `.pro`、`CMakeLists.txt`、`main.cpp`。
 
-### 11.4 变量流向
+### 11.5 变量流向
 
 ```
 .pro 文件                          .prf 函数 IQMakeCoreInit()
@@ -868,7 +896,7 @@ CMakeLists.txt                     .cmake 函数 resolvePackageInfo()
   set(IMAKECORE_SYSTEM ... CACHE) → $CACHE{IMAKECORE_SYSTEM} → execute_process ENV
 ```
 
-### 11.5 真实项目 vs 测试项目
+### 11.6 真实项目 vs 测试项目
 
 | | 真实项目 (IPubCore) | 测试项目 (project_*) |
 |--|---------------------|---------------------|
@@ -876,7 +904,7 @@ CMakeLists.txt                     .cmake 函数 resolvePackageInfo()
 | `.prf` 中 `isEmpty(IMAKECORE_ROOT)` | TRUE → 读 `$$(IMAKECORE_ROOT)` | FALSE → 保留 `.pro` 值 |
 | `IMAKECORE_SYSTEM` 来源 | `$$(IMAKECORE_ROOT)/.system` | `$$(IMAKECORE_ROOT)/.system`（系统 env） |
 
-### 11.6 预期失败项目的处理
+### 11.7 预期失败项目的处理
 
 如果一个测试项目预期会失败（如错误校验测试），应将其在 `tests.pro` 和 `CMakeLists.txt` 中**注释掉但保留**：
 
@@ -894,7 +922,7 @@ CMakeLists.txt                     .cmake 函数 resolvePackageInfo()
 - 需要单独调试时取消注释即可
 - 当前已注释的预期失败项目列表参见 `tests.pro` 或 `CMakeLists.txt`
 
-### 11.7 生成规则：排除 build 目录
+### 11.8 生成规则：排除 build 目录
 
 `tests.pro` 和 `CMakeLists.txt` 通过 glob `project_*` 自动生成。**必须排除 `build` 目录**内的匹配项——`build/` 下的 `CMakeFiles/project_*.dir` 等目录会被误匹配。
 
