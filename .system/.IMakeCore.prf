@@ -43,23 +43,29 @@ defineTest(IQMakeCoreInit){
     else: _CI_ARCH = $$QT_ARCH
     isEmpty(_CI_ARCH): _CI_ARCH = unknown
 
-    # compiler
-    msvc: _CI_COMPILER = msvc
-    else: win32-g++: _CI_COMPILER = gcc
-    else: linux-g++|linux-g++-64: _CI_COMPILER = gcc
-    else: clang|linux-clang: _CI_COMPILER = clang
+    # compiler — detect from QMAKE_CXX path, NEVER use `msvc:` scope
+    contains(QMAKE_CXX, "cl.exe"): _CI_COMPILER = msvc
+    else: contains(QMAKE_CXX, "g++")|contains(QMAKE_CXX, "gcc"): _CI_COMPILER = gcc
+    else: contains(QMAKE_CXX, "clang"): _CI_COMPILER = clang
     else: _CI_COMPILER = unknown
 
-    # compiler version (run once, trim)
-    _CI_COMPILER_VERSION = $$system($$QMAKE_CXX -dumpversion 2>nul || echo 0)
-    isEmpty(_CI_COMPILER_VERSION): _CI_COMPILER_VERSION = unknown
+    # compiler version
+    isEqual(_CI_COMPILER, msvc) {
+        # MSVC: version is in QMAKE_CXX path or VCToolsVersion env var
+        _CI_COMPILER_VERSION = $$(VCToolsVersion)
+        isEmpty(_CI_COMPILER_VERSION): _CI_COMPILER_VERSION = unknown
+    } else: isEqual(_CI_COMPILER, gcc)|isEqual(_CI_COMPILER, clang) {
+        _CI_COMPILER_VERSION = $$system($$QMAKE_CXX -dumpversion 2>nul || echo unknown)
+    } else {
+        _CI_COMPILER_VERSION = unknown
+    }
 
     # build mode
     CONFIG(debug, debug|release): _CI_BUILD_MODE = debug
     else: _CI_BUILD_MODE = release
 
     # runtimes
-    win32-msvc {
+    isEqual(_CI_COMPILER, msvc) {
         contains(QMAKE_CXXFLAGS, /MD): _CI_RUNTIMES = dynamic
         else: _CI_RUNTIMES = static
     } else: _CI_RUNTIMES = system
