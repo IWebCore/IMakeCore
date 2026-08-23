@@ -50,9 +50,14 @@ class SupportLibGenerator:
         if self.pack_type == "qmake":
             content = self._qmake_pro(lp, mode)
             fname = f"{dir_name}.pro"
-        else:
+        elif self.pack_type == "cmake":
             content = self._cmake_cmakelists(lp, mode, p, pkg_dir)
             fname = "CMakeLists.txt"
+        elif self.pack_type == "xmake":
+            content = self._xmake_lua(lp, mode, p, pkg_dir)
+            fname = "xmake.lua"
+        else:
+            raise ValueError(f"Unknown pack_type: {self.pack_type!r}")
         path = os.path.join(pkg_dir, fname)
         with open(path, "wt", encoding="utf-8") as f:
             f.write(content)
@@ -128,5 +133,33 @@ CONFIG(dll) {{
             lines.append(f'    COMMAND ${{CMAKE_COMMAND}} -E make_directory "${{CMAKE_CURRENT_SOURCE_DIR}}/../../.bin"')
             lines.append(f'    COMMAND ${{CMAKE_COMMAND}} -E copy_if_different "$<TARGET_FILE:{safe_target}>" "${{CMAKE_CURRENT_SOURCE_DIR}}/../../.bin/"')
             lines.append(")")
+
+        return "\n".join(lines) + "\n"
+
+    def _xmake_lua(self, lp: Any, mode: str, p: Any, pkg_dir: str) -> str:
+        safe_name = lp.publisher.replace("@", "_") + "_" + lp.name.replace(".", "_") + "_" + lp.version.replace(".", "_")
+        kind = "static" if mode == "static" else "shared"
+
+        lines: list[str] = []
+        lines.append(f"-- {lp.publisher}@{lp.name}@{lp.version} — DO NOT EDIT")
+        lines.append(f'target("{safe_name}")')
+        lines.append(f'    set_kind("{kind}")')
+        lines.append(f'    set_targetdir("$(scriptdir)/$(arch)-$(os)-{mode}")')
+        lines.append(f'    set_basename("{safe_name}")')
+
+        if mode == "dynamic":
+            detail = self._get_detail(lp)
+            if detail:
+                for d in detail.get_dynamic_definition():
+                    lines.append(f'    add_defines("{d}")')
+
+        lines.append("")
+        lines.append("target_end()")
+        lines.append("")
+        lines.append('local imake = os.getenv("IXMakeCore")')
+        lines.append("if imake then")
+        lines.append("    includes(imake)")
+        lines.append("end")
+        lines.append("imakecore_init(os.scriptdir())")
 
         return "\n".join(lines) + "\n"
