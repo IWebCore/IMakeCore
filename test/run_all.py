@@ -1,14 +1,15 @@
 """
 run_all.py — Master test runner.
 
-Accepts optional pack type arguments: qmake, cmake, or both.
-Defaults to both if none specified.
+Accepts optional pack type arguments: qmake, cmake, xmake, or any combination.
+Defaults to all three if none specified.
 
 Usage:
-    python run_all.py              # runs qmake + cmake
-    python run_all.py qmake        # runs qmake only
-    python run_all.py cmake        # runs cmake only
-    python run_all.py qmake cmake  # runs both
+    python run_all.py                    # runs qmake + cmake + xmake
+    python run_all.py qmake              # runs qmake only
+    python run_all.py cmake              # runs cmake only
+    python run_all.py xmake              # runs xmake only
+    python run_all.py qmake cmake xmake  # runs all three
 """
 
 import subprocess
@@ -29,17 +30,17 @@ SUITES = [
     "package_json", "compile_info",
 ]
 
-VALID = {"qmake", "cmake"}
+VALID = {"qmake", "cmake", "xmake"}
 
 
 def main():
     args = sys.argv[1:]
     if not args:
-        pack_types = ["qmake", "cmake"]
+        pack_types = ["qmake", "cmake", "xmake"]
     else:
         for a in args:
             if a not in VALID:
-                print(f"ERROR: Invalid pack type '{a}'. Use: qmake cmake")
+                print(f"ERROR: Invalid pack type '{a}'. Use: qmake cmake xmake")
                 return False
         seen = set()
         pack_types = []
