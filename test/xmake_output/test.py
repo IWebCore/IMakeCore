@@ -117,7 +117,7 @@ def test_xmake_static_link_contract():
 
     m_linkdir = re.search(r'add_linkdirs\("(.+?)"\)', pkg_txt)
     _check(m_linkdir is not None, f"{proj.name}: missing add_linkdirs(...)")
-    _check('set_targetdir("$(scriptdir)/$(arch)-$(os)-static")' in sup_txt, f"{proj.name}: missing set_targetdir(...)")
+    _check('test@hello@2.0.0_static/$(arch)-$(os)-static' in sup_txt, f"{proj.name}: missing set_targetdir(...)")
     m_targetdir = re.search(r'set_targetdir\("(.+?)"\)', sup_txt)
 
     m_links = re.search(r'add_links\("(.+?)"\)', pkg_txt)
@@ -130,9 +130,11 @@ def test_xmake_static_link_contract():
 
     if m_linkdir and m_targetdir:
         pkg_dir = _norm(str(proj / ".lib"))
-        sup_dir_norm = _norm(str(sup_dir))
+        # per-package add_linkdirs is "$(scriptdir)/../.support/<pkg>_static/..." where
+        # its $(scriptdir) is the .lib/ store; the support lib's set_targetdir is an
+        # absolute path to the same dir. Resolve the former and compare.
         linkdir_resolved = _norm(m_linkdir.group(1).replace("$(scriptdir)", pkg_dir))
-        targetdir_resolved = _norm(m_targetdir.group(1).replace("$(scriptdir)", sup_dir_norm))
+        targetdir_resolved = _norm(m_targetdir.group(1))
         _check(linkdir_resolved == targetdir_resolved,
                f"{proj.name}: link/target dir mismatch: {linkdir_resolved} vs {targetdir_resolved}")
 

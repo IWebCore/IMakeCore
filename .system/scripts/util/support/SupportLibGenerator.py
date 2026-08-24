@@ -139,6 +139,9 @@ CONFIG(dll) {{
     def _xmake_lua(self, lp: Any, mode: str, p: Any, pkg_dir: str) -> str:
         safe_name = lp.publisher.replace("@", "_") + "_" + lp.name.replace(".", "_") + "_" + lp.version.replace(".", "_")
         kind = "static" if mode == "static" else "shared"
+        # Absolute output dir (forward slashes): xmake's $(scriptdir) resolves to
+        # the including aggregator's dir, not this file's dir, so compute it here.
+        out_dir = os.path.normpath(os.path.join(self.support_dir, f"{lp.publisher}@{lp.name}@{lp.version}_{mode}")).replace(os.sep, "/")
 
         lines: list[str] = []
         lines.append(f"-- {lp.publisher}@{lp.name}@{lp.version} — DO NOT EDIT")
@@ -149,7 +152,7 @@ CONFIG(dll) {{
         lines.append("")
         lines.append(f'target("{safe_name}")')
         lines.append(f'    set_kind("{kind}")')
-        lines.append(f'    set_targetdir("$(scriptdir)/$(arch)-$(os)-{mode}")')
+        lines.append(f'    set_targetdir("{out_dir}/$(arch)-$(os)-{mode}")')
         lines.append(f'    set_basename("{safe_name}")')
 
         if mode == "dynamic":
