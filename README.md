@@ -61,7 +61,11 @@ In your `xmake.lua`:
 ```lua
 local imake = os.getenv("IXMakeCore")
 if imake then includes(imake) end
-imakecore_init(os.scriptdir())
+
+target("myapp")
+    set_kind("binary")
+    add_files("main.cpp")
+    add_rules("imakecore")
 ```
 
 ## Manual resolution

@@ -142,6 +142,11 @@ CONFIG(dll) {{
 
         lines: list[str] = []
         lines.append(f"-- {lp.publisher}@{lp.name}@{lp.version} — DO NOT EDIT")
+        lines.append('local imake = os.getenv("IXMakeCore")')
+        lines.append("if imake then")
+        lines.append("    includes(imake)")
+        lines.append("end")
+        lines.append("")
         lines.append(f'target("{safe_name}")')
         lines.append(f'    set_kind("{kind}")')
         lines.append(f'    set_targetdir("$(scriptdir)/$(arch)-$(os)-{mode}")')
@@ -153,13 +158,7 @@ CONFIG(dll) {{
                 for d in detail.get_dynamic_definition():
                     lines.append(f'    add_defines("{d}")')
 
+        lines.append('    add_rules("imakecore")')
         lines.append("")
-        lines.append("target_end()")
-        lines.append("")
-        lines.append('local imake = os.getenv("IXMakeCore")')
-        lines.append("if imake then")
-        lines.append("    includes(imake)")
-        lines.append("end")
-        lines.append("imakecore_init(os.scriptdir())")
 
         return "\n".join(lines) + "\n"

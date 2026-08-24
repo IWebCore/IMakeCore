@@ -158,3 +158,59 @@ class XmakePackageGenerator(MakePackageGenerator):
             result += f'includes("{path}")\n'
 
         return result
+
+    def package_json(self, pkg: Any, env: Any) -> dict[str, Any] | None:
+        """Machine-readable resolved config for xmake's on_load (script domain)."""
+        lp = self._get_lp(pkg)
+        if lp is None:
+            return None
+        detail = self._get_detail_from_db(lp.publisher, lp.name, lp.version)
+        if detail is None:
+            return None
+        paths = self._get_file_paths(detail)
+        if paths is None:
+            return None
+
+        mode = getattr(pkg, "mode", "default")
+        lib_path = self._normalize_path(lp.path)
+
+        def resolve(rel: str) -> str:
+            return lib_path if rel == "." else f"{lib_path}/{self._normalize_path(rel)}"
+
+        data: dict[str, Any] = {
+            "publisher": lp.publisher,
+            "name": lp.name,
+            "version": lp.version,
+            "mode": mode if mode in ("static", "dynamic") else "source",
+            "includes": [resolve(inc) for inc in paths["includes"]],
+            "definitions": list(paths["definitions"]),
+            "headers": [resolve(h) for h in paths["headers"]],
+            "sources": [],
+            "precompile_headers": [resolve(ph) for ph in paths["precompile_headers"]],
+            "links": [],
+            "linkdir": "",
+        }
+
+        if mode in ("static", "dynamic"):
+            if mode == "dynamic":
+                data["definitions"] += list(paths.get("dynamic_definition") or [])
+            safe_name = (lp.publisher.replace("@", "_") + "_"
+                         + lp.name.replace(".", "_") + "_"
+                         + lp.version.replace(".", "_"))
+            data["links"] = [safe_name]
+            data["linkdir"] = f".support/{lp.publisher}@{lp.name}@{lp.version}_{mode}"
+        else:
+            # source mode: only actual source files go to target:add("files")
+            # (script-domain target:add does NOT auto-split headers like the
+            # description-domain add_files does; headers are kept separate).
+            data["sources"] = [resolve(f) for f in (paths["sources"] or [])]
+
+        return data
+
+    def post_process_json(self, packages: list[Any], env: Any) -> list[dict[str, Any]]:
+        result: list[dict[str, Any]] = []
+        for p in packages:
+            data = self.package_json(p, env)
+            if data is not None:
+                result.append(data)
+        return result

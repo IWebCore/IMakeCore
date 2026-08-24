@@ -848,27 +848,27 @@ ICmakeCoreInit(<name>)
 
 ```lua
 -- xmake.lua
-target("<name>")
-    set_kind("binary")
-    add_files("main.cpp")
-
 -- --- IMakeCore integration ---
 local imake = os.getenv("IXMakeCore")
 if imake then includes(imake) end
-imakecore_init(os.scriptdir())
+
+target("<name>")
+    set_kind("binary")
+    add_files("main.cpp")
+    add_rules("imakecore")
 ```
 
 **说明：**
 
 | 行 | 用途 |
 |----|------|
+| `includes(os.getenv("IXMakeCore"))` | 加载 `.IMakeCore.lua` 集成文件（定义 `imakecore` rule） |
 | `target("<name>")` | 声明可执行目标，`<name>` 换成项目名 |
 | `set_kind("binary")` | 目标类型为可执行程序 |
 | `add_files("main.cpp")` | 编译入口源文件 |
-| `includes(os.getenv("IXMakeCore"))` | 加载 `.IMakeCore.lua` 集成文件 |
-| `imakecore_init(os.scriptdir())` | 调用 `IMakeCore.py` 解析包并 `includes(.package.lua)` |
+| `add_rules("imakecore")` | 触发 `on_load`（脚本域）调用 `IMakeCore.py` 解析包并施加 include/defines/files/links |
 
-**注意：** `imakecore_init()` 内部已自动 `includes(.package.lua)`，**无需**在 xmake.lua 中重复。
+**注意：** xmake 的 `includes()` 只在**描述作用域**可用、命令执行只在**脚本域**（`on_load`）可用，因此集成文件用 `rule("imakecore")` + `on_load` 实现；`add_rules("imakecore")` 必须放在 `target()` 块内。无需（也不能）在 xmake.lua 里调用 `imakecore_init()`。
 
 ### 11.4 main.cpp 模板
 

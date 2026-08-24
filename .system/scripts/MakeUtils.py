@@ -32,6 +32,14 @@ class MakeUtils:
         out_path = os.path.join(env.appPath, filename)
         content = gen.post_process(packages, env)
 
+        # xmake: also emit a machine-readable JSON for the on_load (script-domain) hook.
+        if pack_type == "xmake":
+            import json
+            json_path = os.path.join(env.appPath, ".package.xmake.json")
+            json_content = json.dumps(gen.post_process_json(packages, env), indent=2)
+            with open(json_path, "w", encoding="utf-8") as f:
+                f.write(json_content)
+
         if os.path.exists(out_path):
             with open(out_path, "r", encoding="utf-8") as f:
                 if f.read() == content:
