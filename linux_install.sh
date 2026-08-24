@@ -39,7 +39,7 @@ echo "Registering environment variables..."
 IMAKECORE_ROOT="$TARGET"
 IQMakeCore="$TARGET/.system/.IMakeCore.prf"
 ICMakeCore="$TARGET/.system/.IMakeCore.cmake"
-IXMakeCore="$TARGET/.system/.IMakeCore.xmake"
+IXMakeCore="$TARGET/.system/.IMakeCore.lua"
 IMAKECORE_BIN="$TARGET/.programs/linux"
 
 # 1) /etc/profile.d/ — 新交互式 shell (login shells)

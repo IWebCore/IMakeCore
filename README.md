@@ -22,7 +22,7 @@ Both scripts register three environment variables pointing at the integration fi
 |-------------|--------------|-----------------------------|
 | `IQMakeCore` | qmake        | `.system/.IMakeCore.prf`     |
 | `ICMakeCore` | CMake        | `.system/.IMakeCore.cmake`   |
-| `IXMakeCore` | xmake        | `.system/.IMakeCore.xmake`   |
+| `IXMakeCore` | xmake        | `.system/.IMakeCore.lua`     |
 
 The scripts also register `IMAKECORE_ROOT`, which must be set before any resolution runs.
 

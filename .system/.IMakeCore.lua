@@ -7,7 +7,7 @@
 --
 -- imakecore_init(proj_dir) resolves packages.json in proj_dir by running
 -- IMakeCore.py <proj_dir> xmake, then includes the generated
--- <proj_dir>/.package.xmake chain file at root scope (applies to all targets).
+-- <proj_dir>/.package.lua chain file at root scope (applies to all targets).
 
 function imakecore_init(proj_dir)
     -- (1) Build the IMAKECORE_* compile-info env table from xmake.
@@ -102,7 +102,7 @@ function imakecore_init(proj_dir)
         os.raise("Python interpreter not found")
     end
 
-    -- (4) Run IMakeCore.py to resolve packages and emit .package.xmake.
+    -- (4) Run IMakeCore.py to resolve packages and emit .package.lua.
     local outdata, errdata, failed
     try {
         function()
@@ -114,12 +114,12 @@ function imakecore_init(proj_dir)
         }
     }
     -- belt-and-braces: a failure mode that does NOT raise (non-zero exit on
-    -- some xmake builds) leaves .package.xmake absent on first run — detect it.
-    if failed or not os.isfile(path.join(proj_dir, ".package.xmake")) then
+    -- some xmake builds) leaves .package.lua absent on first run — detect it.
+    if failed or not os.isfile(path.join(proj_dir, ".package.lua")) then
         os.raise("IMakeCore resolution failed: " .. tostring(failed or "")
                  .. tostring(outdata or "") .. tostring(errdata or ""))
     end
 
     -- (5) Include the generated chain file (root scope — applies to all targets).
-    includes(path.join(proj_dir, ".package.xmake"))
+    includes(path.join(proj_dir, ".package.lua"))
 end

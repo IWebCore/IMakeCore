@@ -22,7 +22,7 @@ test/**/project_*/.bin/
 test/**/project_*/.data/
 test/**/project_*/.package.pri
 test/**/project_*/.package.cmake
-test/**/project_*/.package.xmake
+test/**/project_*/.package.lua
 
 # Test: database
 test/**/.db/

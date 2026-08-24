@@ -20,7 +20,7 @@ def _run(project: Path):
                           capture_output=True, text=True, timeout=120)
 
 def _prepare(project: Path, packages: dict) -> Path:
-    for name in (".package.pri", ".package.cmake", ".package.xmake", ".data", ".lib", ".support", ".bin"):
+    for name in (".package.pri", ".package.cmake", ".package.lua", ".data", ".lib", ".support", ".bin"):
         p = project / name
         if p.exists(): (shutil.rmtree if p.is_dir() else os.remove)(str(p))
     project.mkdir(parents=True, exist_ok=True)
@@ -33,7 +33,7 @@ def _check(c, msg):
     else: _FAILED += 1; print(f"  FAIL: {msg}")
 
 def _out(project: Path) -> Path:
-    return project / (".package.xmake" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))
+    return project / (".package.lua" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))
 
 def _norm(p: str) -> str:
     return os.path.normpath(p).replace(os.sep, "/")

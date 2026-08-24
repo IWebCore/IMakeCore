@@ -20,7 +20,7 @@ def _run(project: Path):
                           capture_output=True, text=True, timeout=120)
 
 def _prepare(project: Path, packages: dict) -> Path:
-    for name in (".package.pri", ".package.cmake", ".package.xmake", ".data", ".lib", ".support", ".bin"):
+    for name in (".package.pri", ".package.cmake", ".package.lua", ".data", ".lib", ".support", ".bin"):
         p = project / name
         if p.exists(): (shutil.rmtree if p.is_dir() else os.remove)(str(p))
     project.mkdir(parents=True, exist_ok=True)
@@ -33,7 +33,7 @@ def _check(c, msg):
     else: _FAILED += 1; print(f"  FAIL: {msg}")
 
 def _vfy_pri(project: Path, *expected: str):
-    pri = project / (".package.xmake" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))
+    pri = project / (".package.lua" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))
     _check(pri.exists(), f"{project.name}: output missing")
     if pri.exists():
         txt = pri.read_text()
@@ -50,7 +50,7 @@ def _vfy_cache(project: Path, *names: str):
         for n in names: _check(n in data.get("resolved",{}), f"{project.name}: cache missing '{n}'")
 
 def _vfy_absent(project: Path, *forbidden: str):
-    pri = project / (".package.xmake" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))
+    pri = project / (".package.lua" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))
     if pri.exists():
         txt = pri.read_text()
         for pkg in forbidden: _check(pkg not in txt, f"{project.name}: leaked '{pkg}'")
@@ -123,7 +123,7 @@ def test_override_global():
     r = _run(proj)
     _check(r.returncode == 0, f"rc={r.returncode}\n{r.stdout[:300]}")
 
-    pri_txt = (proj / (".package.xmake" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))).read_text()
+    pri_txt = (proj / (".package.lua" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))).read_text()
     _check("1.0.0" in pri_txt, "override should force 1.0.0")
     _check("2.0.0" not in pri_txt, "2.0.0 should not appear when overridden to 1.0.0")
 
@@ -140,7 +140,7 @@ def test_override_per_package():
     r = _run(proj)
     _check(r.returncode == 0, f"rc={r.returncode}\n{r.stdout[:300]}")
 
-    pri_txt = (proj / (".package.xmake" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))).read_text()
+    pri_txt = (proj / (".package.lua" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))).read_text()
     _check("1.0.0" in pri_txt, "per-package override (1.0.0) should beat global (2.0.0)")
     _check("2.0.0" not in pri_txt, "2.0.0 should be overridden")
 
@@ -154,7 +154,7 @@ def test_override_string_entry():
 
     r = _run(proj)
     _check(r.returncode == 0, f"rc={r.returncode}")
-    pri_txt = (proj / (".package.xmake" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))).read_text()
+    pri_txt = (proj / (".package.lua" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))).read_text()
     _check("1.0.0" in pri_txt, "string entry override should force 1.0.0")
 
 
@@ -168,7 +168,7 @@ def test_override_nonexistent_version():
     r = _run(proj)
     # Nonexistent override → forceCandidate stays None → normal resolution picks 2.0.0
     _check(r.returncode == 0, f"nonexistent override should fall through, got {r.returncode}")
-    pri_txt = (proj / (".package.xmake" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))).read_text()
+    pri_txt = (proj / (".package.lua" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))).read_text()
     _check("2.0.0" in pri_txt, "should fall through to normal resolution (2.0.0)")
 
 
@@ -199,7 +199,7 @@ def test_override_both_root_packages():
 
     r = _run(proj)
     _check(r.returncode == 0, f"rc={r.returncode}")
-    pri_txt = (proj / (".package.xmake" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))).read_text()
+    pri_txt = (proj / (".package.lua" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))).read_text()
     _check("test@hello@1.0.0" in pri_txt or ('1.0.0' in pri_txt and 'hello' in pri_txt),
            "hello should be overridden to 1.0.0")
     _check("test@world@1.0.0" in pri_txt or ('world' in pri_txt),

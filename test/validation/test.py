@@ -20,7 +20,7 @@ def _run(project: Path):
                           capture_output=True, text=True, timeout=120)
 
 def _prepare(project: Path, packages: dict) -> Path:
-    for name in (".package.pri", ".package.cmake", ".package.xmake", ".data", ".lib", ".support", ".bin"):
+    for name in (".package.pri", ".package.cmake", ".package.lua", ".data", ".lib", ".support", ".bin"):
         p = project / name
         if p.exists(): (shutil.rmtree if p.is_dir() else os.remove)(str(p))
     project.mkdir(parents=True, exist_ok=True)
@@ -33,7 +33,7 @@ def _check(c, msg):
     else: _FAILED += 1; print(f"  FAIL: {msg}")
 
 def _vfy_pri(project: Path, *expected: str):
-    pri = project / (".package.xmake" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))
+    pri = project / (".package.lua" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))
     _check(pri.exists(), f"{project.name}: output missing")
     if pri.exists():
         txt = pri.read_text()
@@ -50,7 +50,7 @@ def _vfy_cache(project: Path, *names: str):
         for n in names: _check(n in data.get("resolved",{}), f"{project.name}: cache missing '{n}'")
 
 def _vfy_absent(project: Path, *forbidden: str):
-    pri = project / (".package.xmake" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))
+    pri = project / (".package.lua" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))
     if pri.exists():
         txt = pri.read_text()
         for pkg in forbidden: _check(pkg not in txt, f"{project.name}: leaked '{pkg}'")
@@ -91,14 +91,14 @@ def test_missing_dependency():
 def test_missing_packages_json():
     """No packages.json — should fail gracefully, no crash."""
     proj = ROOT / "project_no_pkg"
-    for name in (".package.pri", ".package.cmake", ".package.xmake", ".data", ".lib", ".support", ".bin"):
+    for name in (".package.pri", ".package.cmake", ".package.lua", ".data", ".lib", ".support", ".bin"):
         p = proj / name
         if p.exists():
             (shutil.rmtree if p.is_dir() else os.remove)(str(p))
     proj.mkdir(parents=True, exist_ok=True)
     r = _run(proj)
     _check(r.returncode in (0, 1), f"unexpected rc={r.returncode}")
-    _check(not (proj / (".package.xmake" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))).exists() or r.returncode != 0,
+    _check(not (proj / (".package.lua" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))).exists() or r.returncode != 0,
            ".package.pri should not be generated when packages.json is missing")
 
 

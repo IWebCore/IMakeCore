@@ -50,7 +50,7 @@ echo Setting environment variables...
 set "IMAKECORE_ROOT=%TARGET%"
 set "IQMakeCore=%TARGET%\.system\.IMakeCore.prf"
 set "ICMakeCore=%TARGET%\.system\.IMakeCore.cmake"
-set "IXMakeCore=%TARGET%\.system\.IMakeCore.xmake"
+set "IXMakeCore=%TARGET%\.system\.IMakeCore.lua"
 set "IMAKECORE_BIN=%TARGET%\.programs\windows"
 
 :: setx = 持久化 (新窗口), set = 当前窗口

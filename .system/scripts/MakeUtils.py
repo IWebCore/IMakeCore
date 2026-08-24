@@ -13,7 +13,7 @@ class MakeUtils:
     _GENERATORS = {
         "qmake": (QmakePackageGenerator(), ".package.pri"),
         "cmake": (CmakePackageGenerator(), ".package.cmake"),
-        "xmake": (XmakePackageGenerator(), ".package.xmake"),
+        "xmake": (XmakePackageGenerator(), ".package.lua"),
     }
 
     @staticmethod

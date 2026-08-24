@@ -20,7 +20,7 @@ def _run(project: Path):
                           capture_output=True, text=True, timeout=120)
 
 def _prepare(project: Path, packages: dict) -> Path:
-    for name in (".package.pri", ".package.cmake", ".package.xmake", ".data", ".lib", ".support", ".bin"):
+    for name in (".package.pri", ".package.cmake", ".package.lua", ".data", ".lib", ".support", ".bin"):
         p = project / name
         if p.exists(): (shutil.rmtree if p.is_dir() else os.remove)(str(p))
     project.mkdir(parents=True, exist_ok=True)
@@ -33,7 +33,7 @@ def _check(c, msg):
     else: _FAILED += 1; print(f"  FAIL: {msg}")
 
 def _vfy_pri(project: Path, *expected: str):
-    pri = project / (".package.xmake" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))
+    pri = project / (".package.lua" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))
     _check(pri.exists(), f"{project.name}: output missing")
     if pri.exists():
         txt = pri.read_text()
@@ -50,7 +50,7 @@ def _vfy_cache(project: Path, *names: str):
         for n in names: _check(n in data.get("resolved",{}), f"{project.name}: cache missing '{n}'")
 
 def _vfy_absent(project: Path, *forbidden: str):
-    pri = project / (".package.xmake" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))
+    pri = project / (".package.lua" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))
     if pri.exists():
         txt = pri.read_text()
         for pkg in forbidden: _check(pkg not in txt, f"{project.name}: leaked '{pkg}'")
@@ -66,7 +66,7 @@ def test_wildcard_latest():
     _vfy_pri(proj, "hello")
     _vfy_cache(proj, "test/hello")
     # Should pick latest = 2.0.0
-    pri_txt = (proj / (".package.xmake" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))).read_text() if ((proj / (".package.xmake" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri")))).exists() else ""
+    pri_txt = (proj / (".package.lua" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))).read_text() if ((proj / (".package.lua" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri")))).exists() else ""
     _check("2.0.0" in pri_txt, "wildcard should pick 2.0.0 latest")
 
 def test_exact_version():
@@ -74,7 +74,7 @@ def test_exact_version():
     proj = _prepare(ROOT / "project_exact", {"test/hello": "2.0.0"})
     r = _run(proj)
     _check(r.returncode == 0, f"rc={r.returncode}")
-    pri_txt = (proj / (".package.xmake" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))).read_text() if ((proj / (".package.xmake" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri")))).exists() else ""
+    pri_txt = (proj / (".package.lua" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))).read_text() if ((proj / (".package.lua" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri")))).exists() else ""
     _check("2.0.0" in pri_txt, "exact 2.0.0 not found")
     _check("1.0.0" not in pri_txt, "1.0.0 leaked into exact match")
 
@@ -83,7 +83,7 @@ def test_version_range_lower_bound():
     proj = _prepare(ROOT / "project_range_low", {"test/hello": ">=1.0"})
     r = _run(proj)
     _check(r.returncode == 0, f"rc={r.returncode}")
-    pri_txt = (proj / (".package.xmake" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))).read_text() if ((proj / (".package.xmake" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri")))).exists() else ""
+    pri_txt = (proj / (".package.lua" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))).read_text() if ((proj / (".package.lua" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri")))).exists() else ""
     _check("2.0.0" in pri_txt, ">=1.0 should pick 2.0.0")
 
 def test_version_range_restricted():
@@ -91,7 +91,7 @@ def test_version_range_restricted():
     proj = _prepare(ROOT / "project_range_restricted", {"test/hello": ">=1.0,<2.0"})
     r = _run(proj)
     _check(r.returncode == 0, f"rc={r.returncode}")
-    pri_txt = (proj / (".package.xmake" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))).read_text() if ((proj / (".package.xmake" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri")))).exists() else ""
+    pri_txt = (proj / (".package.lua" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))).read_text() if ((proj / (".package.lua" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri")))).exists() else ""
     _check("1.0.0" in pri_txt, ">=1.0,<2.0 should pick 1.0.0")
     _check("2.0.0" not in pri_txt, "2.0.0 should be excluded by <2.0")
 
@@ -100,8 +100,8 @@ def test_version_skip_x():
     proj = _prepare(ROOT / "project_skip", {"test/hello": "x"})
     r = _run(proj)
     _check(r.returncode == 0, f"rc={r.returncode}")
-    if ((proj / (".package.xmake" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri")))).exists():
-        _check("hello" not in (proj / (".package.xmake" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))).read_text(), "x should skip")
+    if ((proj / (".package.lua" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri")))).exists():
+        _check("hello" not in (proj / (".package.lua" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))).read_text(), "x should skip")
 
 
 def test_version_latest():
@@ -109,7 +109,7 @@ def test_version_latest():
     proj = _prepare(ROOT / "project_latest", {"test/hello": ">=0"})
     r = _run(proj)
     _check(r.returncode == 0, f"rc={r.returncode}")
-    pri_txt = (proj / (".package.xmake" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))).read_text() if ((proj / (".package.xmake" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri")))).exists() else ""
+    pri_txt = (proj / (".package.lua" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri"))).read_text() if ((proj / (".package.lua" if _G_PACK_TYPE == "xmake" else (".package.cmake" if _G_PACK_TYPE == "cmake" else ".package.pri")))).exists() else ""
     _check("2.0.0" in pri_txt, "should pick latest 2.0.0")
 
 

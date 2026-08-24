@@ -64,7 +64,7 @@
 
 | 测试 | 说明 |
 |------|------|
-| `test_xmake_single_package` | xmake 模式下解析 hello@1.0.0 → 生成 `.package.xmake` + includes 链 + add_includedirs/add_headerfiles |
+| `test_xmake_single_package` | xmake 模式下解析 hello@1.0.0 → 生成 `.package.lua` + includes 链 + add_includedirs/add_headerfiles |
 | `test_xmake_transitive` | xmake 模式下 world→hello 传递依赖 |
 | `test_xmake_version_select` | xmake 模式下版本选择 `>=2.0` → 2.0.0 |
 | `test_xmake_static_link_contract` | static 库：add_linkdirs 与 set_targetdir 解析到同一目录，add_links/set_basename safe_name 一致 |

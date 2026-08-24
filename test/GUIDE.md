@@ -303,12 +303,12 @@ def _run(project: Path):
 
 def _prepare(project: Path, packages: dict) -> Path:
     """
-    清理旧产物（.package.pri/.package.cmake/.package.xmake, .data/, .lib/ 等），写入新的 packages.json。
+    清理旧产物（.package.pri/.package.cmake/.package.lua, .data/, .lib/ 等），写入新的 packages.json。
 
     清理在【每次执行前】进行，确保每次测试从干净状态开始。
     执行完毕后文件【保留】，不删除。
     """
-    for name in (".package.pri", ".package.cmake", ".package.xmake", ".data", ".lib", ".support", ".bin"):
+    for name in (".package.pri", ".package.cmake", ".package.lua", ".data", ".lib", ".support", ".bin"):
         p = project / name
         if p.exists():
             (shutil.rmtree if p.is_dir() else os.remove)(str(p))
@@ -865,10 +865,10 @@ imakecore_init(os.scriptdir())
 | `target("<name>")` | 声明可执行目标，`<name>` 换成项目名 |
 | `set_kind("binary")` | 目标类型为可执行程序 |
 | `add_files("main.cpp")` | 编译入口源文件 |
-| `includes(os.getenv("IXMakeCore"))` | 加载 `.IMakeCore.xmake` 集成文件 |
-| `imakecore_init(os.scriptdir())` | 调用 `IMakeCore.py` 解析包并 `includes(.package.xmake)` |
+| `includes(os.getenv("IXMakeCore"))` | 加载 `.IMakeCore.lua` 集成文件 |
+| `imakecore_init(os.scriptdir())` | 调用 `IMakeCore.py` 解析包并 `includes(.package.lua)` |
 
-**注意：** `imakecore_init()` 内部已自动 `includes(.package.xmake)`，**无需**在 xmake.lua 中重复。
+**注意：** `imakecore_init()` 内部已自动 `includes(.package.lua)`，**无需**在 xmake.lua 中重复。
 
 ### 11.4 main.cpp 模板
 
