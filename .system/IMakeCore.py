@@ -14,8 +14,6 @@ from scripts.data import *
 from scripts.data.AppData import AppData
 from scripts.util.PackageResolver import PackageResolver
 from scripts.MakeUtils import *
-from scripts.util.support.SupportProjectFileGenerator import SupportProjectFileGenerator
-from scripts.util.support.SupportLibGenerator import SupportLibGenerator
 
 def _validate_header_only_modes(packages: list) -> None:
     """Header-only packages must use mode='source' (or default), never static/dynamic."""
@@ -116,11 +114,13 @@ def _generate_outputs(packages: list, app_path: str, pack_type: str, env) -> Non
     """Produce all build artefacts: lib files, include chain."""
     lib_pkgs = [r for r in packages
                 if getattr(r, "mode", "default") in ("static", "dynamic")]
+
+    gen = MakeUtils.getGenerator(pack_type)
     if lib_pkgs:
-        SupportLibGenerator(lib_pkgs, pack_type, env).generate_all()
+        gen.generate_support_libs(lib_pkgs, env)
 
     project_name = os.path.basename(os.path.abspath(app_path))
-    SupportProjectFileGenerator(project_name, lib_pkgs, pack_type, env).generate()
+    gen.generate_support_project(project_name, lib_pkgs, env)
 
     MakeUtils.createIncludeFile(pack_type, packages, env)
 

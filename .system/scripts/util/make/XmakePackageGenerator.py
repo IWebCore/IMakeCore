@@ -2,29 +2,50 @@ from __future__ import annotations
 
 import os
 from typing import Any
+
 from scripts.util.make.MakePackageGenerator import MakePackageGenerator
 
 
 class XmakePackageGenerator(MakePackageGenerator):
+    """xmake (.xmake / xmake.lua) package generator."""
 
-    @staticmethod
-    def _get_lp(pkg: Any) -> Any:
-        return getattr(pkg, "real_package", None) or getattr(pkg, "libPackage", None)
+    _comment = "--"
+    _lib_suffix = "xmake"
+    condition_file_name = "imakecore_condition.xmake"
 
-    @staticmethod
-    def _header_comment(lp: Any) -> list[str]:
-        return [
-            "-- SYSTEM AUTO GENERATED DO NOT EDIT!!!",
-            f"-- {lp.publisher}@{lp.name}@{lp.version}",
-            f"-- {lp.summary or ''}",
-            "",
-        ]
+    _CHAIN_HEADER = "-- SYSTEM CONFIGURED, DO NOT EDIT!!!\n"
+
+    _CHAIN_ENTRY = '\n-- {publisher}@{name}@{version}\n-- {summary}\nincludes("{path}")\n'
+
+    _SUPPORT_LIB_TEMPLATE = """\
+-- {publisher}@{name}@{version} — DO NOT EDIT
+local imake = os.getenv("IXMakeCore")
+if imake then
+    includes(imake)
+end
+
+target("{safe_name}")
+    set_kind("{kind}")
+    set_targetdir("{out_dir}/$(arch)-$(os)-{mode}")
+    set_basename("{safe_name}")
+{defines}    add_rules("imakecore")
+
+"""
+
+    _SUPPORT_PROJECT_TEMPLATE = """\
+-- SYSTEM AUTO GENERATED DO NOT EDIT!!!
+-- {project_name} support sub-projects
+
+{includes}
+"""
+
+    # ── virtual interface ───────────────────────────────────────────────────
 
     def generate(self, pkg: Any, env: Any) -> str:
         lp = self._get_lp(pkg)
         if lp is None:
             return ""
-        output_path = self._lib_output_path(lp, env, "xmake")
+        output_path = self._per_package_path(lp, env)
 
         detail = self._get_detail_from_db(lp.publisher, lp.name, lp.version)
         if detail is None:
@@ -37,127 +58,39 @@ class XmakePackageGenerator(MakePackageGenerator):
 
         mode = getattr(pkg, "mode", "default")
         lib_path = self._normalize_path(lp.path)
-        lines = self._header_comment(lp)
-        lines.append(f'local current_lib_path = "{lib_path}"')
-        lines.append("")
 
-        self._emit_include_dirs(lines, paths["includes"])
-        self._emit_definitions(lines, paths["definitions"])
-        self._emit_headerfiles(lines, paths["headers"])
+        sections = [
+            self._header_comment(lp),
+            f'local current_lib_path = "{lib_path}"\n\n',
+            self._include_dirs_section(paths["includes"]),
+            self._definitions_section(paths["definitions"]),
+            self._headerfiles_section(paths["headers"]),
+        ]
 
         if mode in ("static", "dynamic"):
             if mode == "dynamic" and paths.get("dynamic_definition"):
-                for d in paths["dynamic_definition"]:
-                    lines.append(f'add_defines("{d}")')
-                lines.append("")
-            self._emit_lib_link(lines, pkg, env)
+                sections.append(self._definitions_section(paths["dynamic_definition"]))
+            sections.append(self._lib_link_section(pkg))
         else:
-            self._emit_sources(lines, paths["headers"], paths["sources"])
-        self._emit_files(lines, paths["uis"])
-        self._emit_files(lines, paths["resources"])
-        self._emit_precompile(lines, paths["precompile_headers"])
+            sections.append(self._sources_section(paths["headers"], paths["sources"]))
+        sections.append(self._files_section(paths["uis"]))
+        sections.append(self._files_section(paths["resources"]))
+        sections.append(self._precompile_section(paths["precompile_headers"]))
 
-        content = "\n".join(lines) + "\n"
-        return self._write_if_changed(output_path, content)
-
-    @staticmethod
-    def _emit_lib_link(lines: list[str], pkg: Any, env: Any) -> None:
-        lp = XmakePackageGenerator._get_lp(pkg)
-        if lp is None:
-            return
-        mode = getattr(pkg, "mode", "static")
-        pkg_dir = f"{lp.publisher}@{lp.name}@{lp.version}_{mode}"
-        safe_name = lp.publisher.replace("@", "_") + "_" + lp.name.replace(".", "_") + "_" + lp.version.replace(".", "_")
-        link_dir = f"$(scriptdir)/../.support/{pkg_dir}/$(arch)-$(os)-{mode}"
-        lines.append(f'add_linkdirs("{link_dir}")')
-        if mode == "dynamic":
-            lines.append('if is_plat("windows") then')
-            lines.append(f'    add_links("{safe_name}")')
-            lines.append('elseif is_plat("macosx") then')
-            lines.append(f'    add_links("{safe_name}")')
-            lines.append('else')
-            lines.append(f'    add_links("{safe_name}")')
-            lines.append('end')
-        else:
-            lines.append('if is_plat("windows") then')
-            lines.append(f'    add_links("{safe_name}")')
-            lines.append('else')
-            lines.append(f'    add_links("{safe_name}")')
-            lines.append('end')
-        lines.append("")
-
-    @staticmethod
-    def _emit_include_dirs(lines: list[str], includes: list[str]) -> None:
-        if not includes:
-            return
-        for inc in includes:
-            if inc == ".":
-                lines.append("add_includedirs(current_lib_path)")
-            else:
-                norm = XmakePackageGenerator._normalize_path(inc)
-                lines.append(f'add_includedirs(current_lib_path .. "/{norm}")')
-        lines.append("")
-
-    @staticmethod
-    def _emit_definitions(lines: list[str], definitions: list[str]) -> None:
-        if not definitions:
-            return
-        for d in definitions:
-            lines.append(f'add_defines("{d}")')
-        lines.append("")
-
-    @staticmethod
-    def _emit_headerfiles(lines: list[str], headers: list[str]) -> None:
-        if not headers:
-            return
-        for h in headers:
-            norm = XmakePackageGenerator._normalize_path(h)
-            lines.append(f'add_headerfiles(current_lib_path .. "/{norm}")')
-        lines.append("")
-
-    @staticmethod
-    def _emit_sources(lines: list[str], headers: list[str] | None, sources: list[str] | None) -> None:
-        all_files = (headers or []) + (sources or [])
-        if not all_files:
-            return
-        for f in all_files:
-            norm = XmakePackageGenerator._normalize_path(f)
-            lines.append(f'add_files(current_lib_path .. "/{norm}")')
-        lines.append("")
-
-    @staticmethod
-    def _emit_files(lines: list[str], items: list[str]) -> None:
-        if not items:
-            return
-        for f in items:
-            norm = XmakePackageGenerator._normalize_path(f)
-            lines.append(f'add_files(current_lib_path .. "/{norm}")')
-        lines.append("")
-
-    @staticmethod
-    def _emit_precompile(lines: list[str], precompile_headers: list[str]) -> None:
-        if not precompile_headers:
-            return
-        for ph in precompile_headers:
-            norm = XmakePackageGenerator._normalize_path(ph)
-            lines.append(f'set_pcxxheader(current_lib_path .. "/{norm}")')
-        lines.append("")
+        return self._write_if_changed(output_path, "".join(sections))
 
     def post_process(self, packages: list[Any], env: Any) -> str:
-        result = """\
--- SYSTEM CONFIGURED, DO NOT EDIT!!!
-"""
+        parts = [self._CHAIN_HEADER]
         for p in packages:
             path = self.generate(p, env)
             if not path:
                 continue
-            path = os.path.normpath(path).replace(os.sep, "/")
             lp = self._get_lp(p)
-            result += f"\n-- {lp.publisher}@{lp.name}@{lp.version}\n"
-            result += f"-- {lp.summary}\n"
-            result += f'includes("{path}")\n'
-
-        return result
+            parts.append(self._CHAIN_ENTRY.format(
+                publisher=lp.publisher, name=lp.name, version=lp.version,
+                summary=lp.summary, path=os.path.normpath(path).replace(os.sep, "/"),
+            ))
+        return "".join(parts)
 
     def package_json(self, pkg: Any, env: Any) -> dict[str, Any] | None:
         """Machine-readable resolved config for xmake's on_load (script domain)."""
@@ -214,3 +147,104 @@ class XmakePackageGenerator(MakePackageGenerator):
             if data is not None:
                 result.append(data)
         return result
+
+    def support_lib_filename(self, dir_name: str) -> str:
+        return "xmake.lua"
+
+    def support_lib_content(self, lp: Any, mode: str, pkg_dir: str) -> str:
+        safe_name = lp.publisher.replace("@", "_") + "_" + lp.name.replace(".", "_") + "_" + lp.version.replace(".", "_")
+        out_dir = self._normalize_path(pkg_dir)
+        defines = ""
+        if mode == "dynamic":
+            detail = self._get_support_detail(lp)
+            if detail:
+                defines = "".join(f'    add_defines("{d}")\n' for d in detail.get_dynamic_definition())
+        return self._SUPPORT_LIB_TEMPLATE.format(
+            publisher=lp.publisher, name=lp.name, version=lp.version,
+            safe_name=safe_name, kind="static" if mode == "static" else "shared",
+            out_dir=out_dir, mode=mode, defines=defines,
+        )
+
+    def support_project_filename(self, project_name: str) -> str:
+        return "xmake.lua"
+
+    def support_project_content(self, project_name: str, lib_packages: list[Any]) -> str:
+        includes = "".join(f'includes("{d}")\n' for d in self._support_dir_names(lib_packages))
+        return self._SUPPORT_PROJECT_TEMPLATE.format(project_name=project_name, includes=includes)
+
+    # ── per-package section builders ────────────────────────────────────────
+
+    @staticmethod
+    def _include_dirs_section(includes: list[str]) -> str:
+        if not includes:
+            return ""
+        lines = []
+        for inc in includes:
+            norm = inc.replace("\\", "/")
+            if norm == ".":
+                lines.append("add_includedirs(current_lib_path)")
+            else:
+                lines.append(f'add_includedirs(current_lib_path .. "/{norm}")')
+        return "\n".join(lines) + "\n\n"
+
+    @staticmethod
+    def _definitions_section(definitions: list[str]) -> str:
+        if not definitions:
+            return ""
+        return "".join(f'add_defines("{d}")\n' for d in definitions) + "\n"
+
+    @staticmethod
+    def _headerfiles_section(headers: list[str]) -> str:
+        if not headers:
+            return ""
+        return "".join(f'add_headerfiles(current_lib_path .. "/{h}")\n' for h in headers) + "\n"
+
+    @staticmethod
+    def _sources_section(headers: list[str], sources: list[str]) -> str:
+        all_files = (headers or []) + (sources or [])
+        if not all_files:
+            return ""
+        return "".join(f'add_files(current_lib_path .. "/{f}")\n' for f in all_files) + "\n"
+
+    @staticmethod
+    def _files_section(items: list[str]) -> str:
+        if not items:
+            return ""
+        return "".join(f'add_files(current_lib_path .. "/{f}")\n' for f in items) + "\n"
+
+    @staticmethod
+    def _precompile_section(precompile_headers: list[str]) -> str:
+        if not precompile_headers:
+            return ""
+        return "".join(f'set_pcxxheader(current_lib_path .. "/{ph}")\n' for ph in precompile_headers) + "\n"
+
+    @classmethod
+    def _lib_link_section(cls, pkg: Any) -> str:
+        lp = cls._get_lp(pkg)
+        if lp is None:
+            return ""
+        mode = getattr(pkg, "mode", "static")
+        pkg_dir = f"{lp.publisher}@{lp.name}@{lp.version}_{mode}"
+        safe_name = lp.publisher.replace("@", "_") + "_" + lp.name.replace(".", "_") + "_" + lp.version.replace(".", "_")
+        link_dir = f"$(scriptdir)/../.support/{pkg_dir}/$(arch)-$(os)-{mode}"
+
+        parts = [f'add_linkdirs("{link_dir}")']
+        if mode == "dynamic":
+            parts += [
+                'if is_plat("windows") then',
+                f'    add_links("{safe_name}")',
+                'elseif is_plat("macosx") then',
+                f'    add_links("{safe_name}")',
+                'else',
+                f'    add_links("{safe_name}")',
+                'end',
+            ]
+        else:
+            parts += [
+                'if is_plat("windows") then',
+                f'    add_links("{safe_name}")',
+                'else',
+                f'    add_links("{safe_name}")',
+                'end',
+            ]
+        return "\n".join(parts) + "\n\n"

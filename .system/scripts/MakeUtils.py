@@ -17,6 +17,14 @@ class MakeUtils:
     }
 
     @staticmethod
+    def getGenerator(pack_type: str) -> Any:
+        """Return the package generator registered for ``pack_type``."""
+        entry = MakeUtils._GENERATORS.get(pack_type)
+        if entry is None:
+            raise ValueError(f"Unknown packType: {pack_type}")
+        return entry[0]
+
+    @staticmethod
     def createIncludeFile(pack_type: str, packages: list[Any], env: Any) -> None:
         """Generate ``.package.pri`` or ``.package.cmake`` include chain.
 

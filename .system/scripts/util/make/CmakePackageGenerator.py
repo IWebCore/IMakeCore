@@ -2,20 +2,60 @@ from __future__ import annotations
 
 import os
 from typing import Any
+
 from scripts.util.make.MakePackageGenerator import MakePackageGenerator
 
 
 class CmakePackageGenerator(MakePackageGenerator):
+    """CMake (.cmake) package generator."""
 
-    @staticmethod
-    def _get_lp(pkg: Any) -> Any:
-        return getattr(pkg, "real_package", None) or getattr(pkg, "libPackage", None)
+    _comment = "#"
+    _lib_suffix = "cmake"
+    condition_file_name = "imakecore_condition.cmake"
+
+    _CHAIN_HEADER = """\
+###################################
+# SYSTEM CONFIGURED, DO NOT EDIT!!!
+###################################
+"""
+
+    _CHAIN_ENTRY = "\n# {publisher}@{name}@{version}\n# {summary}\ninclude({path})\n"
+
+    _SUPPORT_LIB_TEMPLATE = """\
+# {publisher}@{name}@{version} — DO NOT EDIT
+cmake_minimum_required(VERSION 3.16)
+project({safe_target} LANGUAGES CXX)
+
+add_library({safe_target} {lib_type})
+set_target_properties({safe_target} PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties({safe_target} PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY "{out_dir}"
+{output_dirs})
+
+{defines}set(IMAKECORE_ROOT_DIR "${{CMAKE_CURRENT_SOURCE_DIR}}")
+include($ENV{{ICMakeCore}})
+ICmakeCoreInit({safe_target})
+{post_build}"""
+
+    _SUPPORT_PROJECT_TEMPLATE = """\
+# SYSTEM AUTO GENERATED DO NOT EDIT!!!
+# {project_name} support subdirs project
+
+cmake_minimum_required(VERSION 3.16)
+project({project_name}_Support)
+
+include({condition})
+
+{subdirs}
+"""
+
+    # ── virtual interface ───────────────────────────────────────────────────
 
     def generate(self, pkg: Any, env: Any) -> str:
         lp = self._get_lp(pkg)
         if lp is None:
             return ""
-        output_path = self._lib_output_path(lp, env, "cmake")
+        output_path = self._per_package_path(lp, env)
 
         detail = self._get_detail_from_db(lp.publisher, lp.name, lp.version)
         if detail is None:
@@ -28,152 +68,164 @@ class CmakePackageGenerator(MakePackageGenerator):
 
         mode = getattr(pkg, "mode", "default")
         lib_path = self._normalize_path(lp.path)
-        lines = self._header_comment(lp)
-        lines.append(f'set(current_lib_path "{lib_path}")')
-        lines.append("")
 
-        self._emit_include_dirs(lines, paths["includes"])
-        self._emit_definitions(lines, paths["definitions"])
-        self._emit_cmake_headers(lines, paths["headers"])
+        sections = [
+            self._header_comment(lp),
+            f'set(current_lib_path "{lib_path}")\n\n',
+            self._include_dirs_section(paths["includes"]),
+            self._definitions_section(paths["definitions"]),
+            self._target_sources_section(paths["headers"]),
+        ]
 
         if mode in ("static", "dynamic"):
             if mode == "dynamic" and paths.get("dynamic_definition"):
-                for d in paths["dynamic_definition"]:
-                    lines.append(f"target_compile_definitions(${{IMAKECORE_TARGET}} PRIVATE {d})")
-                lines.append("")
-            self._emit_cmake_lib_link(lines, pkg, env)
+                sections.append(self._definitions_section(paths["dynamic_definition"]))
+            sections.append(self._lib_link_section(pkg))
         else:
-            self._emit_cmake_sources(lines, paths["headers"], paths["sources"])
-        self._emit_ui(lines, paths["uis"])
-        self._emit_resources(lines, paths["resources"])
-        self._emit_precompile(lines, paths["precompile_headers"])
+            sections.append(self._target_sources_section((paths["headers"] or []) + (paths["sources"] or [])))
+        sections.append(self._ui_section(paths["uis"]))
+        sections.append(self._resources_section(paths["resources"]))
+        sections.append(self._precompile_section(paths["precompile_headers"]))
 
-        content = "\n".join(lines) + "\n"
-        return self._write_if_changed(output_path, content)
-
-    @staticmethod
-    def _emit_cmake_headers(lines: list[str], headers: list[str]) -> None:
-        if not headers:
-            return
-        lines.append("target_sources(${IMAKECORE_TARGET} PRIVATE")
-        for h in headers:
-            lines.append(f'    "${{current_lib_path}}/{h}"')
-        lines.append(")")
-        lines.append("")
-
-    @staticmethod
-    def _emit_cmake_sources(lines: list[str], headers: list[str] | None, sources: list[str] | None) -> None:
-        all_files = (headers or []) + (sources or [])
-        if not all_files:
-            return
-        lines.append("target_sources(${IMAKECORE_TARGET} PRIVATE")
-        for f in all_files:
-            lines.append(f'    "${{current_lib_path}}/{f}"')
-        lines.append(")")
-        lines.append("")
-
-    @staticmethod
-    def _emit_cmake_lib_link(lines: list[str], pkg: Any, env: Any) -> None:
-        lp = CmakePackageGenerator._get_lp(pkg)
-        if lp is None:
-            return
-        mode = getattr(pkg, "mode", "static")
-        pkg_dir = f"{lp.publisher}@{lp.name}@{lp.version}_{mode}"
-        safe_name = lp.publisher.replace("@", "_") + "_" + lp.name.replace(".", "_") + "_" + lp.version.replace(".", "_")
-
-        if mode == "dynamic":
-            lib_path = f"${{CMAKE_CURRENT_LIST_DIR}}/../.support/{pkg_dir}/${{CMAKE_SYSTEM_PROCESSOR}}-${{CMAKE_SYSTEM_NAME}}-{mode}"
-            lines.append(f'if(MSVC)')
-            lines.append(f'    target_link_libraries(${{IMAKECORE_TARGET}} PRIVATE "{lib_path}/{safe_name}.lib")')
-            lines.append(f'elseif(MINGW)')
-            lines.append(f'    target_link_libraries(${{IMAKECORE_TARGET}} PRIVATE "{lib_path}/lib{safe_name}.a")')
-            lines.append(f'elseif(APPLE)')
-            lines.append(f'    target_link_libraries(${{IMAKECORE_TARGET}} PRIVATE "{lib_path}/lib{safe_name}.dylib")')
-            lines.append(f'else()')
-            lines.append(f'    target_link_libraries(${{IMAKECORE_TARGET}} PRIVATE "{lib_path}/lib{safe_name}.so")')
-            lines.append(f'endif()')
-        else:
-            lib_path = f"${{CMAKE_CURRENT_LIST_DIR}}/../.support/{pkg_dir}/${{CMAKE_SYSTEM_PROCESSOR}}-${{CMAKE_SYSTEM_NAME}}-{mode}"
-            lines.append(f'if(MSVC)')
-            lines.append(f'    target_link_libraries(${{IMAKECORE_TARGET}} PRIVATE "{lib_path}/{safe_name}.lib")')
-            lines.append(f'else()')
-            lines.append(f'    target_link_libraries(${{IMAKECORE_TARGET}} PRIVATE "{lib_path}/lib{safe_name}.a")')
-            lines.append(f'endif()')
-        lines.append("")
-
-    @staticmethod
-    def _emit_include_dirs(lines: list[str], includes: list[str]) -> None:
-        if not includes:
-            return
-        lines.append("target_include_directories(${IMAKECORE_TARGET} PRIVATE")
-        for inc in includes:
-            entry = '"${current_lib_path}"' if inc == "." else f'"${{current_lib_path}}/{inc}"'
-            lines.append(f"    {entry}")
-        lines.append(")")
-        lines.append("")
-
-    @staticmethod
-    def _emit_definitions(lines: list[str], definitions: list[str]) -> None:
-        if not definitions:
-            return
-        lines.append("target_compile_definitions(${IMAKECORE_TARGET} PRIVATE")
-        for d in definitions:
-            lines.append(f"    {d}")
-        lines.append(")")
-        lines.append("")
-
-    @staticmethod
-    def _emit_sources(lines: list[str], headers: list[str] | None, sources: list[str] | None) -> None:
-        all_files = (headers or []) + (sources or [])
-        if not all_files:
-            return
-        lines.append("target_sources(${IMAKECORE_TARGET} PRIVATE")
-        for f in all_files:
-            lines.append(f'    "${{current_lib_path}}/{f}"')
-        lines.append(")")
-        lines.append("")
-
-    @staticmethod
-    def _emit_ui(lines: list[str], uis: list[str]) -> None:
-        if not uis:
-            return
-        lines.append("set(CMAKE_AUTOUIC ON)")
-        for u in uis:
-            lines.append(f'qt_wrap_ui(${{IMAKECORE_TARGET}} "${{current_lib_path}}/{u}")')
-        lines.append("")
-
-    @staticmethod
-    def _emit_resources(lines: list[str], resources: list[str]) -> None:
-        if not resources:
-            return
-        lines.append("set(CMAKE_AUTORCC ON)")
-        for r in resources:
-            lines.append(f'qt_add_resources(${{IMAKECORE_TARGET}} "${{current_lib_path}}/{r}")')
-        lines.append("")
-
-    @staticmethod
-    def _emit_precompile(lines: list[str], precompile_headers: list[str]) -> None:
-        if not precompile_headers:
-            return
-        lines.append("target_precompile_headers(${IMAKECORE_TARGET} PRIVATE")
-        for ph in precompile_headers:
-            lines.append(f'    "${{current_lib_path}}/{ph}"')
-        lines.append(")")
-        lines.append("")
+        return self._write_if_changed(output_path, "".join(sections))
 
     def post_process(self, packages: list[Any], env: Any) -> str:
-        result = """\
-###################################
-# SYSTEM CONFIGURED, DO NOT EDIT!!!
-###################################\n"""
+        parts = [self._CHAIN_HEADER]
         for p in packages:
             path = self.generate(p, env)
             if not path:
                 continue
-            path = os.path.normpath(path).replace(os.sep, "/")
             lp = self._get_lp(p)
-            result += f"\n# {lp.publisher}@{lp.name}@{lp.version}\n"
-            result += f"# {lp.summary}\n"
-            result += "include(" + path + ")\n"
+            parts.append(self._CHAIN_ENTRY.format(
+                publisher=lp.publisher, name=lp.name, version=lp.version,
+                summary=lp.summary, path=os.path.normpath(path).replace(os.sep, "/"),
+            ))
+        return "".join(parts)
 
-        return result
+    def support_lib_filename(self, dir_name: str) -> str:
+        return "CMakeLists.txt"
+
+    def support_lib_content(self, lp: Any, mode: str, pkg_dir: str) -> str:
+        safe_name = lp.name.replace(".", "_")
+        safe_ver = lp.version.replace(".", "_")
+        safe_target = f"{lp.publisher}@{safe_name}@{safe_ver}".replace("@", "_")
+        out_dir = f"${{CMAKE_CURRENT_SOURCE_DIR}}/${{CMAKE_SYSTEM_PROCESSOR}}-${{CMAKE_SYSTEM_NAME}}-{mode}"
+
+        output_dirs = ""
+        defines = ""
+        post_build = ""
+        if mode == "dynamic":
+            output_dirs = (
+                f'    LIBRARY_OUTPUT_DIRECTORY "{out_dir}"\n'
+                f'    RUNTIME_OUTPUT_DIRECTORY "{out_dir}"\n'
+            )
+            detail = self._get_support_detail(lp)
+            if detail:
+                defines = "".join(
+                    f"target_compile_definitions({safe_target} PRIVATE {d})\n"
+                    for d in detail.get_dynamic_definition()
+                )
+            defines += "\n"
+            post_build = (
+                f"\nadd_custom_command(TARGET {safe_target} POST_BUILD\n"
+                f'    COMMAND ${{CMAKE_COMMAND}} -E make_directory "${{CMAKE_CURRENT_SOURCE_DIR}}/../../.bin"\n'
+                f'    COMMAND ${{CMAKE_COMMAND}} -E copy_if_different "$<TARGET_FILE:{safe_target}>" "${{CMAKE_CURRENT_SOURCE_DIR}}/../../.bin/"\n'
+                ")\n"
+            )
+
+        return self._SUPPORT_LIB_TEMPLATE.format(
+            publisher=lp.publisher, name=lp.name, version=lp.version,
+            safe_target=safe_target, lib_type="STATIC" if mode == "static" else "SHARED",
+            out_dir=out_dir, output_dirs=output_dirs, defines=defines, post_build=post_build,
+        )
+
+    def support_project_filename(self, project_name: str) -> str:
+        return "CMakeLists.txt"
+
+    def support_project_content(self, project_name: str, lib_packages: list[Any]) -> str:
+        subdirs = "".join(f"add_subdirectory({d} {d}_build)\n" for d in self._support_dir_names(lib_packages))
+        return self._SUPPORT_PROJECT_TEMPLATE.format(
+            project_name=project_name, condition=self.condition_file_name, subdirs=subdirs,
+        )
+
+    # ── per-package section builders ────────────────────────────────────────
+
+    @staticmethod
+    def _target_sources_section(files: list[str]) -> str:
+        if not files:
+            return ""
+        body = "".join(f'    "${{current_lib_path}}/{f}"\n' for f in files)
+        return f"target_sources(${{IMAKECORE_TARGET}} PRIVATE\n{body})\n\n"
+
+    @staticmethod
+    def _include_dirs_section(includes: list[str]) -> str:
+        if not includes:
+            return ""
+        entries = [
+            f'    "${{current_lib_path}}"' if inc == "." else f'    "${{current_lib_path}}/{inc}"'
+            for inc in includes
+        ]
+        return f"target_include_directories(${{IMAKECORE_TARGET}} PRIVATE\n" + "\n".join(entries) + "\n)\n\n"
+
+    @staticmethod
+    def _definitions_section(definitions: list[str]) -> str:
+        if not definitions:
+            return ""
+        body = "".join(f"    {d}\n" for d in definitions)
+        return f"target_compile_definitions(${{IMAKECORE_TARGET}} PRIVATE\n{body})\n\n"
+
+    @staticmethod
+    def _ui_section(uis: list[str]) -> str:
+        if not uis:
+            return ""
+        body = "".join(f'qt_wrap_ui(${{IMAKECORE_TARGET}} "${{current_lib_path}}/{u}")\n' for u in uis)
+        return f"set(CMAKE_AUTOUIC ON)\n{body}\n"
+
+    @staticmethod
+    def _resources_section(resources: list[str]) -> str:
+        if not resources:
+            return ""
+        body = "".join(f'qt_add_resources(${{IMAKECORE_TARGET}} "${{current_lib_path}}/{r}")\n' for r in resources)
+        return f"set(CMAKE_AUTORCC ON)\n{body}\n"
+
+    @staticmethod
+    def _precompile_section(precompile_headers: list[str]) -> str:
+        if not precompile_headers:
+            return ""
+        body = "".join(f'    "${{current_lib_path}}/{ph}"\n' for ph in precompile_headers)
+        return f"target_precompile_headers(${{IMAKECORE_TARGET}} PRIVATE\n{body})\n\n"
+
+    @classmethod
+    def _lib_link_section(cls, pkg: Any) -> str:
+        lp = cls._get_lp(pkg)
+        if lp is None:
+            return ""
+        mode = getattr(pkg, "mode", "static")
+        pkg_dir = f"{lp.publisher}@{lp.name}@{lp.version}_{mode}"
+        safe_name = lp.publisher.replace("@", "_") + "_" + lp.name.replace(".", "_") + "_" + lp.version.replace(".", "_")
+        lib_path = f"${{CMAKE_CURRENT_LIST_DIR}}/../.support/{pkg_dir}/${{CMAKE_SYSTEM_PROCESSOR}}-${{CMAKE_SYSTEM_NAME}}-{mode}"
+
+        def link(name: str) -> str:
+            return f'    target_link_libraries(${{IMAKECORE_TARGET}} PRIVATE "{lib_path}/{name}")'
+
+        if mode == "dynamic":
+            lines = (
+                "if(MSVC)\n"
+                f"{link(f'{safe_name}.lib')}\n"
+                "elseif(MINGW)\n"
+                f"{link(f'lib{safe_name}.a')}\n"
+                "elseif(APPLE)\n"
+                f"{link(f'lib{safe_name}.dylib')}\n"
+                "else()\n"
+                f"{link(f'lib{safe_name}.so')}\n"
+                "endif()\n"
+            )
+        else:
+            lines = (
+                "if(MSVC)\n"
+                f"{link(f'{safe_name}.lib')}\n"
+                "else()\n"
+                f"{link(f'lib{safe_name}.a')}\n"
+                "endif()\n"
+            )
+        return lines + "\n"
